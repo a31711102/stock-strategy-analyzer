@@ -1,0 +1,70 @@
+data:
+  source: "stooq"  # stooq or yfinance
+  fallback: true   # yfinanceへのフォールバック有効
+  cache_enabled: true
+  cache_ttl_hours: 24
+  start_date: "2007-01-01"  # リーマンショック前から
+  stock_list_path: "data_j.xls"
+  
+backtest:
+  # バックテスト期間制限（高速化用）
+  # null: 全期間（2007年～、推奨だが時間がかかる）
+  # 数値: 直近N年のみ（高速化）
+  max_years: null  # 2007年からの全データを使用
+  
+  # 保有期間制限（日数）
+  holding_period:
+    target_days: 14    # 原則保有日数（2週間）= 有効な取引の上限
+    max_days: 30       # 最大保有日数（1か月）= 強制決済の閾値
+  
+  # トレーリングストップ設定
+  trailing_stop:
+    enabled: true
+    long_threshold: 0.10   # ロング: 保有期間中の最高値から-10%で決済
+    short_threshold: 0.10  # ショート: 保有期間中の最安値から+10%で決済
+
+  
+  # 並列処理設定（高速化）
+  enable_parallel: true
+  max_workers: 4
+  
+  # ベクトル化版取引実行を使用（高速化）
+  # true: 新しいベクトル化版（推奨）
+  # false: 従来版（互換性維持用）
+  use_vectorized: true
+  
+  initial_capital: 1000000
+  # 現物取引（買い手法）
+  cash_commission_rate: 0.001    # 0.1%
+  cash_slippage: 0.001           # 0.1%
+  # 信用取引（空売り手法）
+  margin_commission_rate: 0.0015 # 0.15%
+  margin_lending_rate: 0.005     # 0.5% (年率、日割計算)
+  margin_slippage: 0.001         # 0.1%
+
+moving_averages:
+  daily: [5, 25, 75, 200]
+  weekly: [13, 26, 52]
+  monthly: [6, 12, 36]
+
+strategies:
+  enabled:
+    - breakout_new_high_long      # 新高値ブレイク（買い）
+    - pullback_buy_long           # 押し目買い
+    - retry_new_high_long         # 新高値リトライ（買い）
+    - trend_reversal_up_long      # 下降トレンド反転（買い）
+    - pullback_short              # 押し目空売り
+    - breakout_new_low_short      # 新安値ブレイク（空売り）
+    - trend_reversal_down_short   # 上昇トレンド反転（空売り）
+    - momentum_short              # 順張り空売り
+
+web:
+  host: "0.0.0.0"
+  port: 5000
+  debug: true
+
+output:
+  format: "html"  # text, html, csv
+  chart_enabled: true
+  chart_timeframes: ["daily", "weekly", "monthly"]  # 日足・週足・月足
+  signal_display_months: 3  # 直近3カ月の売買シグナルを表示

@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}{{ strategy_name }} 接近シグナル - Stock Strategy Analyzer{% endblock %}
+
+{% block content %}
+<section class="hero strategy-hero approaching-hero">
+    <h1>🎯 {{ strategy_name }}</h1>
+    <p class="hero-sub">シグナル接近中の銘柄（Top 30）</p>
+
+    <div class="nav-links">
+        <a href="/approaching" class="nav-link">← 戦略一覧へ戻る</a>
+        <a href="{{ url_for('strategy_ranking', name=strategy_name) }}" class="nav-link">📊 適合度ランキング</a>
+    </div>
+</section>
+
+<section class="ranking-section">
+    {% if signals %}
+    <table class="ranking-table approaching-table">
+        <thead>
+            <tr>
+                <th class="rank-col">順位</th>
+                <th class="code-col">コード</th>
+                <th class="name-col">銘柄名</th>
+                <th class="days-col">推定日数</th>
+                <th class="score-col">接近度</th>
+                <th class="conditions-col">達成条件</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for signal in signals %}
+            <tr>
+                <td class="rank-col">{{ signal.rank }}</td>
+                <td class="code-col">
+                    <a href="{{ url_for('stock_detail', code=signal.code) }}">{{ signal.code }}</a>
+                </td>
+                <td class="name-col">{{ signal.name }}</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge {% if signal.estimated_days <= 1 %}imminent{% elif signal.estimated_days <= 3 %}soon{% else %}later{% endif %}">
+                        約{{ signal.estimated_days or '?' }}日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge {% if signal.score >= 80 %}high{% elif signal.score >= 60 %}medium{% else %}low{% endif %}">
+                        {{ "%.0f"|format(signal.score) }}%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        {% for cond in signal.conditions_met %}
+                        <span class="condition-tag met">✓ {{ cond }}</span>
+                        {% endfor %}
+                        {% for cond in signal.conditions_pending %}
+                        <span class="condition-tag pending">⏳ {{ cond }}</span>
+                        {% endfor %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="no-data">
+        <p>{{ strategy_name }}で接近中の銘柄はありません。</p>
+    </div>
+    {% endif %}
+</section>
+
+<style>
+    .approaching-hero {
+        background: linear-gradient(135deg, #1a365d 0%, #2d4a73 100%);
+    }
+
+    .nav-links {
+        margin-top: 1.5rem;
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .nav-link {
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        text-decoration: none;
+        border-radius: 20px;
+        transition: all 0.2s;
+    }
+
+    .nav-link:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .approaching-table .days-col,
+    .approaching-table .score-col {
+        text-align: center;
+    }
+
+    .days-badge {
+        display: inline-block;
+        padding: 0.3rem 0.6rem;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: bold;
+    }
+
+    .days-badge.imminent {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+    }
+
+    .days-badge.soon {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+    }
+
+    .days-badge.later {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+    }
+
+    .score-badge {
+        display: inline-block;
+        padding: 0.3rem 0.6rem;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: bold;
+    }
+
+    .score-badge.high {
+        background: #10b981;
+        color: white;
+    }
+
+    .score-badge.medium {
+        background: #f59e0b;
+        color: white;
+    }
+
+    .score-badge.low {
+        background: #6b7280;
+        color: white;
+    }
+
+    .conditions-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+    }
+
+    .condition-tag {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.4rem;
+        border-radius: 8px;
+        white-space: nowrap;
+    }
+
+    .condition-tag.met {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .condition-tag.pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .no-data {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+</style>
+{% endblock %}

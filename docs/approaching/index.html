@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シグナル接近中 - Stock Strategy Analyzer</title>
+    <link rel="stylesheet" href="../static/css/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <a href="../index.html" class="logo">
+                📊 Stock Strategy Analyzer
+            </a>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            
+<section class="hero approaching-hero">
+    <h1>🎯 シグナル接近中の銘柄</h1>
+    <p class="hero-sub">直近1〜3ヶ月のデータから、近日中にシグナル発生が予想される銘柄</p>
+
+    
+    <div class="stats-bar">
+        <div class="stat">
+            <span class="stat-value">8</span>
+            <span class="stat-label">戦略</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value">2026-02-22</span>
+            <span class="stat-label">最終更新</span>
+        </div>
+    </div>
+    
+
+    <div class="nav-links">
+        <a href="../index.html" class="nav-link">📊 適合度ランキング</a>
+        <a href="../approaching/index.html" class="nav-link active">🎯 シグナル接近中</a>
+    </div>
+</section>
+
+<section class="criteria-section">
+    <details class="criteria-details">
+        <summary class="criteria-summary">📋 シグナル接近の判定基準</summary>
+        <div class="criteria-content">
+            <p class="criteria-intro">各戦略のエントリー条件にどれだけ近づいているかを分析し、残り日数を推定しています。</p>
+            <div class="criteria-grid">
+                <div class="criteria-item">
+                    <h4>🎯 接近スコア</h4>
+                    <ul>
+                        <li><span class="ok">OK</span> 80%以上: 1日以内</li>
+                        <li><span class="ok">OK</span> 60%〜80%: 3日以内</li>
+                        <li><span class="mid">中</span> 40%〜60%: 1週間以内</li>
+                    </ul>
+                </div>
+                <div class="criteria-item">
+                    <h4>📅 推定日数</h4>
+                    <p>条件の達成度合いから、シグナル発生までの推定日数を算出</p>
+                </div>
+            </div>
+        </div>
+    </details>
+</section>
+
+<section class="strategies-section">
+    <h2>戦略別 接近銘柄</h2>
+
+    
+    <div class="strategy-grid">
+        
+        <a href="../approaching/上昇トレンド反転.html" class="strategy-card approaching-card">
+            <h3 class="strategy-name">上昇トレンド反転</h3>
+
+            
+            <div class="top3-preview">
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#1</span>
+                    <span class="code">1379</span>
+                    <span class="name">ホクト</span>
+                    <span class="days-badge">約3日後</span>
+                </div>
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#2</span>
+                    <span class="code">137A</span>
+                    <span class="name">Ｃｏｃｏｌｉｖｅ</span>
+                    <span class="days-badge">約3日後</span>
+                </div>
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#3</span>
+                    <span class="code">1401</span>
+                    <span class="name">エムビーエス</span>
+                    <span class="days-badge">約3日後</span>
+                </div>
+                
+            </div>
+            
+
+            <span class="card-arrow">→</span>
+        </a>
+        
+        <a href="../approaching/下降トレンド反転.html" class="strategy-card approaching-card">
+            <h3 class="strategy-name">下降トレンド反転</h3>
+
+            
+            <div class="top3-preview">
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#1</span>
+                    <span class="code">1431</span>
+                    <span class="name">Ｌｉｂ　Ｗｏｒｋ</span>
+                    <span class="days-badge">約3日後</span>
+                </div>
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#2</span>
+                    <span class="code">1799</span>
+                    <span class="name">第一建設工業</span>
+                    <span class="days-badge">約3日後</span>
+                </div>
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#3</span>
+                    <span class="code">1808</span>
+                    <span class="name">長谷工コーポレーション</span>
+                    <span class="days-badge">約3日後</span>
+                </div>
+                
+            </div>
+            
+
+            <span class="card-arrow">→</span>
+        </a>
+        
+        <a href="../approaching/押し目空売り.html" class="strategy-card approaching-card">
+            <h3 class="strategy-name">押し目空売り</h3>
+
+            
+            <div class="top3-preview">
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#1</span>
+                    <span class="code">2326</span>
+                    <span class="name">デジタルアーツ</span>
+                    <span class="days-badge">約5日後</span>
+                </div>
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#2</span>
+                    <span class="code">336A</span>
+                    <span class="name">ダイナミックマッププラットフォーム</span>
+                    <span class="days-badge">約5日後</span>
+                </div>
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#3</span>
+                    <span class="code">340A</span>
+                    <span class="name">ジグザグ</span>
+                    <span class="days-badge">約5日後</span>
+                </div>
+                
+            </div>
+            
+
+            <span class="card-arrow">→</span>
+        </a>
+        
+        <a href="../approaching/押し目買い.html" class="strategy-card approaching-card">
+            <h3 class="strategy-name">押し目買い</h3>
+
+            
+            <div class="top3-preview">
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#1</span>
+                    <span class="code">147A</span>
+                    <span class="name">ソラコム</span>
+                    <span class="days-badge">約3日後</span>
+                </div>
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#2</span>
+                    <span class="code">1515</span>
+                    <span class="name">日鉄鉱業</span>
+                    <span class="days-badge">約3日後</span>
+                </div>
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#3</span>
+                    <span class="code">155A</span>
+                    <span class="name">情報戦略テクノロジー</span>
+                    <span class="days-badge">約3日後</span>
+                </div>
+                
+            </div>
+            
+
+            <span class="card-arrow">→</span>
+        </a>
+        
+        <a href="../approaching/新安値ブレイク.html" class="strategy-card approaching-card">
+            <h3 class="strategy-name">新安値ブレイク</h3>
+
+            
+            <div class="top3-preview">
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#1</span>
+                    <span class="code">137A</span>
+                    <span class="name">Ｃｏｃｏｌｉｖｅ</span>
+                    <span class="days-badge">約1日後</span>
+                </div>
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#2</span>
+                    <span class="code">177A</span>
+                    <span class="name">コージンバイオ</span>
+                    <span class="days-badge">約1日後</span>
+                </div>
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#3</span>
+                    <span class="code">248A</span>
+                    <span class="name">キッズスター</span>
+                    <span class="days-badge">約1日後</span>
+                </div>
+                
+            </div>
+            
+
+            <span class="card-arrow">→</span>
+        </a>
+        
+        <a href="../approaching/新高値ブレイク.html" class="strategy-card approaching-card">
+            <h3 class="strategy-name">新高値ブレイク</h3>
+
+            
+            <div class="top3-preview">
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#1</span>
+                    <span class="code">1820</span>
+                    <span class="name">西松建設</span>
+                    <span class="days-badge">約1日後</span>
+                </div>
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#2</span>
+                    <span class="code">1835</span>
+                    <span class="name">東鉄工業</span>
+                    <span class="days-badge">約1日後</span>
+                </div>
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#3</span>
+                    <span class="code">1847</span>
+                    <span class="name">イチケン</span>
+                    <span class="days-badge">約1日後</span>
+                </div>
+                
+            </div>
+            
+
+            <span class="card-arrow">→</span>
+        </a>
+        
+        <a href="../approaching/新高値リトライ.html" class="strategy-card approaching-card">
+            <h3 class="strategy-name">新高値リトライ</h3>
+
+            
+            <div class="top3-preview">
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#1</span>
+                    <span class="code">1301</span>
+                    <span class="name">極洋</span>
+                    <span class="days-badge">約1日後</span>
+                </div>
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#2</span>
+                    <span class="code">1332</span>
+                    <span class="name">ニッスイ</span>
+                    <span class="days-badge">約1日後</span>
+                </div>
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#3</span>
+                    <span class="code">1333</span>
+                    <span class="name">マルハニチロ</span>
+                    <span class="days-badge">約1日後</span>
+                </div>
+                
+            </div>
+            
+
+            <span class="card-arrow">→</span>
+        </a>
+        
+        <a href="../approaching/順張り空売り.html" class="strategy-card approaching-card">
+            <h3 class="strategy-name">順張り空売り</h3>
+
+            
+            <div class="top3-preview">
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#1</span>
+                    <span class="code">130A</span>
+                    <span class="name">Ｖｅｒｉｔａｓ　Ｉｎ　Ｓｉｌｉｃｏ</span>
+                    <span class="days-badge">約3日後</span>
+                </div>
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#2</span>
+                    <span class="code">137A</span>
+                    <span class="name">Ｃｏｃｏｌｉｖｅ</span>
+                    <span class="days-badge">約3日後</span>
+                </div>
+                
+                <div class="preview-item approaching-item">
+                    <span class="rank">#3</span>
+                    <span class="code">1418</span>
+                    <span class="name">インターライフホールディングス</span>
+                    <span class="days-badge">約3日後</span>
+                </div>
+                
+            </div>
+            
+
+            <span class="card-arrow">→</span>
+        </a>
+        
+    </div>
+    
+</section>
+
+<style>
+    .approaching-hero {
+        background: linear-gradient(135deg, #1a365d 0%, #2d4a73 100%);
+    }
+    .nav-links {
+        margin-top: 1.5rem;
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .nav-link {
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        text-decoration: none;
+        border-radius: 20px;
+        transition: all 0.2s;
+    }
+    .nav-link:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    .nav-link.active {
+        background: rgba(255, 255, 255, 0.25);
+        font-weight: bold;
+    }
+    .approaching-card {
+        border-left: 4px solid #f59e0b;
+    }
+    .approaching-item .days-badge {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+    .no-signals {
+        padding: 1rem;
+        color: #6b7280;
+        text-align: center;
+    }
+    .no-data {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+</style>
+
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>最終更新: 2026-02-22</p>
+        </div>
+    </footer>
+</body>
+</html>

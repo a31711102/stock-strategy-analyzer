@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}{{ stock.code }} {{ stock.name }} - Stock Strategy Analyzer{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb">
+    <a href="{{ url_for('index') }}">トップ</a>
+    <span>›</span>
+    <span>{{ stock.code }} {{ stock.name }}</span>
+</nav>
+
+<section class="stock-section">
+    <header class="stock-header">
+        <div class="stock-title">
+            <span class="stock-code">{{ stock.code }}</span>
+            <h1 class="stock-name">{{ stock.name }}</h1>
+        </div>
+        <p class="updated">更新: {{ stock.updated[:16] if stock.updated else '-' }}</p>
+    </header>
+
+    <div class="strategies-grid">
+        {% for strategy_name, data in sorted_strategies %}
+        <div class="strategy-result {{ 'good' if data.score >= 60 else 'warning' if data.score >= 30 else 'poor' }}">
+            <div class="result-header">
+                <h3 class="strategy-title">{{ strategy_name }}</h3>
+                <span class="score-badge">{{ "%.1f"|format(data.score) }}%</span>
+            </div>
+
+            <div class="score-meter">
+                <div class="meter-fill" style="width: {{ data.score }}%"></div>
+            </div>
+
+            <div class="reason-block">
+                {% for line in data.reason.split('\n') if line.strip() %}
+                <p class="reason-line {{ 'ok' if '[OK]' in line else 'ng' if '[NG]' in line else 'mid' }}">
+                    {{ line }}
+                </p>
+                {% endfor %}
+            </div>
+
+            <div class="trade-stats">
+                <div class="stat-item">
+                    <span class="stat-label">有効取引</span>
+                    <span class="stat-value">{{ data.valid_trades or 0 }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">強制決済</span>
+                    <span class="stat-value">{{ data.forced_trades or 0 }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">除外</span>
+                    <span class="stat-value">{{ data.excluded_trades or 0 }}</span>
+                </div>
+            </div>
+
+            <a href="{{ url_for('strategy_ranking', name=strategy_name) }}" class="btn-view-ranking">
+                この戦略のランキングを見る →
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

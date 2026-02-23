@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}戦略一覧 - Stock Strategy Analyzer{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Stock Strategy Analyzer</h1>
+    <p class="hero-sub">バックテスト結果に基づく銘柄・戦略の適合度分析</p>
+
+    {% if metadata %}
+    <div class="stats-bar">
+        <div class="stat">
+            <span class="stat-value">{{ metadata.processed_stocks or 0 }}</span>
+            <span class="stat-label">処理済み銘柄</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value">{{ metadata.strategies|length }}</span>
+            <span class="stat-label">投資戦略</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value">{{ metadata.last_updated[:10] if metadata.last_updated else '-' }}</span>
+            <span class="stat-label">最終更新</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="nav-links">
+        <a href="/" class="nav-link active">📊 適合度ランキング</a>
+        <a href="/approaching" class="nav-link">🎯 シグナル接近中</a>
+    </div>
+</section>
+
+<style>
+    .nav-links {
+        margin-top: 1.5rem;
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .nav-link {
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        text-decoration: none;
+        border-radius: 20px;
+        transition: all 0.2s;
+    }
+
+    .nav-link:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .nav-link.active {
+        background: rgba(255, 255, 255, 0.25);
+        font-weight: bold;
+    }
+</style>
+
+<section class="criteria-section">
+    <details class="criteria-details">
+        <summary class="criteria-summary">📋 適合度の評価基準</summary>
+        <div class="criteria-content">
+            <p class="criteria-intro">適合度は以下の指標を総合的に評価して算出されます（40%以上のみランキングに表示）</p>
+            <div class="criteria-grid">
+                <div class="criteria-item">
+                    <h4>📈 リターン（40%）</h4>
+                    <ul>
+                        <li><span class="ok">OK</span> +20%以上: 高リターン</li>
+                        <li><span class="ok">OK</span> +10%〜20%: 中リターン</li>
+                        <li><span class="mid">中</span> 0%〜10%: 小リターン</li>
+                        <li><span class="ng">NG</span> マイナス: 損失</li>
+                    </ul>
+                </div>
+                <div class="criteria-item">
+                    <h4>🎯 勝率（30%）</h4>
+                    <ul>
+                        <li><span class="ok">OK</span> 60%以上: 高勝率</li>
+                        <li><span class="mid">中</span> 40%〜60%: 中勝率</li>
+                        <li><span class="ng">NG</span> 40%未満: 低勝率</li>
+                    </ul>
+                </div>
+                <div class="criteria-item">
+                    <h4>🔢 取引回数（30%）</h4>
+                    <ul>
+                        <li><span class="ok">OK</span> 10回以上: 十分な機会</li>
+                        <li><span class="mid">中</span> 5〜9回: 機会あり</li>
+                        <li><span class="ng">NG</span> 5回未満: 機会少</li>
+                    </ul>
+                </div>
+                <div class="criteria-item">
+                    <h4>📉 最大下落率</h4>
+                    <ul>
+                        <li><span class="ok">OK</span> 20%未満: 低リスク</li>
+                        <li><span class="mid">中</span> 20%〜40%: 中リスク</li>
+                        <li><span class="ng">NG</span> 40%以上: 高リスク</li>
+                    </ul>
+                    <p class="note">※最高値からの最大下落幅</p>
+                </div>
+            </div>
+        </div>
+    </details>
+</section>
+
+<section class="strategies-section">
+    <h2>戦略別ランキング</h2>
+    <div class="strategy-grid">
+        {% for strategy in strategies %}
+        <a href="{{ url_for('strategy_ranking', name=strategy.name) }}" class="strategy-card">
+            <h3 class="strategy-name">{{ strategy.name }}</h3>
+
+            {% if strategy.top3 %}
+            <div class="top3-preview">
+                {% for item in strategy.top3 %}
+                <div class="preview-item">
+                    <span class="rank">#{{ item.rank }}</span>
+                    <span class="code">{{ item.code }}</span>
+                    <span class="name">{{ item.name }}</span>
+                    <span class="score">{{ "%.1f"|format(item.score) }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <span class="card-arrow">→</span>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

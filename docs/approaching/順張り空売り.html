@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>順張り空売り 接近シグナル - Stock Strategy Analyzer</title>
+    <link rel="stylesheet" href="../static/css/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <a href="../index.html" class="logo">
+                📊 Stock Strategy Analyzer
+            </a>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            
+<section class="hero strategy-hero approaching-hero">
+    <h1>🎯 順張り空売り</h1>
+    <p class="hero-sub">シグナル接近中の銘柄（Top 30）</p>
+
+    <div class="nav-links">
+        <a href="../approaching/index.html" class="nav-link">← 戦略一覧へ戻る</a>
+        <a href="../strategy/順張り空売り.html" class="nav-link">📊 適合度ランキング</a>
+    </div>
+</section>
+
+<section class="ranking-section">
+    
+    <table class="ranking-table approaching-table">
+        <thead>
+            <tr>
+                <th class="rank-col">順位</th>
+                <th class="code-col">コード</th>
+                <th class="name-col">銘柄名</th>
+                <th class="days-col">推定日数</th>
+                <th class="score-col">接近度</th>
+                <th class="conditions-col">達成条件</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+            <tr>
+                <td class="rank-col">1</td>
+                <td class="code-col">130A</td>
+                <td class="name-col">Ｖｅｒｉｔａｓ　Ｉｎ　Ｓｉｌｉｃｏ</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">2</td>
+                <td class="code-col">137A</td>
+                <td class="name-col">Ｃｏｃｏｌｉｖｅ</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">3</td>
+                <td class="code-col">1418</td>
+                <td class="name-col">インターライフホールディングス</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA下降配列（75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">4</td>
+                <td class="code-col">142A</td>
+                <td class="name-col">ジンジブ</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">5</td>
+                <td class="code-col">143A</td>
+                <td class="name-col">イシン</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">6</td>
+                <td class="code-col">1444</td>
+                <td class="name-col">ニッソウ</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA下降配列（75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け間近</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">7</td>
+                <td class="code-col">145A</td>
+                <td class="name-col">Ｌ　ｉｓ　Ｂ</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">8</td>
+                <td class="code-col">149A</td>
+                <td class="name-col">シンカ</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">9</td>
+                <td class="code-col">150A</td>
+                <td class="name-col">ＪＳＨ</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け間近</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">10</td>
+                <td class="code-col">153A</td>
+                <td class="name-col">カウリス</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">11</td>
+                <td class="code-col">155A</td>
+                <td class="name-col">情報戦略テクノロジー</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA下降配列（75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">12</td>
+                <td class="code-col">173A</td>
+                <td class="name-col">ハンモック</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け間近</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">13</td>
+                <td class="code-col">175A</td>
+                <td class="name-col">Ｗｉｌｌ　Ｓｍａｒｔ</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">14</td>
+                <td class="code-col">1773</td>
+                <td class="name-col">ワイ・ティー・エル・コーポレーション・バーハッド</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA下降配列（75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け間近</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">15</td>
+                <td class="code-col">177A</td>
+                <td class="name-col">コージンバイオ</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け間近</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">16</td>
+                <td class="code-col">184A</td>
+                <td class="name-col">学びエイド</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">17</td>
+                <td class="code-col">1850</td>
+                <td class="name-col">南海辰村建設</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA下降配列（75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">18</td>
+                <td class="code-col">192A</td>
+                <td class="name-col">インテグループ</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">19</td>
+                <td class="code-col">2121</td>
+                <td class="name-col">ＭＩＸＩ</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">20</td>
+                <td class="code-col">2124</td>
+                <td class="name-col">ジェイエイシーリクルートメント</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA下降配列（75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">21</td>
+                <td class="code-col">2127</td>
+                <td class="name-col">日本Ｍ＆Ａセンターホールディングス</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA下降配列（75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">22</td>
+                <td class="code-col">2157</td>
+                <td class="name-col">コシダカホールディングス</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">23</td>
+                <td class="code-col">215A</td>
+                <td class="name-col">タイミー</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け間近</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">24</td>
+                <td class="code-col">2181</td>
+                <td class="name-col">パーソルホールディングス</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA下降配列（75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け間近</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">25</td>
+                <td class="code-col">2193</td>
+                <td class="name-col">クックパッド</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">26</td>
+                <td class="code-col">2211</td>
+                <td class="name-col">不二家</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA下降配列（75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">27</td>
+                <td class="code-col">228A</td>
+                <td class="name-col">オプロ</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA下降配列（75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">28</td>
+                <td class="code-col">2305</td>
+                <td class="name-col">スタジオアリス</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け間近</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">29</td>
+                <td class="code-col">2307</td>
+                <td class="name-col">クロスキャット</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA完全下降配列（200&gt;75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け済み</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="rank-col">30</td>
+                <td class="code-col">2315</td>
+                <td class="name-col">ＣＡＩＣＡ　ＤＩＧＩＴＡＬ</td>
+                <td class="days-col">
+                    <span
+                        class="days-badge soon">
+                        約3日後
+                    </span>
+                </td>
+                <td class="score-col">
+                    <span
+                        class="score-badge high">
+                        100%
+                    </span>
+                </td>
+                <td class="conditions-col">
+                    <div class="conditions-summary">
+                        
+                        <span class="condition-tag met">✓ MA下降配列（75&gt;25&gt;5）</span>
+                        
+                        <span class="condition-tag met">✓ 5日MA下抜け間近</span>
+                        
+                        
+                    </div>
+                </td>
+            </tr>
+            
+        </tbody>
+    </table>
+    
+</section>
+
+<style>
+    .approaching-hero {
+        background: linear-gradient(135deg, #1a365d 0%, #2d4a73 100%);
+    }
+    .nav-links {
+        margin-top: 1.5rem;
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .nav-link {
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        text-decoration: none;
+        border-radius: 20px;
+        transition: all 0.2s;
+    }
+    .nav-link:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    .approaching-table .days-col,
+    .approaching-table .score-col {
+        text-align: center;
+    }
+    .days-badge {
+        display: inline-block;
+        padding: 0.3rem 0.6rem;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: bold;
+    }
+    .days-badge.imminent {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+    }
+    .days-badge.soon {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+    }
+    .days-badge.later {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+    }
+    .score-badge {
+        display: inline-block;
+        padding: 0.3rem 0.6rem;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: bold;
+    }
+    .score-badge.high {
+        background: #10b981;
+        color: white;
+    }
+    .score-badge.medium {
+        background: #f59e0b;
+        color: white;
+    }
+    .score-badge.low {
+        background: #6b7280;
+        color: white;
+    }
+    .conditions-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+    }
+    .condition-tag {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.4rem;
+        border-radius: 8px;
+        white-space: nowrap;
+    }
+    .condition-tag.met {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    .condition-tag.pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .no-data {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+</style>
+
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>最終更新: 2026-02-22</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}シグナル接近中 - Stock Strategy Analyzer{% endblock %}
+
+{% block content %}
+<section class="hero approaching-hero">
+    <h1>🎯 シグナル接近中の銘柄</h1>
+    <p class="hero-sub">直近1〜3ヶ月のデータから、近日中にシグナル発生が予想される銘柄</p>
+
+    {% if metadata %}
+    <div class="stats-bar">
+        <div class="stat">
+            <span class="stat-value">{{ strategies|length }}</span>
+            <span class="stat-label">戦略</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value">{{ metadata.last_updated[:10] if metadata.last_updated else '-' }}</span>
+            <span class="stat-label">最終更新</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="nav-links">
+        <a href="/" class="nav-link">📊 適合度ランキング</a>
+        <a href="/approaching" class="nav-link active">🎯 シグナル接近中</a>
+    </div>
+</section>
+
+<section class="criteria-section">
+    <details class="criteria-details">
+        <summary class="criteria-summary">📋 シグナル接近の判定基準</summary>
+        <div class="criteria-content">
+            <p class="criteria-intro">各戦略のエントリー条件にどれだけ近づいているかを分析し、残り日数を推定しています。</p>
+            <div class="criteria-grid">
+                <div class="criteria-item">
+                    <h4>🎯 接近スコア</h4>
+                    <ul>
+                        <li><span class="ok">OK</span> 80%以上: 1日以内</li>
+                        <li><span class="ok">OK</span> 60%〜80%: 3日以内</li>
+                        <li><span class="mid">中</span> 40%〜60%: 1週間以内</li>
+                    </ul>
+                </div>
+                <div class="criteria-item">
+                    <h4>📅 推定日数</h4>
+                    <p>条件の達成度合いから、シグナル発生までの推定日数を算出</p>
+                </div>
+            </div>
+        </div>
+    </details>
+</section>
+
+<section class="strategies-section">
+    <h2>戦略別 接近銘柄</h2>
+
+    {% if strategies %}
+    <div class="strategy-grid">
+        {% for strategy in strategies %}
+        <a href="{{ url_for('approaching_strategy', name=strategy.name) }}" class="strategy-card approaching-card">
+            <h3 class="strategy-name">{{ strategy.name }}</h3>
+
+            {% if strategy.top3 %}
+            <div class="top3-preview">
+                {% for item in strategy.top3 %}
+                <div class="preview-item approaching-item">
+                    <span class="rank">#{{ item.rank }}</span>
+                    <span class="code">{{ item.code }}</span>
+                    <span class="name">{{ item.name }}</span>
+                    <span class="days-badge">約{{ item.estimated_days or '?' }}日後</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-signals">
+                <p>接近中の銘柄はありません</p>
+            </div>
+            {% endif %}
+
+            <span class="card-arrow">→</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="no-data">
+        <p>接近シグナルのデータがありません。</p>
+        <p>バッチ処理を実行してデータを生成してください。</p>
+    </div>
+    {% endif %}
+</section>
+
+<style>
+    .approaching-hero {
+        background: linear-gradient(135deg, #1a365d 0%, #2d4a73 100%);
+    }
+
+    .nav-links {
+        margin-top: 1.5rem;
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .nav-link {
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        text-decoration: none;
+        border-radius: 20px;
+        transition: all 0.2s;
+    }
+
+    .nav-link:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .nav-link.active {
+        background: rgba(255, 255, 255, 0.25);
+        font-weight: bold;
+    }
+
+    .approaching-card {
+        border-left: 4px solid #f59e0b;
+    }
+
+    .approaching-item .days-badge {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    .no-signals {
+        padding: 1rem;
+        color: #6b7280;
+        text-align: center;
+    }
+
+    .no-data {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+</style>
+{% endblock %}

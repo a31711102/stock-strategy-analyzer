@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}{{ strategy_name }} ランキング - Stock Strategy Analyzer{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb">
+    <a href="{{ url_for('index') }}">トップ</a>
+    <span>›</span>
+    <span>{{ strategy_name }}</span>
+</nav>
+
+<section class="ranking-section">
+    <header class="section-header">
+        <h1>{{ strategy_name }}</h1>
+        <p class="subtitle">適合度ランキング Top {{ rankings|length }}</p>
+    </header>
+
+    <div class="strategy-nav">
+        {% for s in strategies %}
+        <a href="{{ url_for('strategy_ranking', name=s) }}"
+            class="strategy-tab {{ 'active' if s == strategy_name else '' }}">
+            {{ s }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <div class="ranking-table-wrapper">
+        <table class="ranking-table">
+            <thead>
+                <tr>
+                    <th class="col-rank">順位</th>
+                    <th class="col-code">コード</th>
+                    <th class="col-name">銘柄名</th>
+                    <th class="col-score">スコア</th>
+                    <th class="col-reason">評価</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in rankings %}
+                <tr>
+                    <td class="col-rank">
+                        <span class="rank-badge rank-{{ item.rank }}">{{ item.rank }}</span>
+                    </td>
+                    <td class="col-code">
+                        <a href="{{ url_for('stock_detail', code=item.code) }}" class="code-link">
+                            {{ item.code }}
+                        </a>
+                    </td>
+                    <td class="col-name">{{ item.name }}</td>
+                    <td class="col-score">
+                        <div class="score-bar">
+                            <div class="score-fill" style="width: {{ item.score }}%"></div>
+                            <span class="score-value">{{ "%.1f"|format(item.score) }}%</span>
+                        </div>
+                    </td>
+                    <td class="col-reason">
+                        <span class="reason-short">{{ item.reason.split('\n')[0] }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

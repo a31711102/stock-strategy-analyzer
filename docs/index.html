@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>戦略一覧 - Stock Strategy Analyzer</title>
+    <link rel="stylesheet" href="./static/css/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <a href="./index.html" class="logo">
+                📊 Stock Strategy Analyzer
+            </a>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            
+<section class="hero">
+    <h1>Stock Strategy Analyzer</h1>
+    <p class="hero-sub">バックテスト結果に基づく銘柄・戦略の適合度分析</p>
+
+    
+    <div class="stats-bar">
+        <div class="stat">
+            <span class="stat-value">3804</span>
+            <span class="stat-label">処理済み銘柄</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value">8</span>
+            <span class="stat-label">投資戦略</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value">2026-02-22</span>
+            <span class="stat-label">最終更新</span>
+        </div>
+    </div>
+    
+
+    <div class="nav-links">
+        <a href="./index.html" class="nav-link active">📊 適合度ランキング</a>
+        <a href="./approaching/index.html" class="nav-link">🎯 シグナル接近中</a>
+    </div>
+</section>
+
+<section class="criteria-section">
+    <details class="criteria-details">
+        <summary class="criteria-summary">📋 適合度の評価基準</summary>
+        <div class="criteria-content">
+            <p class="criteria-intro">適合度は以下の指標を総合的に評価して算出されます（40%以上のみランキングに表示）</p>
+            <div class="criteria-grid">
+                <div class="criteria-item">
+                    <h4>📈 リターン（40%）</h4>
+                    <ul>
+                        <li><span class="ok">OK</span> +20%以上: 高リターン</li>
+                        <li><span class="ok">OK</span> +10%〜20%: 中リターン</li>
+                        <li><span class="mid">中</span> 0%〜10%: 小リターン</li>
+                        <li><span class="ng">NG</span> マイナス: 損失</li>
+                    </ul>
+                </div>
+                <div class="criteria-item">
+                    <h4>🎯 勝率（30%）</h4>
+                    <ul>
+                        <li><span class="ok">OK</span> 60%以上: 高勝率</li>
+                        <li><span class="mid">中</span> 40%〜60%: 中勝率</li>
+                        <li><span class="ng">NG</span> 40%未満: 低勝率</li>
+                    </ul>
+                </div>
+                <div class="criteria-item">
+                    <h4>🔢 取引回数（30%）</h4>
+                    <ul>
+                        <li><span class="ok">OK</span> 10回以上: 十分な機会</li>
+                        <li><span class="mid">中</span> 5〜9回: 機会あり</li>
+                        <li><span class="ng">NG</span> 5回未満: 機会少</li>
+                    </ul>
+                </div>
+                <div class="criteria-item">
+                    <h4>📉 最大下落率</h4>
+                    <ul>
+                        <li><span class="ok">OK</span> 20%未満: 低リスク</li>
+                        <li><span class="mid">中</span> 20%〜40%: 中リスク</li>
+                        <li><span class="ng">NG</span> 40%以上: 高リスク</li>
+                    </ul>
+                    <p class="note">※最高値からの最大下落幅</p>
+                </div>
+            </div>
+        </div>
+    </details>
+</section>
+
+<section class="strategies-section">
+    <h2>戦略別ランキング</h2>
+    <div class="strategy-grid">
+        
+        <a href="./strategy/上昇トレンド反転.html" class="strategy-card">
+            <h3 class="strategy-name">上昇トレンド反転</h3>
+
+            
+            <div class="top3-preview">
+                
+                <div class="preview-item">
+                    <span class="rank">#1</span>
+                    <span class="code">3798</span>
+                    <span class="name">ＵＬＳグループ</span>
+                    <span class="score">80.8%</span>
+                </div>
+                
+                <div class="preview-item">
+                    <span class="rank">#2</span>
+                    <span class="code">7013</span>
+                    <span class="name">ＩＨＩ</span>
+                    <span class="score">72.9%</span>
+                </div>
+                
+                <div class="preview-item">
+                    <span class="rank">#3</span>
+                    <span class="code">6871</span>
+                    <span class="name">日本マイクロニクス</span>
+                    <span class="score">67.0%</span>
+                </div>
+                
+            </div>
+            
+
+            <span class="card-arrow">→</span>
+        </a>
+        
+        <a href="./strategy/下降トレンド反転.html" class="strategy-card">
+            <h3 class="strategy-name">下降トレンド反転</h3>
+
+            
+            <div class="top3-preview">
+                
+                <div class="preview-item">
+                    <span class="rank">#1</span>
+                    <span class="code">2158</span>
+                    <span class="name">ＦＲＯＮＴＥＯ</span>
+                    <span class="score">83.6%</span>
+                </div>
+                
+                <div class="preview-item">
+                    <span class="rank">#2</span>
+                    <span class="code">6871</span>
+                    <span class="name">日本マイクロニクス</span>
+                    <span class="score">82.9%</span>
+                </div>
+                
+                <div class="preview-item">
+                    <span class="rank">#3</span>
+                    <span class="code">5817</span>
+                    <span class="name">ＪＭＡＣＳ</span>
+                    <span class="score">82.5%</span>
+                </div>
+                
+            </div>
+            
+
+            <span class="card-arrow">→</span>
+        </a>
+        
+        <a href="./strategy/押し目空売り.html" class="strategy-card">
+            <h3 class="strategy-name">押し目空売り</h3>
+
+            
+            <div class="top3-preview">
+                
+                <div class="preview-item">
+                    <span class="rank">#1</span>
+                    <span class="code">9513</span>
+                    <span class="name">電源開発</span>
+                    <span class="score">47.6%</span>
+                </div>
+                
+                <div class="preview-item">
+                    <span class="rank">#2</span>
+                    <span class="code">2801</span>
+                    <span class="name">キッコーマン</span>
+                    <span class="score">45.8%</span>
+                </div>
+                
+                <div class="preview-item">
+                    <span class="rank">#3</span>
+                    <span class="code">8058</span>
+                    <span class="name">三菱商事</span>
+                    <span class="score">45.3%</span>
+                </div>
+                
+            </div>
+            
+
+            <span class="card-arrow">→</span>
+        </a>
+        
+        <a href="./strategy/押し目買い.html" class="strategy-card">
+            <h3 class="strategy-name">押し目買い</h3>
+
+            
+            <div class="top3-preview">
+                
+                <div class="preview-item">
+                    <span class="rank">#1</span>
+                    <span class="code">7061</span>
+                    <span class="name">日本ホスピスホールディングス</span>
+                    <span class="score">100.0%</span>
+                </div>
+                
+                <div class="preview-item">
+                    <span class="rank">#2</span>
+                    <span class="code">6226</span>
+                    <span class="name">守谷輸送機工業</span>
+                    <span class="score">98.3%</span>
+                </div>
+                
+                <div class="preview-item">
+                    <span class="rank">#3</span>
+                    <span class="code">3988</span>
+                    <span class="name">ＳＹＳホールディングス</span>
+                    <span class="score">97.3%</span>
+                </div>
+                
+            </div>
+            
+
+            <span class="card-arrow">→</span>
+        </a>
+        
+        <a href="./strategy/新安値ブレイク.html" class="strategy-card">
+            <h3 class="strategy-name">新安値ブレイク</h3>
+
+            
+            <div class="top3-preview">
+                
+                <div class="preview-item">
+                    <span class="rank">#1</span>
+                    <span class="code">7256</span>
+                    <span class="name">河西工業</span>
+                    <span class="score">64.0%</span>
+                </div>
+                
+                <div class="preview-item">
+                    <span class="rank">#2</span>
+                    <span class="code">4565</span>
+                    <span class="name">ネクセラファーマ</span>
+                    <span class="score">58.6%</span>
+                </div>
+                
+                <div class="preview-item">
+                    <span class="rank">#3</span>
+                    <span class="code">4596</span>
+                    <span class="name">窪田製薬ホールディングス</span>
+                    <span class="score">54.6%</span>
+                </div>
+                
+            </div>
+            
+
+            <span class="card-arrow">→</span>
+        </a>
+        
+        <a href="./strategy/新高値ブレイク.html" class="strategy-card">
+            <h3 class="strategy-name">新高値ブレイク</h3>
+
+            
+            <div class="top3-preview">
+                
+                <div class="preview-item">
+                    <span class="rank">#1</span>
+                    <span class="code">6613</span>
+                    <span class="name">ＱＤレーザ</span>
+                    <span class="score">87.0%</span>
+                </div>
+                
+                <div class="preview-item">
+                    <span class="rank">#2</span>
+                    <span class="code">3674</span>
+                    <span class="name">オークファン</span>
+                    <span class="score">86.3%</span>
+                </div>
+                
+                <div class="preview-item">
+                    <span class="rank">#3</span>
+                    <span class="code">9399</span>
+                    <span class="name">ビート・ホールディングス・リミテッド</span>
+                    <span class="score">86.0%</span>
+                </div>
+                
+            </div>
+            
+
+            <span class="card-arrow">→</span>
+        </a>
+        
+        <a href="./strategy/新高値リトライ.html" class="strategy-card">
+            <h3 class="strategy-name">新高値リトライ</h3>
+
+            
+            <div class="top3-preview">
+                
+                <div class="preview-item">
+                    <span class="rank">#1</span>
+                    <span class="code">155A</span>
+                    <span class="name">情報戦略テクノロジー</span>
+                    <span class="score">84.1%</span>
+                </div>
+                
+                <div class="preview-item">
+                    <span class="rank">#2</span>
+                    <span class="code">9082</span>
+                    <span class="name">大和自動車交通</span>
+                    <span class="score">84.0%</span>
+                </div>
+                
+                <div class="preview-item">
+                    <span class="rank">#3</span>
+                    <span class="code">7851</span>
+                    <span class="name">カワセコンピュータサプライ</span>
+                    <span class="score">83.8%</span>
+                </div>
+                
+            </div>
+            
+
+            <span class="card-arrow">→</span>
+        </a>
+        
+        <a href="./strategy/順張り空売り.html" class="strategy-card">
+            <h3 class="strategy-name">順張り空売り</h3>
+
+            
+            <div class="top3-preview">
+                
+                <div class="preview-item">
+                    <span class="rank">#1</span>
+                    <span class="code">9610</span>
+                    <span class="name">ウィルソン・ラーニング　ワールドワイド</span>
+                    <span class="score">52.3%</span>
+                </div>
+                
+                <div class="preview-item">
+                    <span class="rank">#2</span>
+                    <span class="code">4813</span>
+                    <span class="name">ＡＣＣＥＳＳ</span>
+                    <span class="score">50.0%</span>
+                </div>
+                
+                <div class="preview-item">
+                    <span class="rank">#3</span>
+                    <span class="code">3236</span>
+                    <span class="name">プロパスト</span>
+                    <span class="score">50.0%</span>
+                </div>
+                
+            </div>
+            
+
+            <span class="card-arrow">→</span>
+        </a>
+        
+    </div>
+</section>
+
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>最終更新: 2026-02-22</p>
+        </div>
+    </footer>
+</body>
+</html>
