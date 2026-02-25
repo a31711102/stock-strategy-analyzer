@@ -5,8 +5,9 @@ Web UIルート定義
 - /strategy/<name> : 戦略別ランキング
 - /stock/<code> : 銘柄詳細
 - /api/search : 銘柄検索API
+- /robots.txt : クローラー禁止ファイル
 """
-from flask import Flask, render_template, request, jsonify, abort
+from flask import Flask, render_template, request, jsonify, abort, send_from_directory
 from src.batch.result_cache import ResultCache
 import time
 
@@ -15,6 +16,11 @@ def register_routes(app: Flask):
     """ルートをFlaskアプリに登録"""
     
     cache = ResultCache(app.config['RESULTS_DIR'])
+    
+    @app.route('/robots.txt')
+    def robots_txt():
+        """クローラー禁止ファイルを配信"""
+        return send_from_directory(app.static_folder, 'robots.txt')
     
     @app.route('/')
     def index():
@@ -133,8 +139,8 @@ def register_routes(app: Flask):
         """戦略別接近シグナル"""
         start = time.time()
         
-        # 接近シグナル取得（Top 30）
-        signals = cache.load_approaching_signals(name, limit=30)
+        # 接近シグナル取得（Top 50）
+        signals = cache.load_approaching_signals(name, limit=50)
         
         # 利用可能な戦略一覧（ナビ用）
         strategies = cache.get_available_approaching_strategies()

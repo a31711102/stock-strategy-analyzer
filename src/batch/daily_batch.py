@@ -264,7 +264,8 @@ class DailyBatchProcessor:
                         'conditions_pending': signal.conditions_pending,
                         'score': signal.score,
                         'current_price': signal.current_price,
-                        'last_updated': signal.last_updated
+                        'last_updated': signal.last_updated,
+                        'avg_volume': signal.avg_volume
                     }
             
             return (code, result, approaching_dict)
@@ -377,9 +378,11 @@ class DailyBatchProcessor:
             sorted_results = sorted(results, key=lambda x: x['score'], reverse=True)
             self.result_cache.save_ranking(strategy_name, sorted_results)
         
-        # 接近シグナル保存（スコア降順、Top30）
+        # 接近シグナル保存（出来高50万以上、スコア降順、Top50）
+        MIN_AVG_VOLUME = 500_000
         for strategy_name, signals in approaching_results.items():
-            sorted_signals = sorted(signals, key=lambda x: x['score'], reverse=True)[:30]
+            filtered_signals = [s for s in signals if s.get('avg_volume', 0) >= MIN_AVG_VOLUME]
+            sorted_signals = sorted(filtered_signals, key=lambda x: x['score'], reverse=True)[:50]
             self.result_cache.save_approaching_signals(strategy_name, sorted_signals)
         
         self.logger.info(f"接近シグナル保存完了: {len(approaching_results)}戦略")

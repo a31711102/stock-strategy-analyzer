@@ -34,6 +34,7 @@ class ApproachingSignal:
     score: float                    # 接近スコア（0-100）
     current_price: float
     last_updated: str
+    avg_volume: float = 0.0       # 1日平均出来高（直近60日）
 
 
 class SignalDetector:
@@ -172,6 +173,8 @@ class SignalDetector:
         # 残り日数推定
         estimated_days = self._estimate_days_to_signal(diff_to_high, score)
         
+        avg_vol = float(df_full['Volume'].tail(60).mean()) if 'Volume' in df_full.columns else 0.0
+        
         return ApproachingSignal(
             code=code,
             name=name,
@@ -181,7 +184,8 @@ class SignalDetector:
             conditions_pending=conditions_pending,
             score=score,
             current_price=current_price,
-            last_updated=str(df_recent.index[-1])
+            last_updated=str(df_recent.index[-1]),
+            avg_volume=avg_vol
         )
     
     def _detect_pullback_buy(
@@ -251,6 +255,8 @@ class SignalDetector:
         
         estimated_days = 3 if score >= 60 else 7
         
+        avg_vol = float(df_full['Volume'].tail(60).mean()) if 'Volume' in df_full.columns else 0.0
+        
         return ApproachingSignal(
             code=code,
             name=name,
@@ -260,7 +266,8 @@ class SignalDetector:
             conditions_pending=conditions_pending,
             score=score,
             current_price=current_price,
-            last_updated=str(df_recent.index[-1])
+            last_updated=str(df_recent.index[-1]),
+            avg_volume=avg_vol
         )
     
     def _detect_retry_new_high(
@@ -316,6 +323,8 @@ class SignalDetector:
         
         estimated_days = self._estimate_days_to_signal(diff_to_high, score)
         
+        avg_vol = float(df_full['Volume'].tail(60).mean()) if 'Volume' in df_full.columns else 0.0
+        
         return ApproachingSignal(
             code=code,
             name=name,
@@ -325,7 +334,8 @@ class SignalDetector:
             conditions_pending=conditions_pending,
             score=score,
             current_price=current_price,
-            last_updated=str(df_recent.index[-1])
+            last_updated=str(df_recent.index[-1]),
+            avg_volume=avg_vol
         )
     
     def _detect_trend_reversal_up(
@@ -399,6 +409,8 @@ class SignalDetector:
         
         estimated_days = 3 if score >= 70 else 5
         
+        avg_vol = float(df_full['Volume'].tail(60).mean()) if 'Volume' in df_full.columns else 0.0
+        
         return ApproachingSignal(
             code=code,
             name=name,
@@ -408,7 +420,8 @@ class SignalDetector:
             conditions_pending=conditions_pending,
             score=score,
             current_price=current_price,
-            last_updated=str(df_recent.index[-1])
+            last_updated=str(df_recent.index[-1]),
+            avg_volume=avg_vol
         )
     
     def _detect_pullback_short(
@@ -460,6 +473,8 @@ class SignalDetector:
         total_conditions = len(conditions_met) + len(conditions_pending)
         score = (len(conditions_met) / total_conditions * 100) if total_conditions > 0 else 0
         
+        avg_vol = float(df_full['Volume'].tail(60).mean()) if 'Volume' in df_full.columns else 0.0
+        
         return ApproachingSignal(
             code=code,
             name=name,
@@ -469,7 +484,8 @@ class SignalDetector:
             conditions_pending=conditions_pending,
             score=score,
             current_price=current_price,
-            last_updated=str(df_recent.index[-1])
+            last_updated=str(df_recent.index[-1]),
+            avg_volume=avg_vol
         )
     
     def _detect_breakout_new_low(
@@ -528,6 +544,8 @@ class SignalDetector:
         
         estimated_days = self._estimate_days_to_signal(diff_to_low, score)
         
+        avg_vol = float(df_full['Volume'].tail(60).mean()) if 'Volume' in df_full.columns else 0.0
+        
         return ApproachingSignal(
             code=code,
             name=name,
@@ -537,7 +555,8 @@ class SignalDetector:
             conditions_pending=conditions_pending,
             score=score,
             current_price=current_price,
-            last_updated=str(df_recent.index[-1])
+            last_updated=str(df_recent.index[-1]),
+            avg_volume=avg_vol
         )
     
     def _detect_trend_reversal_down(
@@ -609,6 +628,8 @@ class SignalDetector:
         total_conditions = len(conditions_met) + len(conditions_pending)
         score = (len(conditions_met) / total_conditions * 100) if total_conditions > 0 else 0
         
+        avg_vol = float(df_full['Volume'].tail(60).mean()) if 'Volume' in df_full.columns else 0.0
+        
         return ApproachingSignal(
             code=code,
             name=name,
@@ -618,7 +639,8 @@ class SignalDetector:
             conditions_pending=conditions_pending,
             score=score,
             current_price=current_price,
-            last_updated=str(df_recent.index[-1])
+            last_updated=str(df_recent.index[-1]),
+            avg_volume=avg_vol
         )
     
     def _detect_momentum_short(
@@ -675,6 +697,8 @@ class SignalDetector:
         total_conditions = len(conditions_met) + len(conditions_pending)
         score = (len(conditions_met) / total_conditions * 100) if total_conditions > 0 else 0
         
+        avg_vol = float(df_full['Volume'].tail(60).mean()) if 'Volume' in df_full.columns else 0.0
+        
         return ApproachingSignal(
             code=code,
             name=name,
@@ -684,7 +708,8 @@ class SignalDetector:
             conditions_pending=conditions_pending,
             score=score,
             current_price=current_price,
-            last_updated=str(df_recent.index[-1])
+            last_updated=str(df_recent.index[-1]),
+            avg_volume=avg_vol
         )
     
     def _find_peaks(self, series: pd.Series, window: int = 10) -> pd.Series:

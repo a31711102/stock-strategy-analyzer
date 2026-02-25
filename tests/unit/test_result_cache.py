@@ -119,6 +119,42 @@ class TestApproachingSignals:
         loaded = cache.load_approaching_signals('nonexistent')
         assert loaded == []
 
+    def test_save_and_load_with_avg_volume(self, cache):
+        """avg_volume を含むデータが保存・読込で保持されること"""
+        signals = [
+            {
+                'code': '9432', 'name': 'NTT',
+                'estimated_days': 2, 'score': 80.0,
+                'conditions_met': ['条件A'], 'conditions_pending': [],
+                'current_price': 150.0, 'last_updated': '2026-02-24',
+                'avg_volume': 1_200_000.0,
+            },
+            {
+                'code': '7203', 'name': 'トヨタ',
+                'estimated_days': 5, 'score': 60.0,
+                'conditions_met': [], 'conditions_pending': ['条件B'],
+                'current_price': 2500.0, 'last_updated': '2026-02-24',
+                'avg_volume': 750_000.0,
+            },
+        ]
+        assert cache.save_approaching_signals('breakout', signals)
+
+        loaded = cache.load_approaching_signals('breakout')
+        assert len(loaded) == 2
+        assert loaded[0]['avg_volume'] == 1_200_000.0
+        assert loaded[1]['avg_volume'] == 750_000.0
+
+    def test_load_with_limit_50(self, cache):
+        """limit=50 で件数が正しく制限されること"""
+        signals = [
+            {'code': str(i), 'score': float(100 - i), 'avg_volume': float(500_000 + i * 1000)}
+            for i in range(60)
+        ]
+        cache.save_approaching_signals('test_strategy', signals)
+
+        loaded = cache.load_approaching_signals('test_strategy', limit=50)
+        assert len(loaded) == 50
+
 
 # ===========================================================================
 # Test: 戦略一覧

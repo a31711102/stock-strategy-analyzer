@@ -5,7 +5,7 @@
 {% block content %}
 <section class="hero strategy-hero approaching-hero">
     <h1>🎯 {{ strategy_name }}</h1>
-    <p class="hero-sub">シグナル接近中の銘柄（Top 30）</p>
+    <p class="hero-sub">シグナル接近中の銘柄（Top 50・出来高50万以上）</p>
 
     <div class="nav-links">
         <a href="/approaching" class="nav-link">← 戦略一覧へ戻る</a>
@@ -23,6 +23,7 @@
                 <th class="name-col">銘柄名</th>
                 <th class="days-col">推定日数</th>
                 <th class="score-col">接近度</th>
+                <th class="volume-col">平均出来高</th>
                 <th class="conditions-col">達成条件</th>
             </tr>
         </thead>
@@ -45,6 +46,9 @@
                         class="score-badge {% if signal.score >= 80 %}high{% elif signal.score >= 60 %}medium{% else %}low{% endif %}">
                         {{ "%.0f"|format(signal.score) }}%
                     </span>
+                </td>
+                <td class="volume-col">
+                    {{ "{:,.0f}".format(signal.avg_volume | default(0)) }}
                 </td>
                 <td class="conditions-col">
                     <div class="conditions-summary">
