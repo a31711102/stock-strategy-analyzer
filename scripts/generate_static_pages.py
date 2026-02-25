@@ -41,6 +41,8 @@ def setup_jinja_env() -> Environment:
         loader=FileSystemLoader(str(TEMPLATES_DIR)),
         autoescape=True,
     )
+    # カスタムフィルタ: カンマ区切り数値フォーマット
+    env.filters['number_format'] = lambda value: f'{value:,.0f}' if value else '-'
     return env
 
 
@@ -69,6 +71,7 @@ def generate_base_html():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
     <title>{% block title %}Stock Strategy Analyzer{% endblock %}</title>
     <link rel="stylesheet" href="{{ static_root }}static/css/main.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -421,7 +424,7 @@ def generate_approaching_strategy_html():
 {% block content %}
 <section class="hero strategy-hero approaching-hero">
     <h1>🎯 {{ strategy_name }}</h1>
-    <p class="hero-sub">シグナル接近中の銘柄（Top 30）</p>
+    <p class="hero-sub">シグナル接近中の銘柄（Top 50・出来高50万以上）</p>
 
     <div class="nav-links">
         <a href="{{ site_root }}approaching/index.html" class="nav-link">← 戦略一覧へ戻る</a>
@@ -439,6 +442,7 @@ def generate_approaching_strategy_html():
                 <th class="name-col">銘柄名</th>
                 <th class="days-col">推定日数</th>
                 <th class="score-col">接近度</th>
+                <th class="volume-col">平均出来高</th>
                 <th class="conditions-col">達成条件</th>
             </tr>
         </thead>
@@ -459,6 +463,13 @@ def generate_approaching_strategy_html():
                         class="score-badge {% if signal.score >= 80 %}high{% elif signal.score >= 60 %}medium{% else %}low{% endif %}">
                         {{ "%.0f"|format(signal.score) }}%
                     </span>
+                </td>
+                <td class="volume-col">
+                    {% if signal.avg_volume is defined and signal.avg_volume %}
+                    {{ signal.avg_volume|number_format }}
+                    {% else %}
+                    -
+                    {% endif %}
                 </td>
                 <td class="conditions-col">
                     <div class="conditions-summary">
@@ -626,6 +637,8 @@ def generate_all():
         loader=FileSystemLoader(str(static_templates_dir)),
         autoescape=True,
     )
+    # カスタムフィルタを追加
+    env.filters['number_format'] = lambda value: f'{value:,.0f}' if value else '-'
 
     # 共通コンテキスト（ルート用）
     base_ctx = {
@@ -683,7 +696,7 @@ def generate_all():
     # === 4. 戦略別接近シグナルページ ===
     logger.info('\n[4/4] 戦略別接近シグナルページ生成')
     for name in approaching_strategies:
-        signals = cache.load_approaching_signals(name, limit=30)
+        signals = cache.load_approaching_signals(name, limit=50)
 
         render_template(env, 'static_approaching_strategy.html',
                         DOCS_DIR / 'approaching' / f'{safe_filename(name)}.html',
