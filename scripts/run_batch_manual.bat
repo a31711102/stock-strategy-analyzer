@@ -33,6 +33,9 @@ if %ERRORLEVEL% NEQ 0 (
     echo ログファイル: logs\batch_%date:~0,4%%date:~5,2%%date:~8,2%.log
 ) else (
     echo バッチ処理が正常に完了しました！
+    echo.
+    echo GitHub Pages へのデプロイを開始します...
+    call %PROJECT_DIR%\scripts\auto_deploy.bat
 )
 
 echo.

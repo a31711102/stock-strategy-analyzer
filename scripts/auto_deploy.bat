@@ -8,35 +8,49 @@ chcp 65001 > nul 2>&1
 set PROJECT_DIR=C:\Users\kimi4\stock-strategy-analyzer
 set PYTHON_EXE=C:\anaconda\python.exe
 set PYTHONPATH=%PROJECT_DIR%
+set LOG_FILE=%PROJECT_DIR%\logs\deploy.log
 
 cd /d %PROJECT_DIR%
 
-REM 静的HTML生成
+REM ログディレクトリ作成
+if not exist logs mkdir logs
+
+echo ============================================ >> "%LOG_FILE%"
+echo [%date% %time%] === デプロイ開始 === >> "%LOG_FILE%"
+
+REM 1. 静的HTML生成
+echo [%date% %time%] 静的HTML生成を開始します >> "%LOG_FILE%"
 echo [%date% %time%] 静的HTML生成を開始します
-%PYTHON_EXE% scripts\generate_static_pages.py
+%PYTHON_EXE% scripts\generate_static_pages.py >> "%LOG_FILE%" 2>&1
 
 if %ERRORLEVEL% NEQ 0 (
-    echo [%date% %time%] 静的HTML生成がエラーで終了しました >> logs\deploy_error.log
+    echo [%date% %time%] [ERROR] 静的HTML生成が失敗しました >> "%LOG_FILE%"
+    echo [%date% %time%] [ERROR] 静的HTML生成が失敗しました
     exit /b %ERRORLEVEL%
 )
+echo [%date% %time%] 静的HTML生成が完了しました >> "%LOG_FILE%"
 
-REM Git で docs/ をコミット＆プッシュ
+REM 2. Git で docs/ をコミット＆プッシュ
+echo [%date% %time%] GitHub Pages にデプロイします >> "%LOG_FILE%"
 echo [%date% %time%] GitHub Pages にデプロイします
 
 git add docs/
 git diff --cached --quiet
 if %ERRORLEVEL% EQU 0 (
+    echo [%date% %time%] [SKIP] docs/ に変更なし。デプロイをスキップ >> "%LOG_FILE%"
     echo [%date% %time%] docs/ に変更がありません。デプロイをスキップします。
     exit /b 0
 )
 
 for /f "tokens=*" %%d in ('powershell -Command "Get-Date -Format yyyy-MM-dd"') do set TODAY=%%d
-git commit -m "chore: update static pages (%TODAY%)"
-git push origin main
+git commit -m "chore: update static pages (%TODAY%)" >> "%LOG_FILE%" 2>&1
+git push origin main >> "%LOG_FILE%" 2>&1
 
 if %ERRORLEVEL% NEQ 0 (
-    echo [%date% %time%] git push がエラーで終了しました >> logs\deploy_error.log
+    echo [%date% %time%] [ERROR] git push が失敗しました >> "%LOG_FILE%"
+    echo [%date% %time%] [ERROR] git push が失敗しました
     exit /b %ERRORLEVEL%
 )
 
+echo [%date% %time%] [OK] デプロイが正常に完了しました >> "%LOG_FILE%"
 echo [%date% %time%] デプロイが正常に完了しました

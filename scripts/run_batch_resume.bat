@@ -29,6 +29,9 @@ if %ERRORLEVEL% NEQ 0 (
     echo バッチ処理がエラーで終了しました。
 ) else (
     echo バッチ処理が正常に完了しました！
+    echo.
+    echo GitHub Pages へのデプロイを開始します...
+    call %PROJECT_DIR%\scripts\auto_deploy.bat
 )
 
 echo.
