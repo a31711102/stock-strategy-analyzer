@@ -40,6 +40,7 @@
                 <th class="name-col">銘柄名</th>
                 <th class="days-col">推定日数</th>
                 <th class="score-col">接近度</th>
+                <th class="vol-col">ボラティリティ</th>
                 <th class="volume-col">平均出来高</th>
                 <th class="conditions-col">達成条件</th>
             </tr>
@@ -61,6 +62,29 @@
                         class="score-badge medium">
                         67%
                     </span>
+                </td>
+                <td class="vol-col">
+                    
+                    <div class="vol-info" title="恒常高ボラ">
+                        <div class="vol-categories">
+                            <span class="vol-label">10:</span>
+                            <span class="vol-badge vol-high">
+                                高
+                            </span>
+                            <span class="vol-label">20:</span>
+                            <span class="vol-badge vol-high">
+                                高
+                            </span>
+                        </div>
+                        
+                        <div class="vol-trend">
+                            
+                            <span class="trend-badge trend-stable">➡️ 横ばい</span>
+                            
+                        </div>
+                        
+                    </div>
+                    
                 </td>
                 <td class="volume-col">
                     
@@ -96,6 +120,29 @@
                         class="score-badge medium">
                         67%
                     </span>
+                </td>
+                <td class="vol-col">
+                    
+                    <div class="vol-info" title="恒常高ボラ">
+                        <div class="vol-categories">
+                            <span class="vol-label">10:</span>
+                            <span class="vol-badge vol-high">
+                                高
+                            </span>
+                            <span class="vol-label">20:</span>
+                            <span class="vol-badge vol-high">
+                                高
+                            </span>
+                        </div>
+                        
+                        <div class="vol-trend">
+                            
+                            <span class="trend-badge trend-contracting">🔻 縮小</span>
+                            
+                        </div>
+                        
+                    </div>
+                    
                 </td>
                 <td class="volume-col">
                     
@@ -144,7 +191,8 @@
         background: rgba(255, 255, 255, 0.2);
     }
     .approaching-table .days-col,
-    .approaching-table .score-col {
+    .approaching-table .score-col,
+    .approaching-table .vol-col {
         text-align: center;
     }
     .days-badge {
@@ -184,6 +232,69 @@
     .score-badge.low {
         background: #6b7280;
         color: white;
+    }
+    /* ボラティリティ列 */
+    .vol-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+        cursor: help;
+    }
+    .vol-categories {
+        display: flex;
+        align-items: center;
+        gap: 0.2rem;
+        font-size: 0.8rem;
+    }
+    .vol-label {
+        color: #9ca3af;
+        font-size: 0.7rem;
+    }
+    .vol-badge {
+        display: inline-block;
+        padding: 0.15rem 0.4rem;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        min-width: 1.5rem;
+        text-align: center;
+    }
+    .vol-badge.vol-high {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+    }
+    .vol-badge.vol-mid {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+    }
+    .vol-badge.vol-low {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+    }
+    .vol-trend {
+        margin-top: 0.1rem;
+    }
+    .trend-badge {
+        font-size: 0.7rem;
+        padding: 0.1rem 0.3rem;
+        border-radius: 8px;
+        white-space: nowrap;
+    }
+    .trend-badge.trend-expanding {
+        background: #fef2f2;
+        color: #991b1b;
+    }
+    .trend-badge.trend-contracting {
+        background: #eff6ff;
+        color: #1e40af;
+    }
+    .trend-badge.trend-stable {
+        background: #f9fafb;
+        color: #6b7280;
+    }
+    .vol-na {
+        color: #d1d5db;
     }
     .conditions-summary {
         display: flex;
