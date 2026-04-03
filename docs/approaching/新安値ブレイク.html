@@ -40,9 +40,16 @@
                 <th class="name-col">銘柄名</th>
                 <th class="days-col">推定日数</th>
                 <th class="score-col">接近度</th>
-                <th class="vol-col">ボラティリティ</th>
+                <th class="vol-col" colspan="3">ボラティリティ</th>
                 <th class="volume-col">平均出来高</th>
                 <th class="conditions-col">達成条件</th>
+            </tr>
+            <tr class="sub-header">
+                <th></th><th></th><th></th><th></th><th></th>
+                <th class="vol-sub-col">ATR(10)</th>
+                <th class="vol-sub-col">ATR(20)</th>
+                <th class="vol-sub-col">傾向</th>
+                <th></th><th></th>
             </tr>
         </thead>
         <tbody>
@@ -63,27 +70,25 @@
                         67%
                     </span>
                 </td>
-                <td class="vol-col">
+                <td class="vol-sub-col">
                     
-                    <div class="vol-info" title="恒常高ボラ">
-                        <div class="vol-categories">
-                            <span class="vol-label">10:</span>
-                            <span class="vol-badge vol-high">
-                                高
-                            </span>
-                            <span class="vol-label">20:</span>
-                            <span class="vol-badge vol-high">
-                                高
-                            </span>
-                        </div>
+                    <span class="vol-badge vol-high" title="恒常高ボラ">
+                        高
+                    </span>
+                    
+                </td>
+                <td class="vol-sub-col">
+                    
+                    <span class="vol-badge vol-high">
+                        高
+                    </span>
+                    
+                </td>
+                <td class="vol-sub-col">
+                    
                         
-                        <div class="vol-trend">
-                            
-                            <span class="trend-badge trend-stable">➡️ 横ばい</span>
-                            
-                        </div>
+                        <span class="trend-badge trend-stable">➡️ 横ばい</span>
                         
-                    </div>
                     
                 </td>
                 <td class="volume-col">
@@ -121,27 +126,25 @@
                         67%
                     </span>
                 </td>
-                <td class="vol-col">
+                <td class="vol-sub-col">
                     
-                    <div class="vol-info" title="恒常高ボラ">
-                        <div class="vol-categories">
-                            <span class="vol-label">10:</span>
-                            <span class="vol-badge vol-high">
-                                高
-                            </span>
-                            <span class="vol-label">20:</span>
-                            <span class="vol-badge vol-high">
-                                高
-                            </span>
-                        </div>
+                    <span class="vol-badge vol-high" title="恒常高ボラ">
+                        高
+                    </span>
+                    
+                </td>
+                <td class="vol-sub-col">
+                    
+                    <span class="vol-badge vol-high">
+                        高
+                    </span>
+                    
+                </td>
+                <td class="vol-sub-col">
+                    
                         
-                        <div class="vol-trend">
-                            
-                            <span class="trend-badge trend-contracting">🔻 縮小</span>
-                            
-                        </div>
+                        <span class="trend-badge trend-contracting">🔻 縮小</span>
                         
-                    </div>
                     
                 </td>
                 <td class="volume-col">
@@ -192,8 +195,19 @@
     }
     .approaching-table .days-col,
     .approaching-table .score-col,
-    .approaching-table .vol-col {
+    .approaching-table .vol-sub-col {
         text-align: center;
+    }
+    .sub-header th {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #9ca3af;
+        padding: 0.2rem 0.5rem;
+        border-top: none;
+    }
+    .vol-col {
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
     .days-badge {
         display: inline-block;
@@ -233,32 +247,15 @@
         background: #6b7280;
         color: white;
     }
-    /* ボラティリティ列 */
-    .vol-info {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.25rem;
-        cursor: help;
-    }
-    .vol-categories {
-        display: flex;
-        align-items: center;
-        gap: 0.2rem;
-        font-size: 0.8rem;
-    }
-    .vol-label {
-        color: #9ca3af;
-        font-size: 0.7rem;
-    }
     .vol-badge {
         display: inline-block;
-        padding: 0.15rem 0.4rem;
+        padding: 0.2rem 0.5rem;
         border-radius: 10px;
-        font-size: 0.75rem;
+        font-size: 0.8rem;
         font-weight: bold;
-        min-width: 1.5rem;
+        min-width: 2rem;
         text-align: center;
+        cursor: help;
     }
     .vol-badge.vol-high {
         background: linear-gradient(135deg, #ef4444, #dc2626);
@@ -272,12 +269,9 @@
         background: linear-gradient(135deg, #3b82f6, #2563eb);
         color: white;
     }
-    .vol-trend {
-        margin-top: 0.1rem;
-    }
     .trend-badge {
-        font-size: 0.7rem;
-        padding: 0.1rem 0.3rem;
+        font-size: 0.8rem;
+        padding: 0.2rem 0.4rem;
         border-radius: 8px;
         white-space: nowrap;
     }
@@ -292,9 +286,6 @@
     .trend-badge.trend-stable {
         background: #f9fafb;
         color: #6b7280;
-    }
-    .vol-na {
-        color: #d1d5db;
     }
     .conditions-summary {
         display: flex;
