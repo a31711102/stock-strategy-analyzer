@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>ボラティリティスクリーナー - Stock Strategy Analyzer</title>
+    <link rel="stylesheet" href="../static/css/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <a href="../index.html" class="logo">
+                📊 Stock Strategy Analyzer
+            </a>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            
+<section class="hero screener-hero">
+    <h1>🔥 ボラティリティ乖離スクリーナー</h1>
+    <p class="hero-sub">ATR急拡大 × 需給健全な銘柄の逆張りエントリー早見表</p>
+
+    <div class="nav-links">
+        <a href="../index.html" class="nav-link">📊 適合度ランキング</a>
+        <a href="../approaching/index.html" class="nav-link">🎯 シグナル接近中</a>
+        <a href="../screener/index.html" class="nav-link active">🔥 ボラティリティスクリーナー</a>
+    </div>
+</section>
+
+<section class="screener-control">
+    <div class="risk-input-group">
+        <label for="risk-input">許容損失額</label>
+        <div class="input-wrapper">
+            <input type="number" id="risk-input" value="3" min="0.1" max="100" step="0.1" inputmode="decimal">
+            <span class="input-unit">万円</span>
+        </div>
+        <span class="risk-hint" id="risk-display">3万円</span>
+    </div>
+</section>
+
+<section class="screener-info">
+    <details class="criteria-details">
+        <summary class="criteria-summary">📋 スクリーナーの仕組み</summary>
+        <div class="criteria-content">
+            <div class="criteria-grid">
+                <div class="criteria-item">
+                    <h4>🚦 三段階フィルタ</h4>
+                    <ul>
+                        <li>Stage1: 平均出来高 ≥ 50万株、仕手化排除</li>
+                        <li>Stage2: 正規化ATR ≥ 2.0% → RVR降順ランキング</li>
+                        <li>Stage3: ケルトナーターゲット価格 + ポジションサイジング</li>
+                    </ul>
+                </div>
+                <div class="criteria-item">
+                    <h4>💰 等リスク配分</h4>
+                    <ul>
+                        <li>どの銘柄が損切りでも損失が X 万円に収まる株数</li>
+                        <li>100株単位で切り捨て</li>
+                        <li>「未満株」はリスク額に対してATRが大きすぎる場合</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </details>
+</section>
+
+<section class="screener-results">
+    
+    <div class="table-scroll">
+        <table class="screener-table" id="screener-table">
+            <thead>
+                <tr>
+                    <th class="col-rank">#</th>
+                    <th class="col-ticker">コード</th>
+                    <th class="col-name">銘柄名</th>
+                    <th class="col-rvr">RVR</th>
+                    <th class="col-natr">Norm_ATR</th>
+                    <th class="col-target">Target_Buy</th>
+                    <th class="col-prox">近接度</th>
+                    <th class="col-qty">Quantity</th>
+                    <th class="col-stop">Stop_Loss</th>
+                    <th class="col-cap">Capital</th>
+                    <th class="col-status">Status</th>
+                </tr>
+            </thead>
+            <tbody id="screener-tbody">
+                
+                <tr data-idx="0">
+                    <td class="col-rank">1</td>
+                    <td class="col-ticker">6522</td>
+                    <td class="col-name">アスタリスク</td>
+                    <td class="col-rvr">3.44</td>
+                    <td class="col-natr">16.1%</td>
+                    <td class="col-target">¥555</td>
+                    <td class="col-prox ">
+                        45.6%
+                    </td>
+                    <td class="col-qty js-quantity sub-unit">
+                        未満株
+                    </td>
+                    <td class="col-stop">¥227</td>
+                    <td class="col-cap js-capital">
+                        -
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-up">Up</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="1">
+                    <td class="col-rank">2</td>
+                    <td class="col-ticker">2341</td>
+                    <td class="col-name">アルバイトタイムス</td>
+                    <td class="col-rvr">2.99</td>
+                    <td class="col-natr">7.2%</td>
+                    <td class="col-target">¥165</td>
+                    <td class="col-prox ">
+                        22.1%
+                    </td>
+                    <td class="col-qty js-quantity ">
+                        900
+                    </td>
+                    <td class="col-stop">¥135</td>
+                    <td class="col-cap js-capital">
+                        ¥148,644
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-up">Up</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="2">
+                    <td class="col-rank">3</td>
+                    <td class="col-ticker">9517</td>
+                    <td class="col-name">イーレックス</td>
+                    <td class="col-rvr">2.96</td>
+                    <td class="col-natr">8.5%</td>
+                    <td class="col-target">¥745</td>
+                    <td class="col-prox ">
+                        21.7%
+                    </td>
+                    <td class="col-qty js-quantity ">
+                        100
+                    </td>
+                    <td class="col-stop">¥583</td>
+                    <td class="col-cap js-capital">
+                        ¥74,523
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-up">Up</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="3">
+                    <td class="col-rank">4</td>
+                    <td class="col-ticker">4265</td>
+                    <td class="col-name">Ｉｎｓｔｉｔｕｔｉｏｎ　ｆｏｒ　ａ　Ｇｌｏｂａｌ　Ｓｏｃｉｅｔｙ</td>
+                    <td class="col-rvr">2.66</td>
+                    <td class="col-natr">17.3%</td>
+                    <td class="col-target">¥272</td>
+                    <td class="col-prox ">
+                        14.9%
+                    </td>
+                    <td class="col-qty js-quantity ">
+                        200
+                    </td>
+                    <td class="col-stop">¥161</td>
+                    <td class="col-cap js-capital">
+                        ¥54,304
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-up">Up</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="4">
+                    <td class="col-rank">5</td>
+                    <td class="col-ticker">3778</td>
+                    <td class="col-name">さくらインターネット</td>
+                    <td class="col-rvr">2.54</td>
+                    <td class="col-natr">9.2%</td>
+                    <td class="col-target">¥2,294</td>
+                    <td class="col-prox ">
+                        24.8%
+                    </td>
+                    <td class="col-qty js-quantity sub-unit">
+                        未満株
+                    </td>
+                    <td class="col-stop">¥1,733</td>
+                    <td class="col-cap js-capital">
+                        -
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-up">Up</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="5">
+                    <td class="col-rank">6</td>
+                    <td class="col-ticker">7205</td>
+                    <td class="col-name">日野自動車</td>
+                    <td class="col-rvr">2.52</td>
+                    <td class="col-natr">10.7%</td>
+                    <td class="col-target">¥328</td>
+                    <td class="col-prox ">
+                        17.6%
+                    </td>
+                    <td class="col-qty js-quantity ">
+                        300
+                    </td>
+                    <td class="col-stop">¥242</td>
+                    <td class="col-cap js-capital">
+                        ¥98,352
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-sideways">Sideways</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="6">
+                    <td class="col-rank">7</td>
+                    <td class="col-ticker">278A</td>
+                    <td class="col-name">Ｔｅｒｒａ　Ｄｒｏｎｅ</td>
+                    <td class="col-rvr">2.37</td>
+                    <td class="col-natr">10.5%</td>
+                    <td class="col-target">¥2,551</td>
+                    <td class="col-prox ">
+                        48.6%
+                    </td>
+                    <td class="col-qty js-quantity sub-unit">
+                        未満株
+                    </td>
+                    <td class="col-stop">¥1,510</td>
+                    <td class="col-cap js-capital">
+                        -
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-up">Up</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="7">
+                    <td class="col-rank">8</td>
+                    <td class="col-ticker">2656</td>
+                    <td class="col-name">ベクターホールディングス</td>
+                    <td class="col-rvr">2.28</td>
+                    <td class="col-natr">12.8%</td>
+                    <td class="col-target">¥126</td>
+                    <td class="col-prox ">
+                        34.0%
+                    </td>
+                    <td class="col-qty js-quantity ">
+                        600
+                    </td>
+                    <td class="col-stop">¥77</td>
+                    <td class="col-cap js-capital">
+                        ¥75,624
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-up">Up</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="8">
+                    <td class="col-rank">9</td>
+                    <td class="col-ticker">4422</td>
+                    <td class="col-name">ＶＡＬＵＥＮＥＸ</td>
+                    <td class="col-rvr">2.28</td>
+                    <td class="col-natr">10.3%</td>
+                    <td class="col-target">¥332</td>
+                    <td class="col-prox ">
+                        63.1%
+                    </td>
+                    <td class="col-qty js-quantity ">
+                        100
+                    </td>
+                    <td class="col-stop">¥147</td>
+                    <td class="col-cap js-capital">
+                        ¥33,220
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-up">Up</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="9">
+                    <td class="col-rank">10</td>
+                    <td class="col-ticker">6740</td>
+                    <td class="col-name">ジャパンディスプレイ</td>
+                    <td class="col-rvr">2.26</td>
+                    <td class="col-natr">18.1%</td>
+                    <td class="col-target">¥55</td>
+                    <td class="col-prox ">
+                        34.3%
+                    </td>
+                    <td class="col-qty js-quantity ">
+                        1,000
+                    </td>
+                    <td class="col-stop">¥25</td>
+                    <td class="col-cap js-capital">
+                        ¥54,560
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-range">Range</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="10">
+                    <td class="col-rank">11</td>
+                    <td class="col-ticker">6363</td>
+                    <td class="col-name">酉島製作所</td>
+                    <td class="col-rvr">2.25</td>
+                    <td class="col-natr">5.8%</td>
+                    <td class="col-target">¥2,531</td>
+                    <td class="col-prox ">
+                        23.8%
+                    </td>
+                    <td class="col-qty js-quantity sub-unit">
+                        未満株
+                    </td>
+                    <td class="col-stop">¥2,147</td>
+                    <td class="col-cap js-capital">
+                        -
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-up">Up</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="11">
+                    <td class="col-rank">12</td>
+                    <td class="col-ticker">5423</td>
+                    <td class="col-name">東京製鐵</td>
+                    <td class="col-rvr">2.19</td>
+                    <td class="col-natr">4.7%</td>
+                    <td class="col-target">¥1,485</td>
+                    <td class="col-prox ">
+                        14.9%
+                    </td>
+                    <td class="col-qty js-quantity ">
+                        100
+                    </td>
+                    <td class="col-stop">¥1,321</td>
+                    <td class="col-cap js-capital">
+                        ¥148,493
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-up">Up</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="12">
+                    <td class="col-rank">13</td>
+                    <td class="col-ticker">5801</td>
+                    <td class="col-name">古河電気工業</td>
+                    <td class="col-rvr">2.12</td>
+                    <td class="col-natr">6.7%</td>
+                    <td class="col-target">¥25,927</td>
+                    <td class="col-prox ">
+                        43.4%
+                    </td>
+                    <td class="col-qty js-quantity sub-unit">
+                        未満株
+                    </td>
+                    <td class="col-stop">¥19,825</td>
+                    <td class="col-cap js-capital">
+                        -
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-up">Up</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="13">
+                    <td class="col-rank">14</td>
+                    <td class="col-ticker">4888</td>
+                    <td class="col-name">ステラファーマ</td>
+                    <td class="col-rvr">2.09</td>
+                    <td class="col-natr">11.9%</td>
+                    <td class="col-target">¥457</td>
+                    <td class="col-prox ">
+                        36.5%
+                    </td>
+                    <td class="col-qty js-quantity ">
+                        100
+                    </td>
+                    <td class="col-stop">¥285</td>
+                    <td class="col-cap js-capital">
+                        ¥45,704
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-up">Up</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="14">
+                    <td class="col-rank">15</td>
+                    <td class="col-ticker">5856</td>
+                    <td class="col-name">エルアイイーエイチ</td>
+                    <td class="col-rvr">2.08</td>
+                    <td class="col-natr">17.6%</td>
+                    <td class="col-target">¥13</td>
+                    <td class="col-prox ">
+                        62.2%
+                    </td>
+                    <td class="col-qty js-quantity ">
+                        2,500
+                    </td>
+                    <td class="col-stop">¥1</td>
+                    <td class="col-cap js-capital">
+                        ¥32,100
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-sideways">Sideways</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="15">
+                    <td class="col-rank">16</td>
+                    <td class="col-ticker">9513</td>
+                    <td class="col-name">電源開発</td>
+                    <td class="col-rvr">1.97</td>
+                    <td class="col-natr">4.1%</td>
+                    <td class="col-target">¥3,707</td>
+                    <td class="col-prox ">
+                        9.8%
+                    </td>
+                    <td class="col-qty js-quantity sub-unit">
+                        未満株
+                    </td>
+                    <td class="col-stop">¥3,369</td>
+                    <td class="col-cap js-capital">
+                        -
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-up">Up</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="16">
+                    <td class="col-rank">17</td>
+                    <td class="col-ticker">6787</td>
+                    <td class="col-name">メイコー</td>
+                    <td class="col-rvr">1.94</td>
+                    <td class="col-natr">8.7%</td>
+                    <td class="col-target">¥21,164</td>
+                    <td class="col-prox ">
+                        20.0%
+                    </td>
+                    <td class="col-qty js-quantity sub-unit">
+                        未満株
+                    </td>
+                    <td class="col-stop">¥16,540</td>
+                    <td class="col-cap js-capital">
+                        -
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-range">Range</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="17">
+                    <td class="col-rank">18</td>
+                    <td class="col-ticker">3196</td>
+                    <td class="col-name">ホットランドホールディングス</td>
+                    <td class="col-rvr">1.93</td>
+                    <td class="col-natr">2.7%</td>
+                    <td class="col-target">¥1,897</td>
+                    <td class="col-prox ">
+                        7.0%
+                    </td>
+                    <td class="col-qty js-quantity ">
+                        300
+                    </td>
+                    <td class="col-stop">¥1,800</td>
+                    <td class="col-cap js-capital">
+                        ¥568,968
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-range">Range</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="18">
+                    <td class="col-rank">19</td>
+                    <td class="col-ticker">9519</td>
+                    <td class="col-name">レノバ</td>
+                    <td class="col-rvr">1.87</td>
+                    <td class="col-natr">6.5%</td>
+                    <td class="col-target">¥698</td>
+                    <td class="col-prox ">
+                        26.1%
+                    </td>
+                    <td class="col-qty js-quantity ">
+                        200
+                    </td>
+                    <td class="col-stop">¥576</td>
+                    <td class="col-cap js-capital">
+                        ¥139,704
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-up">Up</span>
+                    </td>
+                </tr>
+                
+                <tr data-idx="19">
+                    <td class="col-rank">20</td>
+                    <td class="col-ticker">9104</td>
+                    <td class="col-name">商船三井</td>
+                    <td class="col-rvr">1.80</td>
+                    <td class="col-natr">3.8%</td>
+                    <td class="col-target">¥5,941</td>
+                    <td class="col-prox ">
+                        8.2%
+                    </td>
+                    <td class="col-qty js-quantity sub-unit">
+                        未満株
+                    </td>
+                    <td class="col-stop">¥5,444</td>
+                    <td class="col-cap js-capital">
+                        -
+                    </td>
+                    <td class="col-status">
+                        <span class="status-badge status-up">Up</span>
+                    </td>
+                </tr>
+                
+            </tbody>
+        </table>
+    </div>
+    
+</section>
+
+
+<script>
+window.SCREENER_DATA = {"stocks": [{"rank": 1, "ticker": "6522", "name": "アスタリスク", "rvr": 3.438, "norm_atr": 16.059, "target_buy": 554.6, "stop_loss": 227.0, "current_price": 1020.0, "proximity_pct": 45.62, "is_proximity_alert": false, "quantity": 0, "is_sub_unit": true, "capital": 0.0, "atr_10": 163.8, "sma_25": 882.2, "avg_volume_5d": 1052380.0, "status": "Up"}, {"rank": 2, "ticker": "2341", "name": "アルバイトタイムス", "rvr": 2.992, "norm_atr": 7.17, "target_buy": 165.2, "stop_loss": 134.8, "current_price": 212.0, "proximity_pct": 22.09, "is_proximity_alert": false, "quantity": 900, "is_sub_unit": false, "capital": 148644.0, "atr_10": 15.2, "sma_25": 195.6, "avg_volume_5d": 663820.0, "status": "Up"}, {"rank": 3, "ticker": "9517", "name": "イーレックス", "rvr": 2.958, "norm_atr": 8.529, "target_buy": 745.2, "stop_loss": 582.8, "current_price": 952.0, "proximity_pct": 21.72, "is_proximity_alert": false, "quantity": 100, "is_sub_unit": false, "capital": 74523.0, "atr_10": 81.2, "sma_25": 907.6, "avg_volume_5d": 961520.0, "status": "Up"}, {"rank": 4, "ticker": "4265", "name": "Ｉｎｓｔｉｔｕｔｉｏｎ　ｆｏｒ　ａ　Ｇｌｏｂａｌ　Ｓｏｃｉｅｔｙ", "rvr": 2.662, "norm_atr": 17.304, "target_buy": 271.5, "stop_loss": 161.1, "current_price": 319.0, "proximity_pct": 14.88, "is_proximity_alert": false, "quantity": 200, "is_sub_unit": false, "capital": 54304.0, "atr_10": 55.2, "sma_25": 381.9, "avg_volume_5d": 2188460.0, "status": "Up"}, {"rank": 5, "ticker": "3778", "name": "さくらインターネット", "rvr": 2.538, "norm_atr": 9.187, "target_buy": 2293.6, "stop_loss": 1733.2, "current_price": 3050.0, "proximity_pct": 24.8, "is_proximity_alert": false, "quantity": 0, "is_sub_unit": true, "capital": 0.0, "atr_10": 280.2, "sma_25": 2854.0, "avg_volume_5d": 7427920.0, "status": "Up"}, {"rank": 6, "ticker": "7205", "name": "日野自動車", "rvr": 2.525, "norm_atr": 10.729, "target_buy": 327.8, "stop_loss": 242.4, "current_price": 398.0, "proximity_pct": 17.63, "is_proximity_alert": false, "quantity": 300, "is_sub_unit": false, "capital": 98352.0, "atr_10": 42.7, "sma_25": 413.2, "avg_volume_5d": 21291380.0, "status": "Sideways"}, {"rank": 7, "ticker": "278A", "name": "Ｔｅｒｒａ　Ｄｒｏｎｅ", "rvr": 2.365, "norm_atr": 10.494, "target_buy": 2550.6, "stop_loss": 1509.6, "current_price": 4960.0, "proximity_pct": 48.58, "is_proximity_alert": false, "quantity": 0, "is_sub_unit": true, "capital": 0.0, "atr_10": 520.5, "sma_25": 3591.6, "avg_volume_5d": 920640.0, "status": "Up"}, {"rank": 8, "ticker": "2656", "name": "ベクターホールディングス", "rvr": 2.281, "norm_atr": 12.827, "target_buy": 126.0, "stop_loss": 77.0, "current_price": 191.0, "proximity_pct": 34.01, "is_proximity_alert": false, "quantity": 600, "is_sub_unit": false, "capital": 75624.0, "atr_10": 24.5, "sma_25": 175.0, "avg_volume_5d": 3115100.0, "status": "Up"}, {"rank": 9, "ticker": "4422", "name": "ＶＡＬＵＥＮＥＸ", "rvr": 2.277, "norm_atr": 10.3, "target_buy": 332.2, "stop_loss": 146.8, "current_price": 900.0, "proximity_pct": 63.09, "is_proximity_alert": false, "quantity": 100, "is_sub_unit": false, "capital": 33220.0, "atr_10": 92.7, "sma_25": 517.6, "avg_volume_5d": 1079360.0, "status": "Up"}, {"rank": 10, "ticker": "6740", "name": "ジャパンディスプレイ", "rvr": 2.256, "norm_atr": 18.072, "target_buy": 54.6, "stop_loss": 24.6, "current_price": 83.0, "proximity_pct": 34.27, "is_proximity_alert": false, "quantity": 1000, "is_sub_unit": false, "capital": 54560.0, "atr_10": 15.0, "sma_25": 84.6, "avg_volume_5d": 73977900.0, "status": "Range"}, {"rank": 11, "ticker": "6363", "name": "酉島製作所", "rvr": 2.251, "norm_atr": 5.777, "target_buy": 2530.8, "stop_loss": 2147.2, "current_price": 3320.0, "proximity_pct": 23.77, "is_proximity_alert": false, "quantity": 0, "is_sub_unit": true, "capital": 0.0, "atr_10": 191.8, "sma_25": 2914.4, "avg_volume_5d": 541580.0, "status": "Up"}, {"rank": 12, "ticker": "5423", "name": "東京製鐵", "rvr": 2.193, "norm_atr": 4.688, "target_buy": 1484.9, "stop_loss": 1321.3, "current_price": 1745.0, "proximity_pct": 14.9, "is_proximity_alert": false, "quantity": 100, "is_sub_unit": false, "capital": 148493.0, "atr_10": 81.8, "sma_25": 1648.5, "avg_volume_5d": 733980.0, "status": "Up"}, {"rank": 13, "ticker": "5801", "name": "古河電気工業", "rvr": 2.123, "norm_atr": 6.662, "target_buy": 25927.0, "stop_loss": 19825.0, "current_price": 45800.0, "proximity_pct": 43.39, "is_proximity_alert": false, "quantity": 0, "is_sub_unit": true, "capital": 0.0, "atr_10": 3051.0, "sma_25": 32029.0, "avg_volume_5d": 10610120.0, "status": "Up"}, {"rank": 14, "ticker": "4888", "name": "ステラファーマ", "rvr": 2.088, "norm_atr": 11.944, "target_buy": 457.0, "stop_loss": 285.0, "current_price": 720.0, "proximity_pct": 36.52, "is_proximity_alert": false, "quantity": 100, "is_sub_unit": false, "capital": 45704.0, "atr_10": 86.0, "sma_25": 629.0, "avg_volume_5d": 2479200.0, "status": "Up"}, {"rank": 15, "ticker": "5856", "name": "エルアイイーエイチ", "rvr": 2.076, "norm_atr": 17.647, "target_buy": 12.8, "stop_loss": 0.8, "current_price": 34.0, "proximity_pct": 62.24, "is_proximity_alert": false, "quantity": 2500, "is_sub_unit": false, "capital": 32100.0, "atr_10": 6.0, "sma_25": 24.8, "avg_volume_5d": 18488400.0, "status": "Sideways"}, {"rank": 16, "ticker": "9513", "name": "電源開発", "rvr": 1.968, "norm_atr": 4.105, "target_buy": 3706.6, "stop_loss": 3369.4, "current_price": 4107.0, "proximity_pct": 9.75, "is_proximity_alert": false, "quantity": 0, "is_sub_unit": true, "capital": 0.0, "atr_10": 168.6, "sma_25": 4043.8, "avg_volume_5d": 1370400.0, "status": "Up"}, {"rank": 17, "ticker": "6787", "name": "メイコー", "rvr": 1.941, "norm_atr": 8.738, "target_buy": 21163.8, "stop_loss": 16539.8, "current_price": 26460.0, "proximity_pct": 20.02, "is_proximity_alert": false, "quantity": 0, "is_sub_unit": true, "capital": 0.0, "atr_10": 2312.0, "sma_25": 25787.8, "avg_volume_5d": 578980.0, "status": "Range"}, {"rank": 18, "ticker": "3196", "name": "ホットランドホールディングス", "rvr": 1.928, "norm_atr": 2.731, "target_buy": 1896.6, "stop_loss": 1799.8, "current_price": 1772.0, "proximity_pct": 7.03, "is_proximity_alert": false, "quantity": 300, "is_sub_unit": false, "capital": 568968.0, "atr_10": 48.4, "sma_25": 1993.4, "avg_volume_5d": 530460.0, "status": "Range"}, {"rank": 19, "ticker": "9519", "name": "レノバ", "rvr": 1.867, "norm_atr": 6.497, "target_buy": 698.5, "stop_loss": 575.7, "current_price": 945.0, "proximity_pct": 26.08, "is_proximity_alert": false, "quantity": 200, "is_sub_unit": false, "capital": 139704.0, "atr_10": 61.4, "sma_25": 821.3, "avg_volume_5d": 1738940.0, "status": "Up"}, {"rank": 20, "ticker": "9104", "name": "商船三井", "rvr": 1.798, "norm_atr": 3.839, "target_buy": 5940.8, "stop_loss": 5443.8, "current_price": 6473.0, "proximity_pct": 8.22, "is_proximity_alert": false, "quantity": 0, "is_sub_unit": true, "capital": 0.0, "atr_10": 248.5, "sma_25": 6437.8, "avg_volume_5d": 6199520.0, "status": "Up"}], "keltner_multiplier": 2.0};
+</script>
+<script src="../static/js/screener.js"></script>
+
+
+<style>
+    .screener-hero {
+        background: linear-gradient(135deg, #7c2d12 0%, #9a3412 50%, #c2410c 100%);
+    }
+    .nav-links {
+        margin-top: 1.5rem;
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .nav-link {
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        text-decoration: none;
+        border-radius: 20px;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+    }
+    .nav-link:hover { background: rgba(255, 255, 255, 0.2); }
+    .nav-link.active { background: rgba(255, 255, 255, 0.25); font-weight: bold; }
+
+    /* --- Risk Input --- */
+    .screener-control {
+        margin: 1.5rem 0;
+        display: flex;
+        justify-content: center;
+    }
+    .risk-input-group {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 0.75rem 1.25rem;
+    }
+    .risk-input-group label {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+    .input-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    #risk-input {
+        width: 5rem;
+        padding: 0.4rem 0.6rem;
+        border: 1px solid #475569;
+        border-radius: 8px;
+        background: #0f172a;
+        color: #f1f5f9;
+        font-size: 1.1rem;
+        font-weight: 600;
+        text-align: right;
+    }
+    #risk-input:focus {
+        outline: none;
+        border-color: #f97316;
+        box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.3);
+    }
+    .input-unit { color: #94a3b8; font-size: 0.9rem; }
+    .risk-hint {
+        color: #f97316;
+        font-weight: 600;
+        font-size: 0.9rem;
+        min-width: 5rem;
+    }
+
+    /* --- Table --- */
+    .table-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .screener-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+    .screener-table th,
+    .screener-table td {
+        padding: 0.6rem 0.5rem;
+        text-align: right;
+        white-space: nowrap;
+        border-bottom: 1px solid #1e293b;
+    }
+    .screener-table th {
+        background: #0f172a;
+        color: #94a3b8;
+        font-weight: 500;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+    .screener-table tbody tr:hover {
+        background: #1e293b;
+    }
+    .col-rank { text-align: center; width: 2.5rem; }
+    .col-ticker { text-align: left; font-weight: 600; color: #60a5fa; }
+    .col-name { text-align: left; max-width: 10rem; overflow: hidden; text-overflow: ellipsis; }
+    .col-rvr { color: #fbbf24; font-weight: 600; }
+    .col-natr { color: #a78bfa; }
+    .col-target { color: #34d399; }
+    .col-stop { color: #f87171; }
+
+    .prox-alert {
+        color: #ef4444 !important;
+        font-weight: 700;
+        animation: pulse-red 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-red {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+    }
+    .sub-unit {
+        color: #6b7280;
+        font-style: italic;
+    }
+
+    /* Status badges */
+    .status-badge {
+        padding: 0.2rem 0.5rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .status-range { background: #065f46; color: #6ee7b7; }
+    .status-up { background: #1e40af; color: #93c5fd; }
+    .status-down { background: #991b1b; color: #fca5a5; }
+    .status-sideways { background: #374151; color: #9ca3af; }
+
+    /* --- Criteria --- */
+    .screener-info { margin: 1rem 0; }
+    .no-data { text-align: center; padding: 3rem; color: #6b7280; }
+
+    /* --- Mobile --- */
+    @media (max-width: 768px) {
+        .screener-table { font-size: 0.75rem; }
+        .screener-table th, .screener-table td { padding: 0.4rem 0.3rem; }
+        .col-name { max-width: 6rem; }
+        .risk-input-group { flex-wrap: wrap; justify-content: center; }
+    }
+</style>
+
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>最終更新: 2026-04-10</p>
+        </div>
+    </footer>
+</body>
+</html>
