@@ -14,13 +14,12 @@
   const riskInput = document.getElementById('risk-input');
   const riskDisplay = document.getElementById('risk-display');
   const subunitCheckbox = document.getElementById('subunit-checkbox');
-  const tableBody = document.getElementById('screener-tbody');
-
-  if (!riskInput || !tableBody || !window.SCREENER_DATA) {
+  if (!riskInput || !window.SCREENER_DATA) {
     return;
   }
 
-  const stocks = window.SCREENER_DATA.stocks;
+  const stocksDynamic = window.SCREENER_DATA.stocks_dynamic || [];
+  const stocksLargeCap = window.SCREENER_DATA.stocks_large_cap || [];
   const keltnerMultiplier = window.SCREENER_DATA.keltner_multiplier || 2.0;
   const UNIT_SHARES = 100;
 
@@ -69,10 +68,17 @@
       }) + '万円';
     }
 
-    const rows = tableBody.querySelectorAll('tr[data-idx]');
+    const rows = document.querySelectorAll('.screener-table tr[data-table-id][data-idx]');
     rows.forEach(function (row) {
+      const tableId = row.getAttribute('data-table-id');
       const idx = parseInt(row.getAttribute('data-idx'), 10);
-      const stock = stocks[idx];
+      
+      let stock = null;
+      if (tableId === 'dynamic') {
+          stock = stocksDynamic[idx];
+      } else if (tableId === 'large_cap') {
+          stock = stocksLargeCap[idx];
+      }
       if (!stock) return;
 
       const result = calculatePosition(riskJpy, stock.atr_10, stock.target_buy);
