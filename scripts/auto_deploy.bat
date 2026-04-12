@@ -18,7 +18,18 @@ if not exist logs mkdir logs
 echo ============================================ >> "%LOG_FILE%"
 echo [%date% %time%] === デプロイ開始 === >> "%LOG_FILE%"
 
-REM 1. 静的HTML生成
+REM 1. ボラティリティスクリーナー実行（バッチとは独立にデータ取得）
+echo [%date% %time%] スクリーナーを実行します >> "%LOG_FILE%"
+echo [%date% %time%] スクリーナーを実行します
+%PYTHON_EXE% scripts\run_screener.py >> "%LOG_FILE%" 2>&1
+
+if %ERRORLEVEL% NEQ 0 (
+    echo [%date% %time%] [WARN] スクリーナー実行でエラー（続行） >> "%LOG_FILE%"
+    echo [%date% %time%] [WARN] スクリーナー実行でエラー（続行）
+)
+echo [%date% %time%] スクリーナー完了 >> "%LOG_FILE%"
+
+REM 2. 静的HTML生成
 echo [%date% %time%] 静的HTML生成を開始します >> "%LOG_FILE%"
 echo [%date% %time%] 静的HTML生成を開始します
 %PYTHON_EXE% scripts\generate_static_pages.py >> "%LOG_FILE%" 2>&1
@@ -30,7 +41,7 @@ if %ERRORLEVEL% NEQ 0 (
 )
 echo [%date% %time%] 静的HTML生成が完了しました >> "%LOG_FILE%"
 
-REM 2. Git で docs/ をコミット＆プッシュ
+REM 3. Git で docs/ をコミット＆プッシュ
 echo [%date% %time%] GitHub Pages にデプロイします >> "%LOG_FILE%"
 echo [%date% %time%] GitHub Pages にデプロイします
 

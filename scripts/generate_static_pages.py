@@ -132,6 +132,7 @@ def generate_index_html():
     <div class="nav-links">
         <a href="{{ site_root }}index.html" class="nav-link active">📊 適合度ランキング</a>
         <a href="{{ site_root }}approaching/index.html" class="nav-link">🎯 シグナル接近中</a>
+        <a href="{{ site_root }}screener/index.html" class="nav-link">🔥 ボラティリティスクリーナー</a>
     </div>
 </section>
 
@@ -300,6 +301,7 @@ def generate_approaching_index_html():
     <div class="nav-links">
         <a href="{{ site_root }}index.html" class="nav-link">📊 適合度ランキング</a>
         <a href="{{ site_root }}approaching/index.html" class="nav-link active">🎯 シグナル接近中</a>
+        <a href="{{ site_root }}screener/index.html" class="nav-link">🔥 ボラティリティスクリーナー</a>
     </div>
 </section>
 
@@ -429,6 +431,7 @@ def generate_approaching_strategy_html():
     <div class="nav-links">
         <a href="{{ site_root }}approaching/index.html" class="nav-link">← 戦略一覧へ戻る</a>
         <a href="{{ site_root }}strategy/{{ strategy_name_encoded }}.html" class="nav-link">📊 適合度ランキング</a>
+        <a href="{{ site_root }}screener/index.html" class="nav-link">🔥 スクリーナー</a>
     </div>
 </section>
 
@@ -442,8 +445,16 @@ def generate_approaching_strategy_html():
                 <th class="name-col">銘柄名</th>
                 <th class="days-col">推定日数</th>
                 <th class="score-col">接近度</th>
+                <th class="vol-col" colspan="3">ボラティリティ</th>
                 <th class="volume-col">平均出来高</th>
                 <th class="conditions-col">達成条件</th>
+            </tr>
+            <tr class="sub-header">
+                <th></th><th></th><th></th><th></th><th></th>
+                <th class="vol-sub-col">ATR(10)</th>
+                <th class="vol-sub-col">ATR(20)</th>
+                <th class="vol-sub-col">傾向</th>
+                <th></th><th></th>
             </tr>
         </thead>
         <tbody>
@@ -463,6 +474,31 @@ def generate_approaching_strategy_html():
                         class="score-badge {% if signal.score >= 80 %}high{% elif signal.score >= 60 %}medium{% else %}low{% endif %}">
                         {{ "%.0f"|format(signal.score) }}%
                     </span>
+                </td>
+                <td class="vol-sub-col">
+                    {% if signal.volatility_category_10 is defined and signal.volatility_category_10 %}
+                    <span class="vol-badge vol-{{ signal.volatility_category_10 }}" {% if signal.volatility_pattern is defined and signal.volatility_pattern %}title="{{ signal.volatility_pattern }}"{% endif %}>
+                        {% if signal.volatility_category_10 == 'high' %}高{% elif signal.volatility_category_10 == 'mid' %}中{% else %}低{% endif %}
+                    </span>
+                    {% else %}-{% endif %}
+                </td>
+                <td class="vol-sub-col">
+                    {% if signal.volatility_category_20 is defined and signal.volatility_category_20 %}
+                    <span class="vol-badge vol-{{ signal.volatility_category_20 }}">
+                        {% if signal.volatility_category_20 == 'high' %}高{% elif signal.volatility_category_20 == 'mid' %}中{% else %}低{% endif %}
+                    </span>
+                    {% else %}-{% endif %}
+                </td>
+                <td class="vol-sub-col">
+                    {% if signal.volatility_trend is defined and signal.volatility_trend %}
+                        {% if signal.volatility_trend == 'expanding' %}
+                        <span class="trend-badge trend-expanding">🔺 拡大</span>
+                        {% elif signal.volatility_trend == 'contracting' %}
+                        <span class="trend-badge trend-contracting">🔻 縮小</span>
+                        {% else %}
+                        <span class="trend-badge trend-stable">➡️ 横ばい</span>
+                        {% endif %}
+                    {% else %}-{% endif %}
                 </td>
                 <td class="volume-col">
                     {% if signal.avg_volume is defined and signal.avg_volume %}
@@ -515,8 +551,20 @@ def generate_approaching_strategy_html():
         background: rgba(255, 255, 255, 0.2);
     }
     .approaching-table .days-col,
-    .approaching-table .score-col {
+    .approaching-table .score-col,
+    .approaching-table .vol-sub-col {
         text-align: center;
+    }
+    .sub-header th {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #9ca3af;
+        padding: 0.2rem 0.5rem;
+        border-top: none;
+    }
+    .vol-col {
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
     .days-badge {
         display: inline-block;
@@ -556,6 +604,46 @@ def generate_approaching_strategy_html():
         background: #6b7280;
         color: white;
     }
+    .vol-badge {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        min-width: 2rem;
+        text-align: center;
+        cursor: help;
+    }
+    .vol-badge.vol-high {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+    }
+    .vol-badge.vol-mid {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+    }
+    .vol-badge.vol-low {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+    }
+    .trend-badge {
+        font-size: 0.8rem;
+        padding: 0.2rem 0.4rem;
+        border-radius: 8px;
+        white-space: nowrap;
+    }
+    .trend-badge.trend-expanding {
+        background: #fef2f2;
+        color: #991b1b;
+    }
+    .trend-badge.trend-contracting {
+        background: #eff6ff;
+        color: #1e40af;
+    }
+    .trend-badge.trend-stable {
+        background: #f9fafb;
+        color: #6b7280;
+    }
     .conditions-summary {
         display: flex;
         flex-wrap: wrap;
@@ -587,6 +675,286 @@ def generate_approaching_strategy_html():
 def safe_filename(name: str) -> str:
     """戦略名をファイル名として安全な形に変換"""
     return name
+
+
+def generate_screener_html():
+    """ボラティリティ乖離スクリーナーページのテンプレート"""
+    return '''{% extends "static_base.html" %}
+
+{% block title %}ボラティリティスクリーナー - Stock Strategy Analyzer{% endblock %}
+
+{% block content %}
+<section class="hero screener-hero">
+    <h1>🔥 ボラティリティ乖離スクリーナー</h1>
+    <p class="hero-sub">ATR急拡大 × 需給健全な銘柄の逆張りエントリー早見表</p>
+
+    <div class="nav-links">
+        <a href="{{ site_root }}index.html" class="nav-link">📊 適合度ランキング</a>
+        <a href="{{ site_root }}approaching/index.html" class="nav-link">🎯 シグナル接近中</a>
+        <a href="{{ site_root }}screener/index.html" class="nav-link active">🔥 ボラティリティスクリーナー</a>
+    </div>
+</section>
+
+<section class="screener-control">
+    <div class="risk-input-group">
+        <label for="risk-input">許容損失額</label>
+        <div class="input-wrapper">
+            <input type="number" id="risk-input" value="3" min="0.1" max="100" step="0.1" inputmode="decimal">
+            <span class="input-unit">万円</span>
+        </div>
+        <span class="risk-hint" id="risk-display">3万円</span>
+    </div>
+    <div style="margin-top:0.5rem; text-align:center;">
+        <label style="cursor:pointer; font-size:0.9rem; color:#cbd5e1;">
+            <input type="checkbox" id="subunit-checkbox" style="margin-right: 0.5rem;">単元未満株（1株単位）での購入を想定する
+        </label>
+    </div>
+</section>
+
+<section class="screener-info">
+    <details class="criteria-details">
+        <summary class="criteria-summary">📋 スクリーナーの仕組み</summary>
+        <div class="criteria-content">
+            <div class="criteria-grid">
+                <div class="criteria-item">
+                    <h4>🚦 三段階フィルタ</h4>
+                    <ul>
+                        <li>Stage1: 平均出来高 ≥ 50万株、仕手化排除</li>
+                        <li>Stage2: 正規化ATR ≥ {{ screener_params.min_norm_atr }}% → RVR降順ランキング</li>
+                        <li>Stage3: ケルトナーターゲット価格 + ポジションサイジング</li>
+                    </ul>
+                </div>
+                <div class="criteria-item">
+                    <h4>💰 等リスク配分</h4>
+                    <ul>
+                        <li>どの銘柄が損切りでも損失が X 万円に収まる株数</li>
+                        <li>100株単位で切り捨て</li>
+                        <li>「未満株」はリスク額に対してATRが大きすぎる場合</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </details>
+</section>
+
+{% macro render_screener_table(table_stocks, table_id) %}
+    {% if table_stocks %}
+    <div class="table-scroll">
+        <table class="screener-table" id="screener-table-{{ table_id }}">
+            <thead>
+                <tr>
+                    <th class="col-rank">#</th>
+                    <th class="col-ticker">コード</th>
+                    <th class="col-name">銘柄名</th>
+                    <th class="col-rvr">相対ボラ(RVR)</th>
+                    <th class="col-natr">標準化ATR</th>
+                    <th class="col-price">現在値</th>
+                    <th class="col-target">目標買値</th>
+                    <th class="col-prox">近接度</th>
+                    <th class="col-qty">買付株数</th>
+                    <th class="col-stop">損切価格</th>
+                    <th class="col-cap">必要資金</th>
+                    <th class="col-status">トレンド</th>
+                </tr>
+            </thead>
+            <tbody id="screener-tbody-{{ table_id }}">
+                {% for stock in table_stocks %}
+                <tr data-table-id="{{ table_id }}" data-idx="{{ loop.index0 }}">
+                    <td class="col-rank">{{ stock.rank }}</td>
+                    <td class="col-ticker">{{ stock.ticker }}</td>
+                    <td class="col-name">{{ stock.name }}</td>
+                    <td class="col-rvr">{{ "%.2f"|format(stock.rvr) }}</td>
+                    <td class="col-natr">{{ "%.1f"|format(stock.norm_atr) }}%</td>
+                    <td class="col-price">¥{{ stock.current_price|number_format }}</td>
+                    <td class="col-target">¥{{ stock.target_buy|number_format }}</td>
+                    <td class="col-prox {% if stock.is_proximity_alert %}prox-alert{% endif %}">
+                        {{ "%.1f"|format(stock.proximity_pct) }}%
+                    </td>
+                    <td class="col-qty js-quantity {% if stock.is_sub_unit %}sub-unit{% endif %}">
+                        {% if stock.is_sub_unit %}未満株{% else %}{{ stock.quantity|number_format }}{% endif %}
+                    </td>
+                    <td class="col-stop">¥{{ stock.stop_loss|number_format }}</td>
+                    <td class="col-cap js-capital">
+                        {% if stock.is_sub_unit %}-{% else %}¥{{ stock.capital|number_format }}{% endif %}
+                    </td>
+                    {% set status_map = {'Up':'上昇', 'Down':'下落', 'Range':'レンジ', 'Sideways':'横ばい'} %}
+                    <td class="col-status">
+                        <span class="status-badge status-{{ stock.status|lower }}">{{ status_map.get(stock.status, stock.status) }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="no-data">
+        <p>該当する銘柄がありません。</p>
+    </div>
+    {% endif %}
+{% endmacro %}
+
+<section class="screener-results">
+    <h3 style="color:white; margin:1rem 0; padding-left:1rem; border-left:4px solid #f97316;">🔥 動態急拡大銘柄（RVR順・中小型メイン）</h3>
+    {{ render_screener_table(stocks_dynamic, 'dynamic') }}
+
+    <h3 style="color:white; margin:3rem 0 1rem 0; padding-left:1rem; border-left:4px solid #3b82f6;">🌊 大型ハイボラ銘柄ターゲット（Norm_ATR順・売買代金100億円以上）</h3>
+    {{ render_screener_table(stocks_large_cap, 'large_cap') }}
+</section>
+
+{% if stocks_dynamic or stocks_large_cap %}
+<script>
+window.SCREENER_DATA = {{ screener_json|safe }};
+</script>
+<script src="{{ static_root }}static/js/screener.js"></script>
+{% endif %}
+
+<style>
+    .screener-hero {
+        padding: 3rem 1rem;
+    }
+    .nav-links {
+        margin-top: 1.5rem;
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .nav-link {
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        text-decoration: none;
+        border-radius: 20px;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+    }
+    .nav-link:hover { background: rgba(255, 255, 255, 0.2); }
+    .nav-link.active { background: rgba(255, 255, 255, 0.25); font-weight: bold; }
+
+    /* --- Risk Input --- */
+    .screener-control {
+        margin: 1.5rem 0;
+        display: flex;
+        justify-content: center;
+    }
+    .risk-input-group {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 0.75rem 1.25rem;
+    }
+    .risk-input-group label {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+    .input-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    #risk-input {
+        width: 5rem;
+        padding: 0.4rem 0.6rem;
+        border: 1px solid #475569;
+        border-radius: 8px;
+        background: #0f172a;
+        color: #f1f5f9;
+        font-size: 1.1rem;
+        font-weight: 600;
+        text-align: right;
+    }
+    #risk-input:focus {
+        outline: none;
+        border-color: #f97316;
+        box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.3);
+    }
+    .input-unit { color: #94a3b8; font-size: 0.9rem; }
+    .risk-hint {
+        color: #f97316;
+        font-weight: 600;
+        font-size: 0.9rem;
+        min-width: 5rem;
+    }
+
+    /* --- Table --- */
+    .table-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .screener-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+    .screener-table th,
+    .screener-table td {
+        padding: 0.6rem 0.5rem;
+        text-align: right;
+        white-space: nowrap;
+        border-bottom: 1px solid #1e293b;
+    }
+    .screener-table th {
+        background: #0f172a;
+        color: #94a3b8;
+        font-weight: 500;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+    .screener-table tbody tr:hover {
+        background: #1e293b;
+    }
+    .col-rank { text-align: center; width: 2.5rem; }
+    .col-ticker { text-align: left; font-weight: 600; color: #60a5fa; }
+    .col-name { text-align: left; max-width: 10rem; overflow: hidden; text-overflow: ellipsis; }
+    .col-rvr { color: #fbbf24; font-weight: 600; }
+    .col-natr { color: #a78bfa; }
+    .col-target { color: #34d399; }
+    .col-stop { color: #f87171; }
+
+    .prox-alert {
+        color: #ef4444 !important;
+        font-weight: 700;
+        animation: pulse-red 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-red {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+    }
+    .sub-unit {
+        color: #6b7280;
+        font-style: italic;
+    }
+
+    /* Status badges */
+    .status-badge {
+        padding: 0.2rem 0.5rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .status-range { background: #065f46; color: #6ee7b7; }
+    .status-up { background: #1e40af; color: #93c5fd; }
+    .status-down { background: #991b1b; color: #fca5a5; }
+    .status-sideways { background: #374151; color: #9ca3af; }
+
+    /* --- Criteria --- */
+    .screener-info { margin: 1rem 0; }
+    .no-data { text-align: center; padding: 3rem; color: #6b7280; }
+
+    /* --- Mobile --- */
+    @media (max-width: 768px) {
+        .screener-table { font-size: 0.75rem; }
+        .screener-table th, .screener-table td { padding: 0.4rem 0.3rem; }
+        .col-name { max-width: 6rem; }
+        .risk-input-group { flex-wrap: wrap; justify-content: center; }
+    }
+</style>
+{% endblock %}'''
 
 
 def generate_all():
@@ -632,6 +1000,9 @@ def generate_all():
     (static_templates_dir / 'static_approaching_strategy.html').write_text(
         generate_approaching_strategy_html(), encoding='utf-8'
     )
+    (static_templates_dir / 'static_screener.html').write_text(
+        generate_screener_html(), encoding='utf-8'
+    )
 
     env = Environment(
         loader=FileSystemLoader(str(static_templates_dir)),
@@ -648,7 +1019,7 @@ def generate_all():
     }
 
     # === 1. トップページ ===
-    logger.info('\n[1/4] トップページ生成')
+    logger.info('\n[1/5] トップページ生成')
     ranking_strategies = cache.get_available_strategies()
     strategy_info = []
     for name in ranking_strategies:
@@ -664,7 +1035,7 @@ def generate_all():
                     strategies=strategy_info, metadata=metadata, **base_ctx)
 
     # === 2. 戦略別ランキングページ ===
-    logger.info('\n[2/4] 戦略別ランキングページ生成')
+    logger.info('\n[2/5] 戦略別ランキングページ生成')
     strategy_nav = [{'name': n, 'encoded': safe_filename(n)} for n in ranking_strategies]
     sub_ctx = {**base_ctx, 'site_root': '../', 'static_root': '../'}
 
@@ -678,7 +1049,7 @@ def generate_all():
                         strategies=strategy_nav, **sub_ctx)
 
     # === 3. 接近シグナル トップページ ===
-    logger.info('\n[3/4] 接近シグナル一覧ページ生成')
+    logger.info('\n[3/5] 接近シグナル一覧ページ生成')
     approaching_strategies = cache.get_available_approaching_strategies()
     approaching_info = []
     for name in approaching_strategies:
@@ -694,7 +1065,7 @@ def generate_all():
                     strategies=approaching_info, metadata=metadata, **sub_ctx)
 
     # === 4. 戦略別接近シグナルページ ===
-    logger.info('\n[4/4] 戦略別接近シグナルページ生成')
+    logger.info('\n[4/5] 戦略別接近シグナルページ生成')
     for name in approaching_strategies:
         signals = cache.load_approaching_signals(name, limit=50)
 
@@ -703,6 +1074,30 @@ def generate_all():
                         strategy_name=name,
                         strategy_name_encoded=safe_filename(name),
                         signals=signals, **sub_ctx)
+
+    # === 5. ボラティリティスクリーナーページ ===
+    logger.info('\n[5/5] ボラティリティスクリーナーページ生成')
+    screener_data = cache.load_screener_result()
+    if screener_data and (screener_data.get('stocks') or screener_data.get('stocks_large_cap')):
+        stocks_dynamic = screener_data.get('stocks', [])
+        stocks_large_cap = screener_data.get('stocks_large_cap', [])
+        screener_params = screener_data.get('parameters', {})
+        # JS用JSONデータ
+        screener_json = json.dumps({
+            'stocks_dynamic': stocks_dynamic,
+            'stocks_large_cap': stocks_large_cap,
+            'keltner_multiplier': screener_params.get('keltner_multiplier', 2.0),
+        }, ensure_ascii=False)
+
+        render_template(env, 'static_screener.html',
+                        DOCS_DIR / 'screener' / 'index.html',
+                        stocks_dynamic=stocks_dynamic,
+                        stocks_large_cap=stocks_large_cap,
+                        screener_params=screener_params,
+                        screener_json=screener_json,
+                        **sub_ctx)
+    else:
+        logger.info('  スクリーナーデータなし（スキップ）')
 
     # 一時テンプレートを削除
     shutil.rmtree(static_templates_dir)

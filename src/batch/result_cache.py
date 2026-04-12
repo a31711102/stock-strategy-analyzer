@@ -395,3 +395,95 @@ class ResultCache:
             strategies.append(path.stem)
         return sorted(strategies)
 
+    # ==================== ATR閾値管理 ====================
+
+    def save_atr_thresholds(self, thresholds: Dict[str, Any]) -> bool:
+        """
+        ATRパーセンタイル閾値をメタデータに保存
+
+        Args:
+            thresholds: {
+                "atr_pct_10": {"p25": float, "p75": float},
+                "atr_pct_20": {"p25": float, "p75": float},
+                "calculated_at": str (ISO format)
+            }
+
+        Returns:
+            成功時True
+        """
+        metadata = self.get_metadata()
+        metadata['atr_thresholds'] = thresholds
+
+        try:
+            metadata_path = self.cache_dir / "metadata.json"
+            with open(metadata_path, 'w', encoding='utf-8') as f:
+                json.dump(metadata, f, ensure_ascii=False, indent=2)
+            logger.info(f"ATR閾値保存完了: p25_10={thresholds.get('atr_pct_10', {}).get('p25', 'N/A')}, "
+                       f"p75_10={thresholds.get('atr_pct_10', {}).get('p75', 'N/A')}")
+            return True
+        except Exception as e:
+            logger.error(f"ATR閾値保存エラー: {e}")
+            return False
+
+    def load_atr_thresholds(self) -> Optional[Dict[str, Any]]:
+        """
+        ATRパーセンタイル閾値をメタデータから読み込み
+
+        Returns:
+            閾値辞書。存在しない場合はNone。
+        """
+        metadata = self.get_metadata()
+        thresholds = metadata.get('atr_thresholds')
+
+        if thresholds is None:
+            logger.info("ATR閾値なし（初回実行）")
+            return None
+
+        logger.info(f"ATR閾値読み込み: calculated_at={thresholds.get('calculated_at', 'unknown')}")
+        return thresholds
+
+    # ==================== ボラティリティスクリーナー ====================
+
+    def save_screener_result(self, result_dict: Dict[str, Any]) -> bool:
+        """
+        ボラティリティ乖離スクリーナーの結果を保存
+
+        Args:
+            result_dict: ScreenerPipeline.to_json_dict() の出力
+
+        Returns:
+            成功時True
+        """
+        screener_dir = self.cache_dir / "screener"
+        screener_dir.mkdir(parents=True, exist_ok=True)
+        screener_path = screener_dir / "volatility_screener.json"
+
+        try:
+            with open(screener_path, 'w', encoding='utf-8') as f:
+                json.dump(result_dict, f, ensure_ascii=False, indent=2)
+            stock_count = len(result_dict.get('stocks', []))
+            logger.info(f"スクリーナー結果保存完了: {stock_count}銘柄")
+            return True
+        except Exception as e:
+            logger.error(f"スクリーナー結果保存エラー: {e}")
+            return False
+
+    def load_screener_result(self) -> Optional[Dict[str, Any]]:
+        """
+        ボラティリティ乖離スクリーナーの結果を読み込み
+
+        Returns:
+            スクリーナー結果の辞書。存在しない場合はNone。
+        """
+        screener_path = self.cache_dir / "screener" / "volatility_screener.json"
+
+        if not screener_path.exists():
+            return None
+
+        try:
+            with open(screener_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"スクリーナー結果読み込みエラー: {e}")
+            return None
+

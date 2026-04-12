@@ -28,7 +28,9 @@ from src.indicators.technical import TechnicalIndicators
 from src.strategies import get_all_strategies
 from src.analysis.compatibility import CompatibilityAnalyzer
 from src.analysis.signal_detector import SignalDetector
+from src.analysis.volatility import VolatilityAnalyzer
 from src.batch.result_cache import ResultCache
+from src.screener.pipeline import ScreenerPipeline
 
 # ログ設定
 def setup_logging(log_dir: str = "./logs"):
@@ -56,7 +58,7 @@ class LowPriorityExecutor:
     - CPU使用率が閾値を超えたらスリープ
     """
     
-    def __init__(self, max_cpu_percent: int = 25, max_memory_mb: int = 1024):
+    def __init__(self, max_cpu_percent: int = 50, max_memory_mb: int = 2048):
         """
         Args:
             max_cpu_percent: 最大CPU使用率（%）
@@ -109,7 +111,7 @@ class DailyBatchProcessor:
     def __init__(
         self,
         config_path: str = "config.yaml",
-        max_cpu_percent: int = 25,
+        max_cpu_percent: int = 50,
         chunk_size: int = 100
     ):
         """
@@ -128,7 +130,18 @@ class DailyBatchProcessor:
         self.indicator_calc = TechnicalIndicators
         self.analyzer = CompatibilityAnalyzer(config_path)
         self.signal_detector = SignalDetector(lookback_days=60)
+        self.volatility_analyzer = VolatilityAnalyzer()
         self.result_cache = ResultCache()
+        
+        # ボラティリティ乖離スクリーナー
+        self.screener_pipeline = ScreenerPipeline()
+        
+        # スクリーナー用: 指標計算済みDataFrameの一時保持
+        self._stock_indicators: dict[str, pd.DataFrame] = {}
+        self._stock_names: dict[str, str] = {}
+        
+        # ATR閾値（バッチ開始時に前回値を読み込み、なければ初回2パス処理）
+        self.atr_thresholds = None
         
         self.logger = logging.getLogger(__name__)
         
@@ -206,10 +219,14 @@ class DailyBatchProcessor:
                     self.data_cache.set(code, df)
             
             if df is None or len(df) < 200:
-                return (code, None, None)
+                return (code, None, None, None)
             
             # テクニカル指標計算
             df = self.indicator_calc.calculate_all_indicators(df)
+            
+            # スクリーナー用にDataFrameを保持（バッチ完了後に一括処理）
+            self._stock_indicators[str(code)] = df
+            self._stock_names[str(code)] = name
             
             # 全戦略で適合度計算
             compatibility = self.analyzer.calculate_compatibility(
@@ -248,6 +265,13 @@ class DailyBatchProcessor:
                     'excluded_trades': data.get('excluded_trades', 0)
                 }
             
+            # ATR情報を計算
+            atr_info = self.volatility_analyzer.build_atr_info(
+                df,
+                thresholds_10=self.atr_thresholds.get('atr_pct_10') if self.atr_thresholds else None,
+                thresholds_20=self.atr_thresholds.get('atr_pct_20') if self.atr_thresholds else None,
+            )
+            
             # 銘柄別詳細を保存
             self.result_cache.save_detail(code, result)
             
@@ -256,7 +280,7 @@ class DailyBatchProcessor:
             if approaching_signals:
                 approaching_dict = {}
                 for strategy_name, signal in approaching_signals.items():
-                    approaching_dict[strategy_name] = {
+                    signal_data = {
                         'code': signal.code,
                         'name': signal.name,
                         'estimated_days': signal.estimated_days,
@@ -265,14 +289,17 @@ class DailyBatchProcessor:
                         'score': signal.score,
                         'current_price': signal.current_price,
                         'last_updated': signal.last_updated,
-                        'avg_volume': signal.avg_volume
+                        'avg_volume': signal.avg_volume,
                     }
+                    # ATR情報を付加
+                    signal_data.update(atr_info)
+                    approaching_dict[strategy_name] = signal_data
             
-            return (code, result, approaching_dict)
+            return (code, result, approaching_dict, atr_info)
             
         except Exception as e:
             self.logger.error(f"銘柄処理エラー ({code}): {e}")
-            return (code, None, None)
+            return (code, None, None, None)
     
     def run(
         self, 
@@ -311,6 +338,14 @@ class DailyBatchProcessor:
                 failed_codes = progress.get('failed_codes', [])
                 self.logger.info(f"前回の進捗を読み込み: 処理済み {len(processed_codes)}, 失敗 {len(failed_codes)}")
         
+        # ATR閾値の読み込み（前回値があれば使い回し、なければ初回2パス処理）
+        self.atr_thresholds = self.result_cache.load_atr_thresholds()
+        is_first_run = self.atr_thresholds is None
+        if is_first_run:
+            self.logger.info("ATR閾値なし: 初回2パス処理を実行します")
+        else:
+            self.logger.info("ATR閾値あり: 前回閾値を使用します")
+        
         # 未処理銘柄を抽出
         all_codes = stock_df['コード'].astype(str).tolist()
         remaining_codes = [c for c in all_codes if c not in processed_codes]
@@ -321,6 +356,9 @@ class DailyBatchProcessor:
         strategy_results: Dict[str, List[Dict]] = {s.name(): [] for s in self.strategies}
         # 接近シグナルの集計
         approaching_results: Dict[str, List[Dict]] = {}
+        # ATR%の収集（閾値計算用）
+        all_atr_pcts_10: List[float] = []
+        all_atr_pcts_20: List[float] = []
         
         # tqdmの安全な設定（非ターミナル環境でのOSError回避）
         tqdm_kwargs = {
@@ -342,10 +380,17 @@ class DailyBatchProcessor:
                 
                 # 処理実行
                 code_result = self.process_single_stock(code, name)
-                result_code, result_data, approaching_data = code_result
+                result_code, result_data, approaching_data, atr_info = code_result
                 
                 if result_data:
                     processed_codes.append(result_code)
+                    
+                    # ATR%を収集（閾値再計算用）
+                    if atr_info:
+                        if atr_info.get('atr_pct_10', 0) > 0:
+                            all_atr_pcts_10.append(atr_info['atr_pct_10'])
+                        if atr_info.get('atr_pct_20', 0) > 0:
+                            all_atr_pcts_20.append(atr_info['atr_pct_20'])
                     
                     # 戦略別に集計
                     for strategy_name, strategy_data in result_data.get('strategies', {}).items():
@@ -372,6 +417,16 @@ class DailyBatchProcessor:
             if not test_mode:
                 self.result_cache.save_progress(processed_codes, failed_codes)
         
+        # ATR閾値を再計算（最新データで更新し、次回用に保存）
+        new_thresholds = self._recalculate_atr_thresholds(all_atr_pcts_10, all_atr_pcts_20)
+        
+        # 初回2パス処理: 閾値なしで処理した接近シグナルにカテゴリを付与し直す
+        if is_first_run and new_thresholds:
+            self.logger.info("初回2パス処理: 接近シグナルのATRカテゴリを再分類します")
+            approaching_results = self._reclassify_approaching_signals(
+                approaching_results, new_thresholds
+            )
+        
         # 戦略別ランキング保存
         for strategy_name, results in strategy_results.items():
             # スコア降順でソート
@@ -386,6 +441,9 @@ class DailyBatchProcessor:
             self.result_cache.save_approaching_signals(strategy_name, sorted_signals)
         
         self.logger.info(f"接近シグナル保存完了: {len(approaching_results)}戦略")
+        
+        # ========== ボラティリティ乖離スクリーナー ==========
+        self._run_volatility_screener()
         
         # メタデータ更新
         elapsed_time = time.time() - start_time
@@ -406,6 +464,129 @@ class DailyBatchProcessor:
         self.logger.info(f"バッチ処理完了: {len(processed_codes)}銘柄, {elapsed_time:.1f}秒")
         
         return stats
+    
+    def _recalculate_atr_thresholds(
+        self,
+        all_atr_pcts_10: List[float],
+        all_atr_pcts_20: List[float]
+    ) -> Optional[Dict]:
+        """
+        全銘柄のATR%からパーセンタイル閾値を再計算し保存
+        
+        Args:
+            all_atr_pcts_10: 全銘柄のATR%(10)リスト
+            all_atr_pcts_20: 全銘柄のATR%(20)リスト
+            
+        Returns:
+            計算された閾値辞書。データ不足の場合はNone。
+        """
+        if not all_atr_pcts_10 or not all_atr_pcts_20:
+            self.logger.warning("ATR%データなし: 閾値再計算をスキップ")
+            return None
+        
+        thresholds = {
+            'atr_pct_10': VolatilityAnalyzer.calculate_thresholds(all_atr_pcts_10),
+            'atr_pct_20': VolatilityAnalyzer.calculate_thresholds(all_atr_pcts_20),
+            'calculated_at': datetime.now().isoformat(),
+        }
+        
+        self.result_cache.save_atr_thresholds(thresholds)
+        self.logger.info(
+            f"ATR閾値再計算完了: "
+            f"ATR%(10) p25={thresholds['atr_pct_10']['p25']:.3f}, p75={thresholds['atr_pct_10']['p75']:.3f} | "
+            f"ATR%(20) p25={thresholds['atr_pct_20']['p25']:.3f}, p75={thresholds['atr_pct_20']['p75']:.3f}"
+        )
+        
+        return thresholds
+    
+    def _reclassify_approaching_signals(
+        self,
+        approaching_results: Dict[str, List[Dict]],
+        thresholds: Dict
+    ) -> Dict[str, List[Dict]]:
+        """
+        初回2パス処理: 接近シグナルのATRカテゴリを閾値に基づいて再分類
+        
+        Args:
+            approaching_results: 戦略名→接近シグナルリストの辞書
+            thresholds: 再計算されたパーセンタイル閾値
+            
+        Returns:
+            再分類後の接近シグナル辞書
+        """
+        th_10 = thresholds.get('atr_pct_10')
+        th_20 = thresholds.get('atr_pct_20')
+        
+        for strategy_name, signals in approaching_results.items():
+            for signal in signals:
+                atr_pct_10 = signal.get('atr_pct_10', 0)
+                atr_pct_20 = signal.get('atr_pct_20', 0)
+                
+                # カテゴリ再分類
+                if th_10 and atr_pct_10 > 0:
+                    cat_10 = VolatilityAnalyzer.classify_volatility(
+                        atr_pct_10, th_10['p25'], th_10['p75']
+                    )
+                    signal['volatility_category_10'] = cat_10
+                else:
+                    cat_10 = signal.get('volatility_category_10', '')
+                
+                if th_20 and atr_pct_20 > 0:
+                    cat_20 = VolatilityAnalyzer.classify_volatility(
+                        atr_pct_20, th_20['p25'], th_20['p75']
+                    )
+                    signal['volatility_category_20'] = cat_20
+                else:
+                    cat_20 = signal.get('volatility_category_20', '')
+                
+                # パターン再判定
+                signal['volatility_pattern'] = VolatilityAnalyzer.get_volatility_pattern(
+                    cat_10, cat_20
+                )
+        
+        return approaching_results
+
+    def _run_volatility_screener(self):
+        """
+        ボラティリティ乖離スクリーナーを実行
+
+        バッチ処理のメインループで収集した指標計算済みDataFrameを流用し、
+        三段階フィルタリング → 結果保存を実行する。
+        追加のデータ取得は行わない。
+        """
+        if not self._stock_indicators:
+            self.logger.warning("スクリーナー: 指標データがありません（スキップ）")
+            return
+
+        self.logger.info(
+            f"=== ボラティリティスクリーナー実行: "
+            f"{len(self._stock_indicators)}銘柄のデータを使用 ==="
+        )
+
+        try:
+            results = self.screener_pipeline.run(
+                self._stock_indicators, self._stock_names
+            )
+
+            result_dict = self.screener_pipeline.to_json_dict(results)
+            self.result_cache.save_screener_result(result_dict)
+
+            total_found = len(results.get('dynamic', [])) + len(results.get('large_cap', []))
+            if total_found > 0:
+                self.logger.info(
+                    f"スクリーナー完了: 計{total_found}銘柄を出力"
+                )
+            else:
+                self.logger.info("スクリーナー完了: 該当銘柄なし")
+
+        except Exception as e:
+            self.logger.error(f"スクリーナー実行エラー: {e}", exc_info=True)
+
+        finally:
+            # メモリ解放
+            self._stock_indicators.clear()
+            self._stock_names.clear()
+
 
 
 def main():

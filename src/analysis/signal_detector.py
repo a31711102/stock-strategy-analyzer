@@ -35,6 +35,16 @@ class ApproachingSignal:
     current_price: float
     last_updated: str
     avg_volume: float = 0.0       # 1日平均出来高（直近60日）
+    # ATRボラティリティ情報（デフォルト値付きで後方互換性を維持）
+    atr_10: float = 0.0                    # ATR(10) 絶対値
+    atr_20: float = 0.0                    # ATR(20) 絶対値
+    atr_pct_10: float = 0.0                # ATR%(10) 正規化値
+    atr_pct_20: float = 0.0                # ATR%(20) 正規化値
+    volatility_category_10: str = ""       # ATR(10)カテゴリ: "high"/"mid"/"low"
+    volatility_category_20: str = ""       # ATR(20)カテゴリ: "high"/"mid"/"low"
+    volatility_pattern: str = ""           # 組み合わせパターン名
+    volatility_trend: str = ""             # 傾向: "expanding"/"contracting"/"stable"
+    atr_ratio: float = 0.0                 # ATRレシオ（ATR/ベースライン）
 
 
 class SignalDetector:

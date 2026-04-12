@@ -236,6 +236,53 @@ class TechnicalIndicators:
         return df
     
     @staticmethod
+    def calculate_atr(df: pd.DataFrame, period: int = 10) -> pd.DataFrame:
+        """
+        ATR (Average True Range) を計算
+        
+        【計算方法】
+        1. True Range (TR) = max(
+             当日の高値 − 当日の安値,
+             |当日の高値 − 前日の終値|,
+             |当日の安値 − 前日の終値|
+           )
+        2. ATR = TRの指定期間の単純移動平均
+        
+        【解釈】
+        - ATRが大きい: ボラティリティが高い
+        - ATRが小さい: ボラティリティが低い
+        - ATRの拡大: 値動きの勢いが増している
+        - ATRの縮小: 値動きが落ち着いている（レンジ相場の可能性）
+        
+        Args:
+            df: OHLCVデータ（High, Low, Close必須）
+            period: ATR期間（デフォルト: 10日 = 2営業週）
+        
+        Returns:
+            ATRを追加したデータフレーム
+        """
+        # 前日の終値
+        prev_close = df['Close'].shift(1)
+        
+        # True Range: 3つの値の最大値
+        tr1 = df['High'] - df['Low']                    # 当日の高値 − 当日の安値
+        tr2 = (df['High'] - prev_close).abs()            # |当日の高値 − 前日の終値|
+        tr3 = (df['Low'] - prev_close).abs()             # |当日の安値 − 前日の終値|
+        
+        # 前日終値がない場合（上場初日等）は High - Low のみ使用
+        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+        
+        # TRカラムが未存在の場合のみ追加（複数period呼び出し時の重複防止）
+        if 'TR' not in df.columns:
+            df['TR'] = tr
+        
+        # ATR = TRの単純移動平均
+        df[f'ATR_{period}'] = tr.rolling(window=period, min_periods=period).mean()
+        
+        logger.debug(f"Calculated ATR_{period}")
+        return df
+    
+    @staticmethod
     def calculate_volume_ma(df: pd.DataFrame, period: int = 25) -> pd.DataFrame:
         """
         出来高移動平均を計算
@@ -301,6 +348,19 @@ class TechnicalIndicators:
         
         # 出来高移動平均（25日）
         df = TechnicalIndicators.calculate_volume_ma(df, period=25)
+        
+        # 出来高移動平均（スクリーナー用: 5日/10日/100日）
+        # 5日: 短期流動性判定、10日/100日: 仕手化排除（Volume_MA_10/Volume_MA_100 < 5.0）
+        df = TechnicalIndicators.calculate_volume_ma(df, period=5)
+        df = TechnicalIndicators.calculate_volume_ma(df, period=10)
+        df = TechnicalIndicators.calculate_volume_ma(df, period=100)
+        
+        # ATR（営業日ベース: 10日=2週間、20日=4週間）
+        df = TechnicalIndicators.calculate_atr(df, period=10)
+        df = TechnicalIndicators.calculate_atr(df, period=20)
+        
+        # ATR（スクリーナー用: 100日 ≒ 5ヶ月、RVR = ATR_10/ATR_100 の分母）
+        df = TechnicalIndicators.calculate_atr(df, period=100)
         
         logger.info(f"Calculated all indicators for {timeframe} timeframe")
         return df
