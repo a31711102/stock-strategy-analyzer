@@ -13,6 +13,7 @@
   // --- DOM要素 ---
   const riskInput = document.getElementById('risk-input');
   const riskDisplay = document.getElementById('risk-display');
+  const subunitCheckbox = document.getElementById('subunit-checkbox');
   const tableBody = document.getElementById('screener-tbody');
 
   if (!riskInput || !tableBody || !window.SCREENER_DATA) {
@@ -30,15 +31,18 @@
    * @returns {{ quantity: number, isSubUnit: boolean, capital: number }}
    */
   function calculatePosition(riskJpy, atr10, targetBuy) {
+    const isSubunitAllowed = subunitCheckbox ? subunitCheckbox.checked : false;
+    const currentUnit = isSubunitAllowed ? 1 : 100;
     const rUnit = atr10 * keltnerMultiplier;
+    
     if (rUnit <= 0) {
       return { quantity: 0, isSubUnit: true, capital: 0 };
     }
 
-    const lots = Math.floor(riskJpy / (rUnit * UNIT_SHARES));
-    const quantity = lots * UNIT_SHARES;
+    const lots = Math.floor(riskJpy / (rUnit * currentUnit));
+    const quantity = lots * currentUnit;
 
-    if (quantity < UNIT_SHARES) {
+    if (quantity < currentUnit) {
       return { quantity: 0, isSubUnit: true, capital: 0 };
     }
 
@@ -98,6 +102,9 @@
 
   // --- イベント ---
   riskInput.addEventListener('input', recalculate);
+  if (subunitCheckbox) {
+      subunitCheckbox.addEventListener('change', recalculate);
+  }
 
   // 初回計算
   recalculate();

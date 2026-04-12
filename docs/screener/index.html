@@ -40,6 +40,11 @@
         </div>
         <span class="risk-hint" id="risk-display">3万円</span>
     </div>
+    <div style="margin-top:0.5rem; text-align:center;">
+        <label style="cursor:pointer; font-size:0.9rem; color:#cbd5e1;">
+            <input type="checkbox" id="subunit-checkbox" style="margin-right: 0.5rem;">単元未満株（1株単位）での購入を想定する
+        </label>
+    </div>
 </section>
 
 <section class="screener-info">
@@ -77,14 +82,15 @@
                     <th class="col-rank">#</th>
                     <th class="col-ticker">コード</th>
                     <th class="col-name">銘柄名</th>
-                    <th class="col-rvr">RVR</th>
-                    <th class="col-natr">Norm_ATR</th>
-                    <th class="col-target">Target_Buy</th>
+                    <th class="col-rvr">相対ボラ(RVR)</th>
+                    <th class="col-natr">標準化ATR</th>
+                    <th class="col-price">現在値</th>
+                    <th class="col-target">目標買値</th>
                     <th class="col-prox">近接度</th>
-                    <th class="col-qty">Quantity</th>
-                    <th class="col-stop">Stop_Loss</th>
-                    <th class="col-cap">Capital</th>
-                    <th class="col-status">Status</th>
+                    <th class="col-qty">買付株数</th>
+                    <th class="col-stop">損切価格</th>
+                    <th class="col-cap">必要資金</th>
+                    <th class="col-status">トレンド</th>
                 </tr>
             </thead>
             <tbody id="screener-tbody">
@@ -544,7 +550,7 @@ window.SCREENER_DATA = {"stocks": [{"rank": 1, "ticker": "6522", "name": "アス
 
 <style>
     .screener-hero {
-        background: linear-gradient(135deg, #7c2d12 0%, #9a3412 50%, #c2410c 100%);
+        padding: 3rem 1rem;
     }
     .nav-links {
         margin-top: 1.5rem;
