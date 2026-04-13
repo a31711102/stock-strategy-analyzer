@@ -112,6 +112,65 @@
       subunitCheckbox.addEventListener('change', recalculate);
   }
 
+  // --- ソート機能 ---
+  function getCellValue(row, key) {
+    const selectorMap = {
+      'rank': '.col-rank', 'ticker': '.col-ticker', 'rvr': '.col-rvr',
+      'natr': '.col-natr', 'price': '.col-price', 'target': '.col-target',
+      'prox': '.col-prox', 'qty': '.col-qty', 'stop': '.col-stop',
+      'cap': '.col-cap', 'status': '.col-status'
+    };
+    const cell = row.querySelector(selectorMap[key]);
+    if (!cell) return 0;
+    
+    const text = cell.textContent.trim();
+    if (text === '-' || text.includes('未満株') || text === '') return -9999999;
+    
+    if (key === 'ticker' || key === 'status') return text;
+    
+    const num = parseFloat(text.replace(/[¥,% ]/g, ''));
+    return isNaN(num) ? text : num;
+  }
+
+  function handleSortClick(e) {
+    const th = e.currentTarget;
+    const table = th.closest('table');
+    const tbody = table.querySelector('tbody');
+    const key = th.getAttribute('data-sort-key');
+    if (!key) return;
+
+    const isAsc = th.classList.contains('asc');
+    
+    table.querySelectorAll('th.sortable').forEach(el => {
+      el.classList.remove('asc', 'desc');
+    });
+
+    th.classList.add(isAsc ? 'desc' : 'asc');
+    const sortDir = isAsc ? -1 : 1;
+
+    const rows = Array.from(tbody.querySelectorAll('tr[data-idx]'));
+    
+    rows.sort((a, b) => {
+      const valA = getCellValue(a, key);
+      const valB = getCellValue(b, key);
+      
+      // 不正値（-表示や未満株）は常に下部に流す
+      if (valA === -9999999 && valB !== -9999999) return 1;
+      if (valB === -9999999 && valA !== -9999999) return -1;
+      if (valA === -9999999 && valB === -9999999) return 0;
+
+      if (valA < valB) return -1 * sortDir;
+      if (valA > valB) return 1 * sortDir;
+      return 0;
+    });
+
+    rows.forEach(row => tbody.appendChild(row));
+  }
+
+  document.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', handleSortClick);
+  });
+
   // 初回計算
   recalculate();
 })();

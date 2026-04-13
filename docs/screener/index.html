@@ -83,18 +83,18 @@
         <table class="screener-table" id="screener-table-dynamic">
             <thead>
                 <tr>
-                    <th class="col-rank">#</th>
-                    <th class="col-ticker">コード</th>
+                    <th class="col-rank sortable" data-sort-key="rank"># <span class="sort-icon"></span></th>
+                    <th class="col-ticker sortable" data-sort-key="ticker">コード <span class="sort-icon"></span></th>
                     <th class="col-name">銘柄名</th>
-                    <th class="col-rvr">相対ボラ(RVR)</th>
-                    <th class="col-natr">標準化ATR</th>
-                    <th class="col-price">現在値</th>
-                    <th class="col-target">目標買値</th>
-                    <th class="col-prox">近接度</th>
-                    <th class="col-qty">買付株数</th>
-                    <th class="col-stop">損切価格</th>
-                    <th class="col-cap">必要資金</th>
-                    <th class="col-status">トレンド</th>
+                    <th class="col-rvr sortable" data-sort-key="rvr">相対ボラ(RVR) <span class="sort-icon"></span></th>
+                    <th class="col-natr sortable" data-sort-key="natr">標準化ATR <span class="sort-icon"></span></th>
+                    <th class="col-price sortable" data-sort-key="price">現在値 <span class="sort-icon"></span></th>
+                    <th class="col-target sortable" data-sort-key="target">目標買値 <span class="sort-icon"></span></th>
+                    <th class="col-prox sortable" data-sort-key="prox">近接度 <span class="sort-icon"></span></th>
+                    <th class="col-qty sortable" data-sort-key="qty">買付株数 <span class="sort-icon"></span></th>
+                    <th class="col-stop sortable" data-sort-key="stop">損切価格 <span class="sort-icon"></span></th>
+                    <th class="col-cap sortable" data-sort-key="cap">必要資金 <span class="sort-icon"></span></th>
+                    <th class="col-status sortable" data-sort-key="status">トレンド <span class="sort-icon"></span></th>
                 </tr>
             </thead>
             <tbody id="screener-tbody-dynamic">
@@ -592,18 +592,18 @@
         <table class="screener-table" id="screener-table-large_cap">
             <thead>
                 <tr>
-                    <th class="col-rank">#</th>
-                    <th class="col-ticker">コード</th>
+                    <th class="col-rank sortable" data-sort-key="rank"># <span class="sort-icon"></span></th>
+                    <th class="col-ticker sortable" data-sort-key="ticker">コード <span class="sort-icon"></span></th>
                     <th class="col-name">銘柄名</th>
-                    <th class="col-rvr">相対ボラ(RVR)</th>
-                    <th class="col-natr">標準化ATR</th>
-                    <th class="col-price">現在値</th>
-                    <th class="col-target">目標買値</th>
-                    <th class="col-prox">近接度</th>
-                    <th class="col-qty">買付株数</th>
-                    <th class="col-stop">損切価格</th>
-                    <th class="col-cap">必要資金</th>
-                    <th class="col-status">トレンド</th>
+                    <th class="col-rvr sortable" data-sort-key="rvr">相対ボラ(RVR) <span class="sort-icon"></span></th>
+                    <th class="col-natr sortable" data-sort-key="natr">標準化ATR <span class="sort-icon"></span></th>
+                    <th class="col-price sortable" data-sort-key="price">現在値 <span class="sort-icon"></span></th>
+                    <th class="col-target sortable" data-sort-key="target">目標買値 <span class="sort-icon"></span></th>
+                    <th class="col-prox sortable" data-sort-key="prox">近接度 <span class="sort-icon"></span></th>
+                    <th class="col-qty sortable" data-sort-key="qty">買付株数 <span class="sort-icon"></span></th>
+                    <th class="col-stop sortable" data-sort-key="stop">損切価格 <span class="sort-icon"></span></th>
+                    <th class="col-cap sortable" data-sort-key="cap">必要資金 <span class="sort-icon"></span></th>
+                    <th class="col-status sortable" data-sort-key="status">トレンド <span class="sort-icon"></span></th>
                 </tr>
             </thead>
             <tbody id="screener-tbody-large_cap">
@@ -1199,6 +1199,23 @@ window.SCREENER_DATA = {"stocks_dynamic": [{"rank": 1, "ticker": "6522", "name":
         top: 0;
         z-index: 1;
     }
+    .screener-table th.sortable {
+        cursor: pointer;
+        user-select: none;
+        transition: background-color 0.2s;
+    }
+    .screener-table th.sortable:hover {
+        background-color: #1e293b;
+        color: #f1f5f9;
+    }
+    .sort-icon {
+        font-size: 0.8rem;
+        margin-left: 0.25rem;
+        opacity: 0.4;
+    }
+    th.asc .sort-icon::before { content: "▲"; opacity: 1; color: #38bdf8; }
+    th.desc .sort-icon::before { content: "▼"; opacity: 1; color: #38bdf8; }
+    th:not(.asc):not(.desc) .sort-icon::before { content: "↕"; }
     .screener-table tbody tr:hover {
         background: #1e293b;
     }
