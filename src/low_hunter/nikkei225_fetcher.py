@@ -24,6 +24,8 @@ logger = logging.getLogger(__name__)
 class Nikkei225Fetcher:
     """日経225構成銘柄リストの取得"""
 
+    WIKIPEDIA_URL = "https://ja.wikipedia.org/wiki/%E6%97%A5%E7%B5%8C%E5%B9%B3%E5%9D%87%E6%A0%AA%E4%BE%A1"
+
     def __init__(self, cache_dir: str = "./data"):
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -32,22 +34,31 @@ class Nikkei225Fetcher:
     def fetch(self) -> List[Tuple[str, str]]:
         """
         日経225構成銘柄リストを取得する。
+        プライマリ → セカンダリ → キャッシュ の3段階フォールバック。
 
         Returns:
             [(銘柄コード, 銘柄名), ...] のリスト。
 
         Raises:
-            RuntimeError: プライマリ取得もキャッシュも利用不可の場合。
+            RuntimeError: 全ての取得手段が失敗した場合。
         """
-        # 1. プライマリ: 公式サイトから取得
-        stocks = self._fetch_from_web()
+        # 1. プライマリ: 日経平均プロフィル公式サイト
+        stocks = self._fetch_from_nikkei_profile()
         if stocks:
             self._save_cache(stocks)
-            logger.info(f"日経225銘柄リスト取得成功: {len(stocks)}銘柄（キャッシュ更新済み）")
+            logger.info(f"日経225銘柄リスト取得成功（公式サイト）: {len(stocks)}銘柄")
             return stocks
 
-        # 2. フォールバック: ローカルキャッシュ
-        logger.warning("公式サイトからの取得に失敗。ローカルキャッシュを使用します")
+        # 2. セカンダリ: Wikipedia日本語版
+        logger.warning("公式サイトからの取得に失敗。Wikipediaを試行します")
+        stocks = self._fetch_from_wikipedia()
+        if stocks:
+            self._save_cache(stocks)
+            logger.info(f"日経225銘柄リスト取得成功（Wikipedia）: {len(stocks)}銘柄")
+            return stocks
+
+        # 3. フォールバック: ローカルキャッシュ
+        logger.warning("Web取得に全て失敗。ローカルキャッシュを使用します")
         stocks = self._load_cache()
         if stocks:
             logger.info(f"キャッシュから日経225銘柄リスト読み込み: {len(stocks)}銘柄")
@@ -59,43 +70,73 @@ class Nikkei225Fetcher:
             f"{self.cache_path} にCSVを手動配置してください。"
         )
 
-    def _fetch_from_web(self) -> List[Tuple[str, str]]:
-        """公式サイトからHTMLをパースして銘柄リストを取得"""
+    def _get_headers(self) -> dict:
+        """User-Agent付きヘッダーを返す"""
+        return {
+            'User-Agent': (
+                'StockStrategyAnalyzer/1.0 '
+                '(https://github.com/a31711102/stock-strategy-analyzer)'
+            )
+        }
+
+    def _fetch_from_nikkei_profile(self) -> List[Tuple[str, str]]:
+        """日経平均プロフィル公式サイトからHTMLをパースして銘柄リストを取得"""
         try:
-            headers = {
-                'User-Agent': (
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-                    'AppleWebKit/537.36 (KHTML, like Gecko) '
-                    'Chrome/120.0.0.0 Safari/537.36'
-                )
-            }
             response = requests.get(
                 config.NIKKEI225_URL,
-                headers=headers,
+                headers=self._get_headers(),
                 timeout=30,
             )
             response.raise_for_status()
 
             tables = pd.read_html(response.text)
             if not tables:
-                logger.warning("HTMLからテーブルが見つかりません")
                 return []
 
-            # テーブル構造に応じてパース
-            # 日経平均プロフィルの構成銘柄テーブルを探す
             for table_df in tables:
                 stocks = self._parse_table(table_df)
                 if stocks:
                     return stocks
 
-            logger.warning("構成銘柄テーブルの特定に失敗しました")
+            logger.warning("公式サイト: 構成銘柄テーブルの特定に失敗")
             return []
 
         except requests.RequestException as e:
-            logger.warning(f"HTTP取得エラー: {e}")
+            logger.warning(f"公式サイトHTTP取得エラー: {e}")
             return []
         except Exception as e:
-            logger.warning(f"パースエラー: {e}")
+            logger.warning(f"公式サイトパースエラー: {e}")
+            return []
+
+    def _fetch_from_wikipedia(self) -> List[Tuple[str, str]]:
+        """Wikipedia日本語版から日経225構成銘柄リストを取得"""
+        try:
+            response = requests.get(
+                self.WIKIPEDIA_URL,
+                headers=self._get_headers(),
+                timeout=30,
+            )
+            response.raise_for_status()
+
+            tables = pd.read_html(response.text)
+            if not tables:
+                return []
+
+            # Wikipediaの日経平均株価ページには複数テーブルがある。
+            # 構成銘柄テーブルを探す（コード列と銘柄名列を持つテーブル）
+            for table_df in tables:
+                stocks = self._parse_table(table_df)
+                if stocks:
+                    return stocks
+
+            logger.warning("Wikipedia: 構成銘柄テーブルの特定に失敗")
+            return []
+
+        except requests.RequestException as e:
+            logger.warning(f"Wikipedia HTTP取得エラー: {e}")
+            return []
+        except Exception as e:
+            logger.warning(f"Wikipedia パースエラー: {e}")
             return []
 
     def _parse_table(self, df: pd.DataFrame) -> List[Tuple[str, str]]:
