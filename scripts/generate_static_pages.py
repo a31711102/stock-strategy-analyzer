@@ -975,115 +975,16 @@ window.SCREENER_DATA = {{ screener_json|safe }};
 
 
 def generate_low_hunter_html():
-    """黄金の指値ボード（Low Hunter）ページのテンプレート"""
-    return '''{% extends "static_base.html" %}
-
-{% block title %}黄金の指値ボード - Low Hunter{% endblock %}
-
-{% block content %}
-<section class="lh-hero">
-    <div class="nav-links">
-        <a href="{{ site_root }}" class="nav-link">トップ</a>
-        <a href="{{ site_root }}screener/" class="nav-link">ボラスクリーナー</a>
-        <a href="#" class="nav-link active">Low Hunter</a>
-    </div>
-    <h2 style="color: #fbbf24; margin: 1rem 0 0.5rem;">🏆 黄金の指値ボード</h2>
-    <p style="color: #94a3b8; font-size: 0.9rem;">
-        日経225の高ボラ・高β銘柄から、過去1年の統計で<br>
-        <strong style="color: #fbbf24;">最も勝率の高い下落率</strong>を1点だけ特定し、明日の指値を提示します。
-    </p>
-</section>
-
-<section class="lh-control">
-    <div class="risk-input-group">
-        <label for="lh-risk-input">許容損失額</label>
-        <input type="number" id="lh-risk-input" value="3" min="0.1" step="0.5" style="width:5rem; text-align:center; background:#0f172a; color:white; border:1px solid #475569; border-radius:6px; padding:0.4rem;">
-        <span id="lh-risk-display" style="color:#fbbf24; font-weight:600;">3万円</span>
-        <span style="color:#64748b; margin-left:1rem;">|</span>
-        <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; color:#94a3b8;">
-            <input type="checkbox" id="lh-unit-checkbox" style="accent-color:#f97316;">
-            100株単位
-        </label>
-    </div>
-</section>
-
-<details class="screener-info" style="margin:0.5rem 1rem;">
-    <summary style="color:#94a3b8; cursor:pointer; font-size:0.85rem;">ℹ️ 使い方・注意事項</summary>
-    <div style="padding:0.5rem 1rem; color:#94a3b8; font-size:0.8rem; line-height:1.7;">
-        <ul style="margin:0; padding-left:1.2rem;">
-            <li><strong>勝率</strong>: 過去1年間で、その下落率の指値が約定した場合に大引け決済でプラスになった確率</li>
-            <li><strong>中央値リターン</strong>: 約定した全取引のリターン（%）の中央値。外れ値に強い指標</li>
-            <li><strong>下落率</strong>: 前日終値に対する下落率。-3.0%なら「前日終値の3%下」が指値</li>
-            <li>買付株数はデフォルト<strong>1株単位</strong>。チェックボックスで100株単位に切替可能</li>
-            <li>⚠️ 本データは統計的参考値であり、投資判断は自己責任で行ってください</li>
-        </ul>
-    </div>
-</details>
-
-<section class="screener-results">
-    {% if lh_stocks %}
-    <div class="table-scroll">
-        <table class="screener-table" id="lh-table">
-            <thead>
-                <tr>
-                    <th class="col-rank sortable" data-sort-key="rank"># <span class="sort-icon"></span></th>
-                    <th class="col-ticker sortable" data-sort-key="ticker">コード <span class="sort-icon"></span></th>
-                    <th class="col-name">銘柄名</th>
-                    <th class="col-winrate sortable" data-sort-key="winrate">勝率 <span class="sort-icon"></span></th>
-                    <th class="col-median sortable" data-sort-key="median">中央値R <span class="sort-icon"></span></th>
-                    <th class="col-drop sortable" data-sort-key="drop">下落率 <span class="sort-icon"></span></th>
-                    <th class="col-target sortable" data-sort-key="target">明日の指値 <span class="sort-icon"></span></th>
-                    <th class="col-qty sortable" data-sort-key="qty">買付株数 <span class="sort-icon"></span></th>
-                    <th class="col-cap sortable" data-sort-key="cap">必要資金 <span class="sort-icon"></span></th>
-                    <th class="col-beta sortable" data-sort-key="beta">β値 <span class="sort-icon"></span></th>
-                    <th class="col-wins sortable" data-sort-key="wins">勝ち/ヒット <span class="sort-icon"></span></th>
-                </tr>
-            </thead>
-            <tbody id="lh-tbody">
-                {% for stock in lh_stocks %}
-                <tr data-idx="{{ loop.index0 }}">
-                    <td class="col-rank">{{ stock.rank }}</td>
-                    <td class="col-ticker">{{ stock.ticker }}</td>
-                    <td class="col-name">{{ stock.name }}</td>
-                    <td class="col-winrate" style="color:#fbbf24; font-weight:700;">{{ "%.1f"|format(stock.win_rate) }}%</td>
-                    <td class="col-median" style="color:{% if stock.median_return > 0 %}#34d399{% else %}#f87171{% endif %};">{{ "%.2f"|format(stock.median_return) }}%</td>
-                    <td class="col-drop" style="color:#f87171;">{{ "%.1f"|format(stock.best_drop_pct) }}%</td>
-                    <td class="col-target" style="color:#38bdf8; font-weight:600;">¥{{ stock.target_price|number_format }}</td>
-                    <td class="col-qty js-quantity">-</td>
-                    <td class="col-cap js-capital">-</td>
-                    <td class="col-beta">{{ "%.2f"|format(stock.beta) }}</td>
-                    <td class="col-wins">{{ stock.win_count }}/{{ stock.hit_count }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <div class="no-data">
-        <p>本日は優位性のある銘柄がありませんでした。</p>
-    </div>
-    {% endif %}
-</section>
-
-{% if lh_stocks %}
-<script>
-window.LOW_HUNTER_DATA = {{ lh_json|safe }};
-</script>
-<script src="{{ static_root }}static/js/low_hunter.js"></script>
-{% endif %}
-
-<style>
-    .lh-hero {
-        padding: 3rem 1rem;
-    }
-    .lh-control {
-        margin: 1.5rem 0;
-        display: flex;
-        justify-content: center;
-    }
-</style>
-{% endblock %}'''
-
+    """Low Hunterページのテンプレート"""
+    template_path = PROJECT_ROOT / 'web' / 'templates' / 'low_hunter.html'
+    if not template_path.exists():
+        return ''
+    
+    html = template_path.read_text(encoding='utf-8')
+    html = html.replace('extends "base.html"', 'extends "static_base.html"')
+    import re
+    html = re.sub(r"{{ url_for.*?\s*}}", "{{ static_root }}static/js/low_hunter.js", html)
+    return html
 
 def generate_all():
     """全ページを生成"""
@@ -1242,8 +1143,8 @@ def generate_all():
 
         render_template(env, 'static_low_hunter.html',
                         DOCS_DIR / 'low-hunter' / 'index.html',
-                        lh_stocks=lh_stocks,
-                        lh_params=lh_params,
+                        stocks=lh_stocks,
+                        parameters=lh_params,
                         lh_json=lh_json,
                         **sub_ctx)
     else:

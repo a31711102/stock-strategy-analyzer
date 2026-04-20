@@ -39,6 +39,7 @@ def run():
     """Low Hunter パイプラインを実行"""
     parser = argparse.ArgumentParser(description='Low Hunter - 黄金の指値ボード生成')
     parser.add_argument('--risk', type=float, default=3.0, help='許容リスク（万円）')
+    parser.add_argument('--limit', type=int, default=None, help='処理する銘柄数の上限（テスト用）')
     args = parser.parse_args()
 
     logger.info("=== Low Hunter 独立実行 ===")
@@ -51,6 +52,9 @@ def run():
     # 1. 日経225銘柄リスト取得
     pipeline = LowHunterPipeline()
     stock_list = pipeline.nikkei_fetcher.fetch()
+    if args.limit:
+        stock_list = stock_list[:args.limit]
+        logger.info(f"テスト実行: 対象銘柄を {args.limit} 件に制限します")
     logger.info(f"対象銘柄: {len(stock_list)}")
 
     # 2. 日経平均データ取得
@@ -70,9 +74,7 @@ def run():
         try:
             df = fetcher.fetch_stock_data(code, start_date, end_date)
             if df is not None and not df.empty and len(df) >= config.MIN_VALID_DAYS:
-                df = indicators.calculate_ma(df, 'daily')
-                df = indicators.calculate_atr(df)
-                df = indicators.calculate_volume_indicators(df)
+                df = indicators.calculate_all_indicators(df, 'daily')
                 stock_data[code] = df
         except Exception as e:
             logger.debug(f"{code} データ取得エラー: {e}")

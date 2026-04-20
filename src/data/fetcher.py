@@ -79,14 +79,14 @@ class StockDataFetcher:
         銘柄コードを正規化（yfinance用: .T形式）
         
         Args:
-            code: 銘柄コード（例: 9432, 123A）
+            code: 銘柄コード（例: 9432, 123A, ^N225）
         
         Returns:
-            正規化された銘柄コード（例: 9432.T, 123A.T）
+            正規化された銘柄コード（例: 9432.T, 123A.T, ^N225）
         """
         code = code.strip().upper()
-        # yfinance用: 東証は.T形式
-        if not code.endswith(".T") and not code.endswith(".JP"):
+        # yfinance用: 東証は.T形式（インデックス記号「^」で始まるものは除外）
+        if not code.startswith("^") and not code.endswith(".T") and not code.endswith(".JP"):
             code += ".T"
         return code
     

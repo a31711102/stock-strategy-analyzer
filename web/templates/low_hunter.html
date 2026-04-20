@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}黄金の指値ボード - Stock Strategy Analyzer{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>📉 黄金の指値ボード</h1>
+    <p class="hero-sub">過去1年間の下落パターンに基づく最適な押し目買いポイント</p>
+</section>
+
+<!-- Reactively manipulated UI -->
+<section class="lh-controls">
+    <div class="control-card">
+        <div class="control-group">
+            <label for="lh-risk-input" class="control-label">許容リスク（万円）:</label>
+            <input type="number" id="lh-risk-input" class="control-input" value="{{ parameters.default_risk_jpy / 10000 if parameters else 3 }}" step="1" min="1">
+        </div>
+        <div class="control-group">
+            <label class="checkbox-wrapper">
+                <input type="checkbox" id="lh-unit-checkbox" checked>
+                <span class="custom-checkbox"></span>
+                100株単位で計算する
+            </label>
+        </div>
+        <div class="risk-summary">
+            現在設定リスク: <span id="lh-risk-display" class="highlight-value">{{ parameters.default_risk_jpy / 10000 if parameters else 3 }}万円</span>
+        </div>
+    </div>
+</section>
+
+<section class="lh-table-section">
+    {% if stocks %}
+    <div class="table-responsive glass-table">
+        <table id="lh-table" class="data-table">
+            <thead>
+                <tr>
+                    <th class="sortable asc" data-sort-key="rank"># <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="ticker">コード <span class="sort-icon"></span></th>
+                    <th>銘柄名</th>
+                    <th class="sortable" data-sort-key="winrate">勝率 <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="median">反発率(中央値)<br><small style="font-size:0.75em; color:#94a3b8; font-weight:normal;">*デイトレ単発</small> <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="annual">年間推計R<br><small style="font-size:0.75em; color:#94a3b8; font-weight:normal;">*反発率×出現数</small> <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="drop">下落条件 <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="target">指値 <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="qty">購入株数 <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="cap">必要資金 <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="wins">実績(成功/出現) <span class="sort-icon"></span></th>
+                </tr>
+            </thead>
+            <tbody id="lh-tbody">
+                {% for stock in stocks %}
+                <tr data-idx="{{ loop.index0 }}">
+                    <td class="col-rank rank-cell">{{ stock.rank }}</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/{{ stock.ticker }}.T" target="_blank">{{ stock.ticker }}</a></td>
+                    <td class="name-cell">{{ stock.name }}</td>
+                    <td class="col-winrate highlight-ok">{% if stock.win_rate >= 70.0 %}<span class="fire-badge">🔥高勝率</span> {% endif %}{{ "%.1f"|format(stock.win_rate) }}%</td>
+                    <td class="col-median highlight-ok">+{{ "%.2f"|format(stock.median_return) }}%</td>
+                    <td class="col-annual highlight-strong">+{{ "%.1f"|format(stock.median_return * stock.hit_count) }}%</td>
+                    <td class="col-drop">{{ "%.1f"|format(stock.best_drop_pct) }}%</td>
+                    <td class="col-target limit-price">¥{{ "{:,.0f}".format(stock.target_price) }}</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">{{ stock.win_count }}回 / {{ stock.hit_count }}回</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>該当する優位性のある銘柄が見つかりませんでした。</p>
+    </div>
+    {% endif %}
+</section>
+
+<!-- JSON Data Mount for JS -->
+<script>
+    window.LOW_HUNTER_DATA = {
+        stocks: {{ stocks | tojson | safe if stocks else '[]' }}
+    };
+</script>
+
+<script src="{{ url_for('static', filename='js/low_hunter.js') }}"></script>
+
+<style>
+    /* Styling matched to existing Navy/Blue tone of the app */
+    .lh-controls { margin: 2rem 0; display: flex; justify-content: center; }
+    .control-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 12px; padding: 1.5rem 2.5rem; display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); }
+    .control-group { display: flex; align-items: center; gap: 0.8rem; }
+    .control-label { font-weight: 500; color: #e2e8f0; font-size: 0.95rem; }
+    .control-input { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(99, 102, 241, 0.4); color: white; padding: 0.5rem 1rem; border-radius: 6px; font-size: 1rem; width: 100px; transition: all 0.2s; }
+    .control-input:focus { outline: none; border-color: #818cf8; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
+    .checkbox-wrapper { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; color: #cbd5e1; }
+    .checkbox-wrapper input { display: none; }
+    .custom-checkbox { width: 18px; height: 18px; border: 2px solid #6366f1; border-radius: 4px; display: flex; justify-content: center; align-items: center; transition: all 0.2s; }
+    .checkbox-wrapper input:checked + .custom-checkbox { background: #6366f1; }
+    .checkbox-wrapper input:checked + .custom-checkbox::after { content: "✓"; color: white; font-size: 12px; font-weight: bold; }
+    .risk-summary { font-size: 0.9rem; color: #94a3b8; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 1.5rem; }
+    .highlight-value { font-size: 1.2rem; font-weight: 700; color: #818cf8; }
+    .glass-table { background: rgba(30, 41, 59, 0.4); border-radius: 12px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.05); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .data-table { width: 100%; border-collapse: collapse; text-align: right; white-space: nowrap; }
+    .data-table th, .data-table td { padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .data-table th { background: rgba(15, 23, 42, 0.6); color: #94a3b8; font-weight: 600; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; }
+    .data-table th.sortable { cursor: pointer; user-select: none; transition: background 0.2s; }
+    .data-table th.sortable:hover { background: rgba(15, 23, 42, 0.9); color: #cbd5e1; }
+    .data-table tbody tr { transition: all 0.2s; }
+    .data-table tbody tr:hover { background: rgba(71, 85, 105, 0.2); transform: translateY(-1px); }
+    .data-table th:nth-child(2), .data-table td:nth-child(2), .data-table th:nth-child(3), .data-table td:nth-child(3) { text-align: left; }
+    .rank-cell { font-weight: 700; color: #64748b; }
+    .name-cell { font-weight: 500; color: #f8fafc; }
+    .highlight-ok { color: #34d399; font-weight: 600; }
+    .limit-price { color: #f8fafc; font-weight: 600; font-family: 'Inter', monospace; }
+    .highlighted-val { color: #818cf8; font-weight: 700; font-size: 1.05rem; }
+    .text-muted { color: #64748b; font-size: 0.85rem; }
+    .sub-unit { color: #475569; font-weight: normal; }
+    .sort-icon::after { content: '↕'; opacity: 0.3; margin-left: 4px; font-size: 0.8em; }
+    .sortable.asc .sort-icon::after { content: '↑'; opacity: 1; color: #818cf8; }
+    .sortable.desc .sort-icon::after { content: '↓'; opacity: 1; color: #818cf8; }
+    .fire-badge { background: rgba(239,68,68,0.2); color:#fca5a5; padding: 2px 6px; border-radius:4px; font-size:0.85em; font-weight:700; margin-right:6px; letter-spacing:0; }
+    .highlight-strong { color: #facc15; font-weight: 700; font-size: 1.05rem; }
+    .empty-state { text-align: center; padding: 4rem; color: #64748b; background: rgba(30, 41, 59, 0.4); border-radius: 12px; border: 1px dashed rgba(148, 163, 184, 0.2); }
+</style>
+{% endblock %}

@@ -30,3 +30,8 @@ NIKKEI225_INDEX_CODE: str = "^N225"
 # === 日経225銘柄リスト取得 ===
 NIKKEI225_URL: str = "https://indexes.nikkei.co.jp/nkave/index/component?idx=nk225"
 NIKKEI225_CACHE_FILENAME: str = "nikkei225_cache.csv"
+
+# 手動配置CSV（プロジェクトルート直下に配置）
+NIKKEI225_MANUAL_CSV_FILENAME: str = "日経平均225構成銘柄.csv"
+# CSVエンコーディング検出順（手動CSVのエンコーディングに依存）
+NIKKEI225_CSV_ENCODINGS: tuple = ("cp932", "utf-8-sig", "utf-8")
