@@ -133,6 +133,7 @@ def generate_index_html():
         <a href="{{ site_root }}index.html" class="nav-link active">📊 適合度ランキング</a>
         <a href="{{ site_root }}approaching/index.html" class="nav-link">🎯 シグナル接近中</a>
         <a href="{{ site_root }}screener/index.html" class="nav-link">🔥 ボラティリティスクリーナー</a>
+        <a href="{{ site_root }}low-hunter/index.html" class="nav-link">📉 黄金の指値ボード</a>
     </div>
 </section>
 
@@ -302,6 +303,7 @@ def generate_approaching_index_html():
         <a href="{{ site_root }}index.html" class="nav-link">📊 適合度ランキング</a>
         <a href="{{ site_root }}approaching/index.html" class="nav-link active">🎯 シグナル接近中</a>
         <a href="{{ site_root }}screener/index.html" class="nav-link">🔥 ボラティリティスクリーナー</a>
+        <a href="{{ site_root }}low-hunter/index.html" class="nav-link">📉 黄金の指値ボード</a>
     </div>
 </section>
 

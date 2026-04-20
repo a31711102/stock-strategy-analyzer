@@ -98,7 +98,7 @@
     const selectorMap = {
       'rank': '.col-rank', 'ticker': '.col-ticker', 'winrate': '.col-winrate',
       'median': '.col-median', 'drop': '.col-drop', 'target': '.col-target',
-      'qty': '.col-qty', 'cap': '.col-cap', 'beta': '.col-beta',
+      'qty': '.col-qty', 'cap': '.col-cap', 'annual': '.col-annual',
       'wins': '.col-wins'
     };
     const cell = row.querySelector(selectorMap[key]);

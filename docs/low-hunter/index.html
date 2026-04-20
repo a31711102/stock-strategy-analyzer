@@ -55,12 +55,12 @@
                     <th class="sortable" data-sort-key="ticker">コード <span class="sort-icon"></span></th>
                     <th>銘柄名</th>
                     <th class="sortable" data-sort-key="winrate">勝率 <span class="sort-icon"></span></th>
-                    <th class="sortable" data-sort-key="median">反発率(中央値) <span class="sort-icon"></span></th>
-                    <th class="sortable" data-sort-key="drop">下落率 <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="median">反発率(中央値)<br><small style="font-size:0.75em; color:#94a3b8; font-weight:normal;">*デイトレ単発</small> <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="annual">年間推計R<br><small style="font-size:0.75em; color:#94a3b8; font-weight:normal;">*反発率×出現数</small> <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="drop">下落条件 <span class="sort-icon"></span></th>
                     <th class="sortable" data-sort-key="target">指値 <span class="sort-icon"></span></th>
                     <th class="sortable" data-sort-key="qty">購入株数 <span class="sort-icon"></span></th>
                     <th class="sortable" data-sort-key="cap">必要資金 <span class="sort-icon"></span></th>
-                    <th class="sortable" data-sort-key="beta">β値 <span class="sort-icon"></span></th>
                     <th class="sortable" data-sort-key="wins">実績(成功/出現) <span class="sort-icon"></span></th>
                 </tr>
             </thead>
@@ -70,13 +70,13 @@
                     <td class="col-rank rank-cell">1</td>
                     <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/5706.T" target="_blank">5706</a></td>
                     <td class="name-cell">三井金属</td>
-                    <td class="col-winrate highlight-ok">77.8%</td>
+                    <td class="col-winrate highlight-ok"><span class="fire-badge">🔥高勝率</span> 77.8%</td>
                     <td class="col-median highlight-ok">+0.86%</td>
+                    <td class="col-annual highlight-strong">+15.5%</td>
                     <td class="col-drop">-6.8%</td>
                     <td class="col-target limit-price">¥34,018</td>
                     <td class="col-qty js-quantity highlighted-val">-</td>
                     <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-beta">1.47</td>
                     <td class="col-wins text-muted">14回 / 18回</td>
                 </tr>
                 
@@ -84,13 +84,13 @@
                     <td class="col-rank rank-cell">2</td>
                     <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/7012.T" target="_blank">7012</a></td>
                     <td class="name-cell">川崎重工業</td>
-                    <td class="col-winrate highlight-ok">77.8%</td>
+                    <td class="col-winrate highlight-ok"><span class="fire-badge">🔥高勝率</span> 77.8%</td>
                     <td class="col-median highlight-ok">+0.47%</td>
+                    <td class="col-annual highlight-strong">+8.5%</td>
                     <td class="col-drop">-5.4%</td>
                     <td class="col-target limit-price">¥2,904</td>
                     <td class="col-qty js-quantity highlighted-val">-</td>
                     <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-beta">1.31</td>
                     <td class="col-wins text-muted">14回 / 18回</td>
                 </tr>
                 
@@ -98,13 +98,13 @@
                     <td class="col-rank rank-cell">3</td>
                     <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6762.T" target="_blank">6762</a></td>
                     <td class="name-cell">TDK</td>
-                    <td class="col-winrate highlight-ok">75.0%</td>
+                    <td class="col-winrate highlight-ok"><span class="fire-badge">🔥高勝率</span> 75.0%</td>
                     <td class="col-median highlight-ok">+0.44%</td>
+                    <td class="col-annual highlight-strong">+7.0%</td>
                     <td class="col-drop">-4.5%</td>
                     <td class="col-target limit-price">¥2,498</td>
                     <td class="col-qty js-quantity highlighted-val">-</td>
                     <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-beta">1.35</td>
                     <td class="col-wins text-muted">12回 / 16回</td>
                 </tr>
                 
@@ -112,13 +112,13 @@
                     <td class="col-rank rank-cell">4</td>
                     <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6723.T" target="_blank">6723</a></td>
                     <td class="name-cell">ルネサスエレクトロニクス</td>
-                    <td class="col-winrate highlight-ok">71.4%</td>
+                    <td class="col-winrate highlight-ok"><span class="fire-badge">🔥高勝率</span> 71.4%</td>
                     <td class="col-median highlight-ok">+1.84%</td>
+                    <td class="col-annual highlight-strong">+25.8%</td>
                     <td class="col-drop">-6.2%</td>
                     <td class="col-target limit-price">¥2,622</td>
                     <td class="col-qty js-quantity highlighted-val">-</td>
                     <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-beta">1.54</td>
                     <td class="col-wins text-muted">10回 / 14回</td>
                 </tr>
                 
@@ -128,11 +128,11 @@
                     <td class="name-cell">住友電気工業</td>
                     <td class="col-winrate highlight-ok">68.8%</td>
                     <td class="col-median highlight-ok">+0.56%</td>
+                    <td class="col-annual highlight-strong">+9.0%</td>
                     <td class="col-drop">-6.3%</td>
                     <td class="col-target limit-price">¥9,348</td>
                     <td class="col-qty js-quantity highlighted-val">-</td>
                     <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-beta">1.64</td>
                     <td class="col-wins text-muted">11回 / 16回</td>
                 </tr>
                 
@@ -142,11 +142,11 @@
                     <td class="name-cell">SCREENホールディングス</td>
                     <td class="col-winrate highlight-ok">68.4%</td>
                     <td class="col-median highlight-ok">+0.65%</td>
+                    <td class="col-annual highlight-strong">+12.3%</td>
                     <td class="col-drop">-4.9%</td>
                     <td class="col-target limit-price">¥9,995</td>
                     <td class="col-qty js-quantity highlighted-val">-</td>
                     <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-beta">1.35</td>
                     <td class="col-wins text-muted">13回 / 19回</td>
                 </tr>
                 
@@ -156,11 +156,11 @@
                     <td class="name-cell">アドバンテスト</td>
                     <td class="col-winrate highlight-ok">66.7%</td>
                     <td class="col-median highlight-ok">+0.59%</td>
+                    <td class="col-annual highlight-strong">+8.8%</td>
                     <td class="col-drop">-6.5%</td>
                     <td class="col-target limit-price">¥26,058</td>
                     <td class="col-qty js-quantity highlighted-val">-</td>
                     <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-beta">1.99</td>
                     <td class="col-wins text-muted">10回 / 15回</td>
                 </tr>
                 
@@ -170,11 +170,11 @@
                     <td class="name-cell">荏原製作所</td>
                     <td class="col-winrate highlight-ok">66.7%</td>
                     <td class="col-median highlight-ok">+0.37%</td>
+                    <td class="col-annual highlight-strong">+5.5%</td>
                     <td class="col-drop">-5.1%</td>
                     <td class="col-target limit-price">¥4,681</td>
                     <td class="col-qty js-quantity highlighted-val">-</td>
                     <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-beta">1.31</td>
                     <td class="col-wins text-muted">10回 / 15回</td>
                 </tr>
                 
@@ -184,11 +184,11 @@
                     <td class="name-cell">安川電機</td>
                     <td class="col-winrate highlight-ok">65.0%</td>
                     <td class="col-median highlight-ok">+0.22%</td>
+                    <td class="col-annual highlight-strong">+4.4%</td>
                     <td class="col-drop">-4.8%</td>
                     <td class="col-target limit-price">¥4,938</td>
                     <td class="col-qty js-quantity highlighted-val">-</td>
                     <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-beta">1.58</td>
                     <td class="col-wins text-muted">13回 / 20回</td>
                 </tr>
                 
@@ -198,11 +198,11 @@
                     <td class="name-cell">フジクラ</td>
                     <td class="col-winrate highlight-ok">64.0%</td>
                     <td class="col-median highlight-ok">+0.58%</td>
+                    <td class="col-annual highlight-strong">+14.5%</td>
                     <td class="col-drop">-5.7%</td>
                     <td class="col-target limit-price">¥5,434</td>
                     <td class="col-qty js-quantity highlighted-val">-</td>
                     <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-beta">1.82</td>
                     <td class="col-wins text-muted">16回 / 25回</td>
                 </tr>
                 
@@ -212,11 +212,11 @@
                     <td class="name-cell">東京エレクトロン</td>
                     <td class="col-winrate highlight-ok">60.9%</td>
                     <td class="col-median highlight-ok">+0.23%</td>
+                    <td class="col-annual highlight-strong">+5.3%</td>
                     <td class="col-drop">-4.3%</td>
                     <td class="col-target limit-price">¥42,118</td>
                     <td class="col-qty js-quantity highlighted-val">-</td>
                     <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-beta">1.39</td>
                     <td class="col-wins text-muted">14回 / 23回</td>
                 </tr>
                 
@@ -269,6 +269,8 @@
     .sort-icon::after { content: '↕'; opacity: 0.3; margin-left: 4px; font-size: 0.8em; }
     .sortable.asc .sort-icon::after { content: '↑'; opacity: 1; color: #818cf8; }
     .sortable.desc .sort-icon::after { content: '↓'; opacity: 1; color: #818cf8; }
+    .fire-badge { background: rgba(239,68,68,0.2); color:#fca5a5; padding: 2px 6px; border-radius:4px; font-size:0.85em; font-weight:700; margin-right:6px; letter-spacing:0; }
+    .highlight-strong { color: #facc15; font-weight: 700; font-size: 1.05rem; }
     .empty-state { text-align: center; padding: 4rem; color: #64748b; background: rgba(30, 41, 59, 0.4); border-radius: 12px; border: 1px dashed rgba(148, 163, 184, 0.2); }
 </style>
 
