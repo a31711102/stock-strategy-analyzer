@@ -29,6 +29,17 @@ if %ERRORLEVEL% NEQ 0 (
 )
 echo [%date% %time%] スクリーナー完了 >> "%LOG_FILE%"
 
+REM 1.5 黄金の指値ボード（Low Hunter）実行
+echo [%date% %time%] Low Hunterを実行します >> "%LOG_FILE%"
+echo [%date% %time%] Low Hunterを実行します
+%PYTHON_EXE% scripts\run_low_hunter.py >> "%LOG_FILE%" 2>&1
+
+if %ERRORLEVEL% NEQ 0 (
+    echo [%date% %time%] [WARN] Low Hunter実行でエラー（続行） >> "%LOG_FILE%"
+    echo [%date% %time%] [WARN] Low Hunter実行でエラー（続行）
+)
+echo [%date% %time%] Low Hunter完了 >> "%LOG_FILE%"
+
 REM 2. 静的HTML生成
 echo [%date% %time%] 静的HTML生成を開始します >> "%LOG_FILE%"
 echo [%date% %time%] 静的HTML生成を開始します

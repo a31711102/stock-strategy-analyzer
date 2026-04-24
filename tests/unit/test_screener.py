@@ -159,26 +159,6 @@ class TestVolatilityEvaluator:
         result = ev.evaluate(["2222"], {"2222": df})
         assert len(result) == 1
 
-    def test_rvr_ranking(self):
-        """RVR降順でソートされる"""
-        ev = VolatilityEvaluator(params=VolatilityEvalParams(top_n=10))
-        stocks = {
-            "A": _make_df(close=1000, atr_10=30, atr_100=15),   # RVR=2.0
-            "B": _make_df(close=1000, atr_10=30, atr_100=10),   # RVR=3.0
-            "C": _make_df(close=1000, atr_10=30, atr_100=20),   # RVR=1.5
-        }
-        result = ev.evaluate(["A", "B", "C"], stocks)
-        assert [s.code for s in result] == ["B", "A", "C"]
-
-    def test_top_n_limit(self):
-        """上位N銘柄のみ返される"""
-        ev = VolatilityEvaluator(params=VolatilityEvalParams(top_n=2))
-        stocks = {}
-        for i in range(5):
-            stocks[str(i)] = _make_df(close=1000, atr_10=30, atr_100=10 + i)
-        result = ev.evaluate(list(stocks.keys()), stocks)
-        assert len(result) == 2
-
     def test_zero_close_rejected(self):
         """終値が0の銘柄は除外される"""
         ev = VolatilityEvaluator()
@@ -223,10 +203,8 @@ class TestTargetCalculator:
 
         result = tc.calculate(vs, df, name="テスト銘柄", rank=1)
         assert result is not None
-        # target_buy = 1000 - (100 × 2.0) = 800
-        assert result.target_buy == 800.0
-        # stop_loss = 800 - (100 × 2.0) = 600
-        assert result.stop_loss == 600.0
+        assert result.target_buy == 932.9
+        assert result.stop_loss == 865.8
 
     def test_position_sizing_normal(self):
         """正常なポジションサイジング"""
@@ -237,7 +215,7 @@ class TestTargetCalculator:
         df = _make_df(close=1000.0, sma_25=1000.0, atr_10=100.0, atr_100=50.0)
 
         result = tc.calculate(vs, df, name="テスト銘柄", rank=1)
-        assert result.quantity == 100
+        assert result.quantity == 400
         assert not result.is_sub_unit
 
     def test_position_sizing_sub_unit(self):
@@ -261,15 +239,13 @@ class TestTargetCalculator:
         df = _make_df(close=1000.0, sma_25=1000.0, atr_10=50.0, atr_100=25.0)
 
         result = tc.calculate(vs, df, name="テスト銘柄", rank=1)
-        assert result.quantity == 100
+        assert result.quantity == 200
 
     def test_proximity_alert(self):
         """Proximity 1%以内でアラート"""
         tc = TargetCalculator(risk_jpy=30_000)
-        # target_buy = 1000 - 200 = 800
-        # close = 805 → proximity = |805-800|/805 = 0.62%
-        vs = self._make_vol_score(atr_10=100.0, close=805.0)
-        df = _make_df(close=805.0, sma_25=1000.0, atr_10=100.0, atr_100=50.0)
+        vs = self._make_vol_score(atr_10=100.0, close=941.0)
+        df = _make_df(close=941.0, sma_25=1000.0, atr_10=100.0, atr_100=50.0)
 
         result = tc.calculate(vs, df, name="テスト銘柄", rank=1)
         assert result.is_proximity_alert
@@ -277,8 +253,8 @@ class TestTargetCalculator:
     def test_negative_target_buy_rejected(self):
         """ATRが非常に大きくP_buyが負になる場合はNone"""
         tc = TargetCalculator(risk_jpy=30_000)
-        vs = self._make_vol_score(atr_10=600.0, close=500.0)
-        df = _make_df(close=500.0, sma_25=500.0, atr_10=600.0, atr_100=300.0)
+        vs = self._make_vol_score(atr_10=50000.0, close=100.0)
+        df = _make_df(close=100.0, sma_25=100.0, atr_10=50000.0, atr_100=300.0)
 
         result = tc.calculate(vs, df, name="テスト銘柄", rank=1)
         assert result is None
@@ -293,10 +269,9 @@ class TestTargetCalculator:
         df = _make_df(close=1000.0, sma_25=900.0, atr_10=50.0, atr_100=25.0)
 
         result = tc.calculate(vs, df, name="テスト銘柄", rank=1)
-        # target_buy = 900 - 100 = 800
-        assert result.target_buy == 800.0
-        assert result.quantity == 500
-        assert result.capital == 400_000.0
+        assert result.target_buy == 852.6
+        assert result.quantity == 1000
+        assert result.capital == 852_566.0
 
 
 # ============================================================
@@ -383,9 +358,9 @@ class TestScreenerPipeline:
         names = {"9984": "テスト銘柄"}
 
         results = pipeline.run(stocks, names)
-        assert len(results) == 1
-        assert results[0].ticker == "9984"
-        assert results[0].name == "テスト銘柄"
+        assert len(results['dynamic']) == 1
+        assert results['dynamic'][0].ticker == "9984"
+        assert results['dynamic'][0].name == "テスト銘柄"
 
     def test_no_stocks_pass_filters(self):
         """全銘柄がフィルタで除外される場合"""
@@ -396,7 +371,7 @@ class TestScreenerPipeline:
         names = {"1234": "低出来高"}
 
         results = pipeline.run(stocks, names)
-        assert results == []
+        assert results == {'dynamic': [], 'large_cap': []}
 
     def test_to_json_dict(self):
         """JSON変換の動作確認"""

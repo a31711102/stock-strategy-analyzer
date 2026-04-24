@@ -128,11 +128,17 @@ class TargetCalculator:
         atr_10 = vol_score.atr_10
         current_price = vol_score.close
 
+        # --- 動的ケルトナー乗数計算 ---
+        # 基準となるNorm_ATR（%）を2.0とし、案A（平方根型の減衰）を適用
+        base_norm_atr = 2.0
+        safe_norm_atr = max(vol_score.norm_atr, 0.1)  # 0除算防止
+        dynamic_k = self.keltner_multiplier * math.sqrt(base_norm_atr / safe_norm_atr)
+
         # --- ケルトナーロジック ---
-        # 買い指値: MA_25 - (ATR_10 × K)
-        target_buy = sma_25 - (atr_10 * self.keltner_multiplier)
-        # 損切り: P_buy - (ATR_10 × K)
-        stop_loss = target_buy - (atr_10 * self.keltner_multiplier)
+        # 買い指値: MA_25 - (ATR_10 × 動的乗数)
+        target_buy = sma_25 - (atr_10 * dynamic_k)
+        # 損切り: P_buy - (ATR_10 × 動的乗数)
+        stop_loss = target_buy - (atr_10 * dynamic_k)
 
         # 負の価格は無効
         if target_buy <= 0 or stop_loss <= 0:
@@ -143,7 +149,7 @@ class TargetCalculator:
         is_alert = proximity_pct <= self.proximity_alert_pct
 
         # --- ポジションサイジング ---
-        quantity, is_sub_unit = self._calculate_quantity(atr_10)
+        quantity, is_sub_unit = self._calculate_quantity(atr_10, dynamic_k)
         capital = target_buy * quantity if quantity > 0 else 0.0
 
         # --- 出来高 ---
@@ -170,21 +176,22 @@ class TargetCalculator:
             status=status,
         )
 
-    def _calculate_quantity(self, atr_10: float) -> tuple[int, bool]:
+    def _calculate_quantity(self, atr_10: float, dynamic_k: float) -> tuple[int, bool]:
         """
         等リスク配分による株数算出
 
         Qty = floor(risk_jpy / (R_unit × UNIT_SHARES)) × UNIT_SHARES
-        R_unit = ATR_10 × KELTNER_MULTIPLIER（1株あたりリスク額）
+        R_unit = ATR_10 × 動的乗数（1株あたりリスク額）
 
         Args:
             atr_10: ATR(10) の値
+            dynamic_k: 動的ケルトナー乗数
 
         Returns:
             (株数, 未満株フラグ) のタプル。
             株数が100未満の場合は (0, True) を返す。
         """
-        r_unit = atr_10 * self.keltner_multiplier
+        r_unit = atr_10 * dynamic_k
         if r_unit <= 0:
             return (0, True)
 
