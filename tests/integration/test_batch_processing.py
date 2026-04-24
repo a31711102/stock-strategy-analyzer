@@ -35,21 +35,21 @@ class TestProcessSingleStock:
 
     def test_cached_stock_returns_result(self, processor):
         """キャッシュ済み銘柄（9432: NTT）で結果が返ること"""
-        code, result, approaching = processor.process_single_stock('9432', 'NTT')
+        code, result, approaching, atr_info = processor.process_single_stock('9432', 'NTT')
         assert code == '9432'
         assert result is not None
         assert 'strategies' in result
 
     def test_result_has_all_strategies(self, processor):
         """結果に全8戦略のスコアが含まれること"""
-        code, result, approaching = processor.process_single_stock('9432', 'NTT')
+        code, result, approaching, atr_info = processor.process_single_stock('9432', 'NTT')
         assert result is not None
         strategies = result['strategies']
         assert len(strategies) == 8
 
     def test_result_structure(self, processor):
         """各戦略の結果に必要なフィールドがあること"""
-        code, result, approaching = processor.process_single_stock('9432', 'NTT')
+        code, result, approaching, atr_info = processor.process_single_stock('9432', 'NTT')
         assert result is not None
 
         expected_fields = [
@@ -66,7 +66,7 @@ class TestProcessSingleStock:
 
     def test_score_range(self, processor):
         """適合度スコアが 0〜100 の範囲にあること"""
-        code, result, approaching = processor.process_single_stock('9432', 'NTT')
+        code, result, approaching, atr_info = processor.process_single_stock('9432', 'NTT')
         assert result is not None
 
         for strategy_name, data in result['strategies'].items():
@@ -77,12 +77,12 @@ class TestProcessSingleStock:
 
     def test_invalid_code_returns_none(self, processor):
         """存在しない銘柄コードでは result=None"""
-        code, result, approaching = processor.process_single_stock('0000', '存在しない銘柄')
+        code, result, approaching, atr_info = processor.process_single_stock('0000', '存在しない銘柄')
         assert result is None
 
     def test_approaching_signals_structure(self, processor):
         """接近シグナルが返る場合はその構造が正しいこと"""
-        code, result, approaching = processor.process_single_stock('9432', 'NTT')
+        code, result, approaching, atr_info = processor.process_single_stock('9432', 'NTT')
         # approaching は None の場合もある（シグナル接近なし）
         if approaching is not None:
             for strategy_name, signal in approaching.items():

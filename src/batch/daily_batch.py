@@ -31,6 +31,8 @@ from src.analysis.signal_detector import SignalDetector
 from src.analysis.volatility import VolatilityAnalyzer
 from src.batch.result_cache import ResultCache
 from src.screener.pipeline import ScreenerPipeline
+from src.low_hunter.pipeline import LowHunterPipeline
+from src.low_hunter import config as lh_config
 
 # ログ設定
 def setup_logging(log_dir: str = "./logs"):
@@ -136,7 +138,10 @@ class DailyBatchProcessor:
         # ボラティリティ乖離スクリーナー
         self.screener_pipeline = ScreenerPipeline()
         
-        # スクリーナー用: 指標計算済みDataFrameの一時保持
+        # Low Hunter（黄金の指値ボード）
+        self.low_hunter_pipeline = LowHunterPipeline()
+        
+        # スクリーナー/Low Hunter用: 指標計算済みDataFrameの一時保持
         self._stock_indicators: dict[str, pd.DataFrame] = {}
         self._stock_names: dict[str, str] = {}
         
@@ -445,6 +450,9 @@ class DailyBatchProcessor:
         # ========== ボラティリティ乖離スクリーナー ==========
         self._run_volatility_screener()
         
+        # ========== Low Hunter（黄金の指値ボード） ==========
+        self._run_low_hunter()
+        
         # メタデータ更新
         elapsed_time = time.time() - start_time
         stats = {
@@ -582,8 +590,48 @@ class DailyBatchProcessor:
         except Exception as e:
             self.logger.error(f"スクリーナー実行エラー: {e}", exc_info=True)
 
+    def _run_low_hunter(self):
+        """
+        Low Hunter（黄金の指値ボード）を実行
+
+        バッチ処理のメインループで収集した指標計算済みDataFrameを流用し、
+        日経平均データのみ追加取得してバックテストを実行する。
+        """
+        if not self._stock_indicators:
+            self.logger.warning("Low Hunter: 指標データがありません（スキップ）")
+            return
+
+        self.logger.info(
+            f"=== Low Hunter 実行: "
+            f"{len(self._stock_indicators)}銘柄のデータを使用 ==="
+        )
+
+        try:
+            # 日経平均データを取得（β値算出に必要）
+            market_df = self.fetcher.fetch_stock_data(lh_config.NIKKEI225_INDEX_CODE)
+            if market_df is None or market_df.empty:
+                self.logger.error("Low Hunter: 日経平均データの取得に失敗（スキップ）")
+                return
+
+            # パイプライン実行
+            results = self.low_hunter_pipeline.run(
+                self._stock_indicators, market_df
+            )
+
+            # 結果保存
+            result_dict = self.low_hunter_pipeline.to_json_dict(results)
+            self.result_cache.save_low_hunter_result(result_dict)
+
+            if results:
+                self.logger.info(f"Low Hunter 完了: {len(results)}銘柄を出力")
+            else:
+                self.logger.info("Low Hunter 完了: 該当銘柄なし")
+
+        except Exception as e:
+            self.logger.error(f"Low Hunter 実行エラー: {e}", exc_info=True)
+
         finally:
-            # メモリ解放
+            # 全サブパイプライン完了後にメモリ解放
             self._stock_indicators.clear()
             self._stock_names.clear()
 
