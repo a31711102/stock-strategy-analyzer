@@ -11,7 +11,7 @@ DROP_RANGE_MAX: float = -7.0      # 検証する最大下落率（%）
 DROP_STEP: float = 0.1            # 刻み幅（%）
 
 # === フィルタ閾値 ===
-MIN_WIN_RATE: float = 60.0        # 最低勝率（%）
+MIN_WIN_RATE: float = 50.0        # 最低勝率（%）
 MIN_WIN_COUNT: int = 10           # 最低勝ち回数
 MIN_BETA: float = 1.2             # 最低β値
 MIN_NORM_ATR: float = 2.0         # 最低Norm_ATR（%）
