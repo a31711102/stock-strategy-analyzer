@@ -33,6 +33,8 @@ from src.batch.result_cache import ResultCache
 from src.screener.pipeline import ScreenerPipeline
 from src.low_hunter.pipeline import LowHunterPipeline
 from src.low_hunter import config as lh_config
+from src.high_hunter.pipeline import HighHunterPipeline
+from src.high_hunter import config as hh_config
 
 # ログ設定
 def setup_logging(log_dir: str = "./logs"):
@@ -140,6 +142,9 @@ class DailyBatchProcessor:
         
         # Low Hunter（黄金の指値ボード）
         self.low_hunter_pipeline = LowHunterPipeline()
+
+        # High Hunter（黄金の空売りボード）
+        self.high_hunter_pipeline = HighHunterPipeline()
         
         # スクリーナー/Low Hunter用: 指標計算済みDataFrameの一時保持
         self._stock_indicators: dict[str, pd.DataFrame] = {}
@@ -452,6 +457,9 @@ class DailyBatchProcessor:
         
         # ========== Low Hunter（黄金の指値ボード） ==========
         self._run_low_hunter()
+
+        # ========== High Hunter（黄金の空売りボード） ==========
+        self._run_high_hunter()
         
         # メタデータ更新
         elapsed_time = time.time() - start_time
@@ -629,6 +637,43 @@ class DailyBatchProcessor:
 
         except Exception as e:
             self.logger.error(f"Low Hunter 実行エラー: {e}", exc_info=True)
+
+    def _run_high_hunter(self):
+        """
+        High Hunter（黄金の空売りボード）を実行
+
+        バッチ処理のメインループで収集した指標計算済みDataFrameを流用し、
+        日経平均データのみ追加取得してバックテストを実行する。
+        """
+        if not self._stock_indicators:
+            self.logger.warning("High Hunter: 指標データがありません（スキップ）")
+            return
+
+        self.logger.info(
+            f"=== High Hunter 実行: "
+            f"{len(self._stock_indicators)}銘柄のデータを使用 ==="
+        )
+
+        try:
+            market_df = self.fetcher.fetch_stock_data(hh_config.NIKKEI225_INDEX_CODE)
+            if market_df is None or market_df.empty:
+                self.logger.error("High Hunter: 日経平均データの取得に失敗（スキップ）")
+                return
+
+            results = self.high_hunter_pipeline.run(
+                self._stock_indicators, market_df
+            )
+
+            result_dict = self.high_hunter_pipeline.to_json_dict(results)
+            self.result_cache.save_high_hunter_result(result_dict)
+
+            if results:
+                self.logger.info(f"High Hunter 完了: {len(results)}銘柄を出力")
+            else:
+                self.logger.info("High Hunter 完了: 該当銘柄なし")
+
+        except Exception as e:
+            self.logger.error(f"High Hunter 実行エラー: {e}", exc_info=True)
 
         finally:
             # 全サブパイプライン完了後にメモリ解放

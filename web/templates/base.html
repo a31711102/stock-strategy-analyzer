@@ -17,6 +17,8 @@
                 📊 Stock Strategy Analyzer
             </a>
             <nav class="nav">
+                <a href="{{ url_for('low_hunter') }}" class="nav-link">📉 Low Hunter</a>
+                <a href="{{ url_for('high_hunter') }}" class="nav-link">📈 High Hunter</a>
                 <form class="search-form" action="{{ url_for('stock_detail', code='') }}" method="GET" id="search-form">
                     <input type="text" class="search-input" placeholder="銘柄コードで検索（例: 1332）" id="stock-search"
                         autocomplete="off">

@@ -162,15 +162,33 @@ def register_routes(app: Flask):
     def low_hunter():
         """黄金の指値ボード（Low Hunter）"""
         start = time.time()
-        
+
         lh_data = cache.load_low_hunter_result()
         stocks = lh_data.get('stocks', []) if lh_data else []
         parameters = lh_data.get('parameters', {}) if lh_data else {}
-        
+
         elapsed = time.time() - start
-        
+
         return render_template(
             'low_hunter.html',
+            stocks=stocks,
+            parameters=parameters,
+            elapsed=f"{elapsed:.3f}"
+        )
+
+    @app.route('/high_hunter')
+    def high_hunter():
+        """黄金の空売りボード（High Hunter）"""
+        start = time.time()
+
+        hh_data = cache.load_high_hunter_result()
+        stocks = hh_data.get('stocks', []) if hh_data else []
+        parameters = hh_data.get('parameters', {}) if hh_data else {}
+
+        elapsed = time.time() - start
+
+        return render_template(
+            'high_hunter.html',
             stocks=stocks,
             parameters=parameters,
             elapsed=f"{elapsed:.3f}"
