@@ -1,0 +1,154 @@
+/**
+ * Project-high-hunter: 黄金の空売りボード リアクティブ計算
+ *
+ * 許容損失額 X（万円）を変更すると、
+ * Quantity（売建株数）と Capital（必要証拠金目安）を即座に再計算する。
+ *
+ * リスク定義:
+ *   R_unit = target_price - prev_close  （空売り後に逆行した場合の損失幅）
+ *   Qty = floor(riskJpy / (R_unit * unitSize)) * unitSize
+ */
+
+(function () {
+  'use strict';
+
+  const riskInput = document.getElementById('hh-risk-input');
+  const riskDisplay = document.getElementById('hh-risk-display');
+  const unitCheckbox = document.getElementById('hh-unit-checkbox');
+
+  if (!riskInput || !window.HIGH_HUNTER_DATA) {
+    return;
+  }
+
+  const stocks = window.HIGH_HUNTER_DATA.stocks || [];
+
+  function calculatePosition(riskJpy, prevClose, targetPrice) {
+    const isUnit100 = unitCheckbox ? unitCheckbox.checked : false;
+    const unitSize = isUnit100 ? 100 : 1;
+
+    const rUnit = targetPrice - prevClose;
+    if (rUnit <= 0) {
+      return { quantity: 0, capital: 0 };
+    }
+
+    const quantity = Math.floor(riskJpy / (rUnit * unitSize)) * unitSize;
+    if (quantity < unitSize) {
+      return { quantity: 0, capital: 0 };
+    }
+
+    // 証拠金目安: 信用売りは約30%が目安（表示のみ、参考値）
+    const capital = targetPrice * quantity * 0.3;
+    return { quantity, capital };
+  }
+
+  function recalculate() {
+    const riskMan = parseFloat(riskInput.value);
+    if (isNaN(riskMan) || riskMan <= 0) {
+      return;
+    }
+
+    const riskJpy = riskMan * 10000;
+
+    if (riskDisplay) {
+      riskDisplay.textContent = riskMan.toLocaleString('ja-JP', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+      }) + '万円';
+    }
+
+    const rows = document.querySelectorAll('#hh-tbody tr[data-idx]');
+    rows.forEach(function (row) {
+      const idx = parseInt(row.getAttribute('data-idx'), 10);
+      const stock = stocks[idx];
+      if (!stock) return;
+
+      const result = calculatePosition(riskJpy, stock.prev_close, stock.target_price);
+
+      const qtyCell = row.querySelector('.js-quantity');
+      const capCell = row.querySelector('.js-capital');
+
+      if (qtyCell) {
+        if (result.quantity === 0) {
+          qtyCell.textContent = '-';
+          qtyCell.classList.add('sub-unit');
+        } else {
+          qtyCell.textContent = result.quantity.toLocaleString();
+          qtyCell.classList.remove('sub-unit');
+        }
+      }
+
+      if (capCell) {
+        if (result.quantity === 0) {
+          capCell.textContent = '-';
+        } else {
+          capCell.textContent = '¥' + Math.round(result.capital).toLocaleString();
+        }
+      }
+    });
+  }
+
+  // --- ソート機能 ---
+  function getCellValue(row, key) {
+    const selectorMap = {
+      'rank': '.col-rank', 'ticker': '.col-ticker', 'winrate': '.col-winrate',
+      'median': '.col-median', 'rise': '.col-rise', 'target': '.col-target',
+      'qty': '.col-qty', 'cap': '.col-cap', 'annual': '.col-annual',
+      'wins': '.col-wins'
+    };
+    const cell = row.querySelector(selectorMap[key]);
+    if (!cell) return 0;
+
+    const text = cell.textContent.trim();
+    if (text === '-' || text === '') return -9999999;
+
+    if (key === 'ticker') return text;
+
+    const num = parseFloat(text.replace(/[¥,%/\s回+]/g, ''));
+    return isNaN(num) ? text : num;
+  }
+
+  function handleSortClick(e) {
+    const th = e.currentTarget;
+    const table = th.closest('table');
+    const tbody = table.querySelector('tbody');
+    const key = th.getAttribute('data-sort-key');
+    if (!key) return;
+
+    const isAsc = th.classList.contains('asc');
+
+    table.querySelectorAll('th.sortable').forEach(el => {
+      el.classList.remove('asc', 'desc');
+    });
+
+    th.classList.add(isAsc ? 'desc' : 'asc');
+    const sortDir = isAsc ? -1 : 1;
+
+    const rows = Array.from(tbody.querySelectorAll('tr[data-idx]'));
+
+    rows.sort((a, b) => {
+      const valA = getCellValue(a, key);
+      const valB = getCellValue(b, key);
+
+      if (valA === -9999999 && valB !== -9999999) return 1;
+      if (valB === -9999999 && valA !== -9999999) return -1;
+      if (valA === -9999999 && valB === -9999999) return 0;
+
+      if (valA < valB) return -1 * sortDir;
+      if (valA > valB) return 1 * sortDir;
+      return 0;
+    });
+
+    rows.forEach(row => tbody.appendChild(row));
+  }
+
+  document.querySelectorAll('#hh-table th.sortable').forEach(th => {
+    th.addEventListener('click', handleSortClick);
+  });
+
+  riskInput.addEventListener('input', recalculate);
+  if (unitCheckbox) {
+    unitCheckbox.addEventListener('change', recalculate);
+  }
+
+  recalculate();
+})();

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>黄金の空売りボード - Stock Strategy Analyzer</title>
+    <link rel="stylesheet" href="../static/css/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <a href="../index.html" class="logo">
+                📊 Stock Strategy Analyzer
+            </a>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            
+<section class="hero">
+    <h1>📈 黄金の空売りボード</h1>
+    <p class="hero-sub">過去1年間の上昇パターンに基づく最適な押し目売りポイント（空売り）</p>
+</section>
+
+<!-- Controls -->
+<section class="hh-controls">
+    <div class="control-card">
+        <div class="control-group">
+            <label for="hh-risk-input" class="control-label">許容リスク（万円）:</label>
+            <input type="number" id="hh-risk-input" class="control-input" value="3.0" step="1" min="1">
+        </div>
+        <div class="control-group">
+            <label class="checkbox-wrapper">
+                <input type="checkbox" id="hh-unit-checkbox" checked>
+                <span class="custom-checkbox"></span>
+                100株単位で計算する
+            </label>
+        </div>
+        <div class="risk-summary">
+            現在設定リスク: <span id="hh-risk-display" class="highlight-value">3.0万円</span>
+        </div>
+    </div>
+</section>
+
+<section class="hh-table-section">
+    
+    <div class="table-responsive glass-table">
+        <table id="hh-table" class="data-table">
+            <thead>
+                <tr>
+                    <th class="sortable asc" data-sort-key="rank"># <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="ticker">コード <span class="sort-icon"></span></th>
+                    <th>銘柄名</th>
+                    <th class="sortable" data-sort-key="winrate">勝率 <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="median">下落率(中央値)<br><small style="font-size:0.75em; color:#94a3b8; font-weight:normal;">*デイトレ単発</small> <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="annual">年間推計R<br><small style="font-size:0.75em; color:#94a3b8; font-weight:normal;">*下落率×出現数</small> <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="rise">上昇条件 <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="target">空売り指値 <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="qty">売建株数 <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="cap">必要証拠金目安 <span class="sort-icon"></span></th>
+                    <th class="sortable" data-sort-key="wins">実績(成功/出現) <span class="sort-icon"></span></th>
+                </tr>
+            </thead>
+            <tbody id="hh-tbody">
+                
+                <tr data-idx="0">
+                    <td class="col-rank rank-cell">1</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/8035.T" target="_blank">8035</a></td>
+                    <td class="name-cell">東京エレクトロン</td>
+                    <td class="col-winrate highlight-ok">68.4%</td>
+                    <td class="col-median highlight-ok">+0.27%</td>
+                    <td class="col-annual highlight-strong">+5.1%</td>
+                    <td class="col-rise">+5.6%</td>
+                    <td class="col-target short-price">¥49,738</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">13回 / 19回</td>
+                </tr>
+                
+                <tr data-idx="1">
+                    <td class="col-rank rank-cell">2</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6504.T" target="_blank">6504</a></td>
+                    <td class="name-cell">富士電機</td>
+                    <td class="col-winrate highlight-ok">63.6%</td>
+                    <td class="col-median highlight-ok">+0.07%</td>
+                    <td class="col-annual highlight-strong">+1.5%</td>
+                    <td class="col-rise">+5.0%</td>
+                    <td class="col-target short-price">¥13,692</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">14回 / 22回</td>
+                </tr>
+                
+                <tr data-idx="2">
+                    <td class="col-rank rank-cell">3</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/3436.T" target="_blank">3436</a></td>
+                    <td class="name-cell">SUMCO</td>
+                    <td class="col-winrate highlight-ok">63.0%</td>
+                    <td class="col-median highlight-ok">+0.35%</td>
+                    <td class="col-annual highlight-strong">+9.4%</td>
+                    <td class="col-rise">+6.5%</td>
+                    <td class="col-target short-price">¥2,534</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">17回 / 27回</td>
+                </tr>
+                
+                <tr data-idx="3">
+                    <td class="col-rank rank-cell">4</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6526.T" target="_blank">6526</a></td>
+                    <td class="name-cell">ソシオネクスト</td>
+                    <td class="col-winrate highlight-ok">58.3%</td>
+                    <td class="col-median highlight-ok">+0.24%</td>
+                    <td class="col-annual highlight-strong">+14.4%</td>
+                    <td class="col-rise">+4.0%</td>
+                    <td class="col-target short-price">¥2,184</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">35回 / 60回</td>
+                </tr>
+                
+                <tr data-idx="4">
+                    <td class="col-rank rank-cell">5</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/5631.T" target="_blank">5631</a></td>
+                    <td class="name-cell">日本製鋼所</td>
+                    <td class="col-winrate highlight-ok">57.6%</td>
+                    <td class="col-median highlight-ok">+0.34%</td>
+                    <td class="col-annual highlight-strong">+22.4%</td>
+                    <td class="col-rise">+3.6%</td>
+                    <td class="col-target short-price">¥10,099</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">38回 / 66回</td>
+                </tr>
+                
+                <tr data-idx="5">
+                    <td class="col-rank rank-cell">6</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/5803.T" target="_blank">5803</a></td>
+                    <td class="name-cell">フジクラ</td>
+                    <td class="col-winrate highlight-ok">57.6%</td>
+                    <td class="col-median highlight-ok">+0.10%</td>
+                    <td class="col-annual highlight-strong">+3.3%</td>
+                    <td class="col-rise">+6.6%</td>
+                    <td class="col-target short-price">¥6,766</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">19回 / 33回</td>
+                </tr>
+                
+                <tr data-idx="6">
+                    <td class="col-rank rank-cell">7</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6762.T" target="_blank">6762</a></td>
+                    <td class="name-cell">TDK</td>
+                    <td class="col-winrate highlight-ok">55.9%</td>
+                    <td class="col-median highlight-ok">+0.18%</td>
+                    <td class="col-annual highlight-strong">+6.1%</td>
+                    <td class="col-rise">+4.4%</td>
+                    <td class="col-target short-price">¥2,838</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">19回 / 34回</td>
+                </tr>
+                
+                <tr data-idx="7">
+                    <td class="col-rank rank-cell">8</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/5706.T" target="_blank">5706</a></td>
+                    <td class="name-cell">三井金属</td>
+                    <td class="col-winrate highlight-ok">55.8%</td>
+                    <td class="col-median highlight-ok">+0.21%</td>
+                    <td class="col-annual highlight-strong">+10.9%</td>
+                    <td class="col-rise">+6.0%</td>
+                    <td class="col-target short-price">¥41,658</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">29回 / 52回</td>
+                </tr>
+                
+                <tr data-idx="8">
+                    <td class="col-rank rank-cell">9</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6723.T" target="_blank">6723</a></td>
+                    <td class="name-cell">ルネサスエレクトロニクス</td>
+                    <td class="col-winrate highlight-ok">55.6%</td>
+                    <td class="col-median highlight-ok">+0.22%</td>
+                    <td class="col-annual highlight-strong">+13.9%</td>
+                    <td class="col-rise">+4.1%</td>
+                    <td class="col-target short-price">¥3,252</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">35回 / 63回</td>
+                </tr>
+                
+                <tr data-idx="9">
+                    <td class="col-rank rank-cell">10</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/7735.T" target="_blank">7735</a></td>
+                    <td class="name-cell">SCREENホールディングス</td>
+                    <td class="col-winrate highlight-ok">55.6%</td>
+                    <td class="col-median highlight-ok">+0.08%</td>
+                    <td class="col-annual highlight-strong">+1.4%</td>
+                    <td class="col-rise">+6.4%</td>
+                    <td class="col-target short-price">¥11,496</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">10回 / 18回</td>
+                </tr>
+                
+                <tr data-idx="10">
+                    <td class="col-rank rank-cell">11</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6976.T" target="_blank">6976</a></td>
+                    <td class="name-cell">太陽誘電</td>
+                    <td class="col-winrate highlight-ok">55.0%</td>
+                    <td class="col-median highlight-ok">+0.15%</td>
+                    <td class="col-annual highlight-strong">+3.0%</td>
+                    <td class="col-rise">+7.0%</td>
+                    <td class="col-target short-price">¥7,001</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">11回 / 20回</td>
+                </tr>
+                
+                <tr data-idx="11">
+                    <td class="col-rank rank-cell">12</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6981.T" target="_blank">6981</a></td>
+                    <td class="name-cell">村田製作所</td>
+                    <td class="col-winrate highlight-ok">54.8%</td>
+                    <td class="col-median highlight-ok">+0.06%</td>
+                    <td class="col-annual highlight-strong">+1.9%</td>
+                    <td class="col-rise">+4.2%</td>
+                    <td class="col-target short-price">¥5,122</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">17回 / 31回</td>
+                </tr>
+                
+                <tr data-idx="12">
+                    <td class="col-rank rank-cell">13</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6501.T" target="_blank">6501</a></td>
+                    <td class="name-cell">日立製作所</td>
+                    <td class="col-winrate highlight-ok">54.5%</td>
+                    <td class="col-median highlight-ok">+0.10%</td>
+                    <td class="col-annual highlight-strong">+2.2%</td>
+                    <td class="col-rise">+4.8%</td>
+                    <td class="col-target short-price">¥5,613</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">12回 / 22回</td>
+                </tr>
+                
+                <tr data-idx="13">
+                    <td class="col-rank rank-cell">14</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6954.T" target="_blank">6954</a></td>
+                    <td class="name-cell">ファナック</td>
+                    <td class="col-winrate highlight-ok">53.5%</td>
+                    <td class="col-median highlight-ok">+0.09%</td>
+                    <td class="col-annual highlight-strong">+5.2%</td>
+                    <td class="col-rise">+3.2%</td>
+                    <td class="col-target short-price">¥7,488</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">31回 / 58回</td>
+                </tr>
+                
+                <tr data-idx="14">
+                    <td class="col-rank rank-cell">15</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/5713.T" target="_blank">5713</a></td>
+                    <td class="name-cell">住友金属鉱山</td>
+                    <td class="col-winrate highlight-ok">53.3%</td>
+                    <td class="col-median highlight-ok">+0.12%</td>
+                    <td class="col-annual highlight-strong">+3.6%</td>
+                    <td class="col-rise">+5.6%</td>
+                    <td class="col-target short-price">¥10,136</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">16回 / 30回</td>
+                </tr>
+                
+                <tr data-idx="15">
+                    <td class="col-rank rank-cell">16</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/9984.T" target="_blank">9984</a></td>
+                    <td class="name-cell">ソフトバンクグループ</td>
+                    <td class="col-winrate highlight-ok">52.6%</td>
+                    <td class="col-median highlight-ok">+0.07%</td>
+                    <td class="col-annual highlight-strong">+2.7%</td>
+                    <td class="col-rise">+6.5%</td>
+                    <td class="col-target short-price">¥6,224</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">20回 / 38回</td>
+                </tr>
+                
+                <tr data-idx="16">
+                    <td class="col-rank rank-cell">17</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/5802.T" target="_blank">5802</a></td>
+                    <td class="name-cell">住友電気工業</td>
+                    <td class="col-winrate highlight-ok">52.0%</td>
+                    <td class="col-median highlight-ok">+0.07%</td>
+                    <td class="col-annual highlight-strong">+1.8%</td>
+                    <td class="col-rise">+7.0%</td>
+                    <td class="col-target short-price">¥10,764</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">13回 / 25回</td>
+                </tr>
+                
+                <tr data-idx="17">
+                    <td class="col-rank rank-cell">18</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6506.T" target="_blank">6506</a></td>
+                    <td class="name-cell">安川電機</td>
+                    <td class="col-winrate highlight-ok">50.8%</td>
+                    <td class="col-median highlight-ok">+0.04%</td>
+                    <td class="col-annual highlight-strong">+2.7%</td>
+                    <td class="col-rise">+3.2%</td>
+                    <td class="col-target short-price">¥5,637</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">34回 / 67回</td>
+                </tr>
+                
+                <tr data-idx="18">
+                    <td class="col-rank rank-cell">19</td>
+                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/4004.T" target="_blank">4004</a></td>
+                    <td class="name-cell">レゾナック・ホールディングス</td>
+                    <td class="col-winrate highlight-ok">50.0%</td>
+                    <td class="col-median highlight-ok">+0.02%</td>
+                    <td class="col-annual highlight-strong">+0.4%</td>
+                    <td class="col-rise">+7.0%</td>
+                    <td class="col-target short-price">¥14,969</td>
+                    <td class="col-qty js-quantity highlighted-val">-</td>
+                    <td class="col-cap js-capital highlighted-val">-</td>
+                    <td class="col-wins text-muted">11回 / 22回</td>
+                </tr>
+                
+            </tbody>
+        </table>
+    </div>
+    
+</section>
+
+<!-- JSON Data Mount for JS -->
+<script>
+    window.HIGH_HUNTER_DATA = {
+        stocks: [{"atr_10": 1504.0, "best_rise_pct": 5.6, "beta": 1.38, "hit_count": 19, "median_return": 0.27, "name": "\u6771\u4eac\u30a8\u30ec\u30af\u30c8\u30ed\u30f3", "norm_atr": 3.19, "prev_close": 47100.0, "rank": 1, "target_price": 49737.6, "ticker": "8035", "win_count": 13, "win_rate": 68.4}, {"atr_10": 545.0, "best_rise_pct": 5.0, "beta": 1.27, "hit_count": 22, "median_return": 0.07, "name": "\u5bcc\u58eb\u96fb\u6a5f", "norm_atr": 4.18, "prev_close": 13040.0, "rank": 2, "target_price": 13692.0, "ticker": "6504", "win_count": 14, "win_rate": 63.6}, {"atr_10": 135.8, "best_rise_pct": 6.5, "beta": 1.5, "hit_count": 27, "median_return": 0.35, "name": "SUMCO", "norm_atr": 5.71, "prev_close": 2379.5, "rank": 3, "target_price": 2534.2, "ticker": "3436", "win_count": 17, "win_rate": 63.0}, {"atr_10": 88.8, "best_rise_pct": 4.0, "beta": 1.44, "hit_count": 60, "median_return": 0.24, "name": "\u30bd\u30b7\u30aa\u30cd\u30af\u30b9\u30c8", "norm_atr": 4.23, "prev_close": 2100.0, "rank": 4, "target_price": 2184.0, "ticker": "6526", "win_count": 35, "win_rate": 58.3}, {"atr_10": 377.8, "best_rise_pct": 3.6, "beta": 1.31, "hit_count": 66, "median_return": 0.34, "name": "\u65e5\u672c\u88fd\u92fc\u6240", "norm_atr": 3.88, "prev_close": 9748.0, "rank": 5, "target_price": 10098.9, "ticker": "5631", "win_count": 38, "win_rate": 57.6}, {"atr_10": 342.4, "best_rise_pct": 6.6, "beta": 1.83, "hit_count": 33, "median_return": 0.1, "name": "\u30d5\u30b8\u30af\u30e9", "norm_atr": 5.39, "prev_close": 6347.0, "rank": 6, "target_price": 6765.9, "ticker": "5803", "win_count": 19, "win_rate": 57.6}, {"atr_10": 132.1, "best_rise_pct": 4.4, "beta": 1.35, "hit_count": 34, "median_return": 0.18, "name": "TDK", "norm_atr": 4.86, "prev_close": 2718.0, "rank": 7, "target_price": 2837.6, "ticker": "6762", "win_count": 19, "win_rate": 55.9}, {"atr_10": 2418.0, "best_rise_pct": 6.0, "beta": 1.48, "hit_count": 52, "median_return": 0.21, "name": "\u4e09\u4e95\u91d1\u5c5e", "norm_atr": 6.15, "prev_close": 39300.0, "rank": 8, "target_price": 41658.0, "ticker": "5706", "win_count": 29, "win_rate": 55.8}, {"atr_10": 199.8, "best_rise_pct": 4.1, "beta": 1.52, "hit_count": 63, "median_return": 0.22, "name": "\u30eb\u30cd\u30b5\u30b9\u30a8\u30ec\u30af\u30c8\u30ed\u30cb\u30af\u30b9", "norm_atr": 6.39, "prev_close": 3124.0, "rank": 9, "target_price": 3252.1, "ticker": "6723", "win_count": 35, "win_rate": 55.6}, {"atr_10": 499.5, "best_rise_pct": 6.4, "beta": 1.35, "hit_count": 18, "median_return": 0.08, "name": "SCREEN\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9", "norm_atr": 4.62, "prev_close": 10805.0, "rank": 10, "target_price": 11496.5, "ticker": "7735", "win_count": 10, "win_rate": 55.6}, {"atr_10": 338.6, "best_rise_pct": 7.0, "beta": 1.48, "hit_count": 20, "median_return": 0.15, "name": "\u592a\u967d\u8a98\u96fb", "norm_atr": 5.17, "prev_close": 6543.0, "rank": 11, "target_price": 7001.0, "ticker": "6976", "win_count": 11, "win_rate": 55.0}, {"atr_10": 211.4, "best_rise_pct": 4.2, "beta": 1.29, "hit_count": 31, "median_return": 0.06, "name": "\u6751\u7530\u88fd\u4f5c\u6240", "norm_atr": 4.3, "prev_close": 4916.0, "rank": 12, "target_price": 5122.5, "ticker": "6981", "win_count": 17, "win_rate": 54.8}, {"atr_10": 159.7, "best_rise_pct": 4.8, "beta": 1.31, "hit_count": 22, "median_return": 0.1, "name": "\u65e5\u7acb\u88fd\u4f5c\u6240", "norm_atr": 2.98, "prev_close": 5356.0, "rank": 13, "target_price": 5613.1, "ticker": "6501", "win_count": 12, "win_rate": 54.5}, {"atr_10": 277.0, "best_rise_pct": 3.2, "beta": 1.31, "hit_count": 58, "median_return": 0.09, "name": "\u30d5\u30a1\u30ca\u30c3\u30af", "norm_atr": 3.82, "prev_close": 7256.0, "rank": 14, "target_price": 7488.2, "ticker": "6954", "win_count": 31, "win_rate": 53.5}, {"atr_10": 505.2, "best_rise_pct": 5.6, "beta": 1.32, "hit_count": 30, "median_return": 0.12, "name": "\u4f4f\u53cb\u91d1\u5c5e\u9271\u5c71", "norm_atr": 5.26, "prev_close": 9599.0, "rank": 15, "target_price": 10136.5, "ticker": "5713", "win_count": 16, "win_rate": 53.3}, {"atr_10": 374.8, "best_rise_pct": 6.5, "beta": 1.81, "hit_count": 38, "median_return": 0.07, "name": "\u30bd\u30d5\u30c8\u30d0\u30f3\u30af\u30b0\u30eb\u30fc\u30d7", "norm_atr": 6.41, "prev_close": 5844.0, "rank": 16, "target_price": 6223.9, "ticker": "9984", "win_count": 20, "win_rate": 52.6}, {"atr_10": 529.3, "best_rise_pct": 7.0, "beta": 1.64, "hit_count": 25, "median_return": 0.07, "name": "\u4f4f\u53cb\u96fb\u6c17\u5de5\u696d", "norm_atr": 5.26, "prev_close": 10060.0, "rank": 17, "target_price": 10764.2, "ticker": "5802", "win_count": 13, "win_rate": 52.0}, {"atr_10": 229.8, "best_rise_pct": 3.2, "beta": 1.59, "hit_count": 67, "median_return": 0.04, "name": "\u5b89\u5ddd\u96fb\u6a5f", "norm_atr": 4.21, "prev_close": 5462.0, "rank": 18, "target_price": 5636.8, "ticker": "6506", "win_count": 34, "win_rate": 50.8}, {"atr_10": 748.0, "best_rise_pct": 7.0, "beta": 1.38, "hit_count": 22, "median_return": 0.02, "name": "\u30ec\u30be\u30ca\u30c3\u30af\u30fb\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9", "norm_atr": 5.35, "prev_close": 13990.0, "rank": 19, "target_price": 14969.3, "ticker": "4004", "win_count": 11, "win_rate": 50.0}]
+    };
+</script>
+
+<script src="../static/js/high_hunter.js"></script>
+
+<style>
+    .hh-controls { margin: 2rem 0; display: flex; justify-content: center; }
+    .control-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 12px; padding: 1.5rem 2.5rem; display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); }
+    .control-group { display: flex; align-items: center; gap: 0.8rem; }
+    .control-label { font-weight: 500; color: #e2e8f0; font-size: 0.95rem; }
+    .control-input { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(239, 68, 68, 0.4); color: white; padding: 0.5rem 1rem; border-radius: 6px; font-size: 1rem; width: 100px; transition: all 0.2s; }
+    .control-input:focus { outline: none; border-color: #f87171; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2); }
+    .checkbox-wrapper { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; color: #cbd5e1; }
+    .checkbox-wrapper input { display: none; }
+    .custom-checkbox { width: 18px; height: 18px; border: 2px solid #ef4444; border-radius: 4px; display: flex; justify-content: center; align-items: center; transition: all 0.2s; }
+    .checkbox-wrapper input:checked + .custom-checkbox { background: #ef4444; }
+    .checkbox-wrapper input:checked + .custom-checkbox::after { content: "✓"; color: white; font-size: 12px; font-weight: bold; }
+    .risk-summary { font-size: 0.9rem; color: #94a3b8; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 1.5rem; }
+    .highlight-value { font-size: 1.2rem; font-weight: 700; color: #f87171; }
+    .glass-table { background: rgba(30, 41, 59, 0.4); border-radius: 12px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.05); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .data-table { width: 100%; border-collapse: collapse; text-align: right; white-space: nowrap; }
+    .data-table th, .data-table td { padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .data-table th { background: rgba(15, 23, 42, 0.6); color: #94a3b8; font-weight: 600; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; }
+    .data-table th.sortable { cursor: pointer; user-select: none; transition: background 0.2s; }
+    .data-table th.sortable:hover { background: rgba(15, 23, 42, 0.9); color: #cbd5e1; }
+    .data-table tbody tr { transition: all 0.2s; }
+    .data-table tbody tr:hover { background: rgba(71, 85, 105, 0.2); transform: translateY(-1px); }
+    .data-table th:nth-child(2), .data-table td:nth-child(2), .data-table th:nth-child(3), .data-table td:nth-child(3) { text-align: left; }
+    .rank-cell { font-weight: 700; color: #64748b; }
+    .name-cell { font-weight: 500; color: #f8fafc; }
+    .highlight-ok { color: #34d399; font-weight: 600; }
+    .short-price { color: #f87171; font-weight: 600; font-family: 'Inter', monospace; }
+    .highlighted-val { color: #f87171; font-weight: 700; font-size: 1.05rem; }
+    .text-muted { color: #64748b; font-size: 0.85rem; }
+    .sub-unit { color: #475569; font-weight: normal; }
+    .sort-icon::after { content: '↕'; opacity: 0.3; margin-left: 4px; font-size: 0.8em; }
+    .sortable.asc .sort-icon::after { content: '↑'; opacity: 1; color: #f87171; }
+    .sortable.desc .sort-icon::after { content: '↓'; opacity: 1; color: #f87171; }
+    .fire-badge { background: rgba(239,68,68,0.2); color:#fca5a5; padding: 2px 6px; border-radius:4px; font-size:0.85em; font-weight:700; margin-right:6px; letter-spacing:0; }
+    .highlight-strong { color: #facc15; font-weight: 700; font-size: 1.05rem; }
+    .empty-state { text-align: center; padding: 4rem; color: #64748b; background: rgba(30, 41, 59, 0.4); border-radius: 12px; border: 1px dashed rgba(148, 163, 184, 0.2); }
+</style>
+
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>最終更新: 2026-04-28</p>
+        </div>
+    </footer>
+</body>
+</html>

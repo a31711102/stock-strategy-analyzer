@@ -134,6 +134,7 @@ def generate_index_html():
         <a href="{{ site_root }}approaching/index.html" class="nav-link">🎯 シグナル接近中</a>
         <a href="{{ site_root }}screener/index.html" class="nav-link">🔥 ボラティリティスクリーナー</a>
         <a href="{{ site_root }}low-hunter/index.html" class="nav-link">📉 黄金の指値ボード</a>
+        <a href="{{ site_root }}high-hunter/index.html" class="nav-link">📈 黄金の空売りボード</a>
     </div>
 </section>
 
@@ -304,6 +305,7 @@ def generate_approaching_index_html():
         <a href="{{ site_root }}approaching/index.html" class="nav-link active">🎯 シグナル接近中</a>
         <a href="{{ site_root }}screener/index.html" class="nav-link">🔥 ボラティリティスクリーナー</a>
         <a href="{{ site_root }}low-hunter/index.html" class="nav-link">📉 黄金の指値ボード</a>
+        <a href="{{ site_root }}high-hunter/index.html" class="nav-link">📈 黄金の空売りボード</a>
     </div>
 </section>
 
@@ -694,6 +696,8 @@ def generate_screener_html():
         <a href="{{ site_root }}index.html" class="nav-link">📊 適合度ランキング</a>
         <a href="{{ site_root }}approaching/index.html" class="nav-link">🎯 シグナル接近中</a>
         <a href="{{ site_root }}screener/index.html" class="nav-link active">🔥 ボラティリティスクリーナー</a>
+        <a href="{{ site_root }}low-hunter/index.html" class="nav-link">📉 黄金の指値ボード</a>
+        <a href="{{ site_root }}high-hunter/index.html" class="nav-link">📈 黄金の空売りボード</a>
     </div>
 </section>
 
@@ -981,11 +985,24 @@ def generate_low_hunter_html():
     template_path = PROJECT_ROOT / 'web' / 'templates' / 'low_hunter.html'
     if not template_path.exists():
         return ''
-    
+
     html = template_path.read_text(encoding='utf-8')
     html = html.replace('extends "base.html"', 'extends "static_base.html"')
     import re
     html = re.sub(r"{{ url_for.*?\s*}}", "{{ static_root }}static/js/low_hunter.js", html)
+    return html
+
+
+def generate_high_hunter_html():
+    """High Hunterページのテンプレート"""
+    template_path = PROJECT_ROOT / 'web' / 'templates' / 'high_hunter.html'
+    if not template_path.exists():
+        return ''
+
+    html = template_path.read_text(encoding='utf-8')
+    html = html.replace('extends "base.html"', 'extends "static_base.html"')
+    import re
+    html = re.sub(r"{{ url_for.*?\s*}}", "{{ static_root }}static/js/high_hunter.js", html)
     return html
 
 def generate_all():
@@ -1036,6 +1053,9 @@ def generate_all():
     )
     (static_templates_dir / 'static_low_hunter.html').write_text(
         generate_low_hunter_html(), encoding='utf-8'
+    )
+    (static_templates_dir / 'static_high_hunter.html').write_text(
+        generate_high_hunter_html(), encoding='utf-8'
     )
 
     env = Environment(
@@ -1134,7 +1154,7 @@ def generate_all():
         logger.info('  スクリーナーデータなし（スキップ）')
 
     # === 6. Low Hunter（黄金の指値ボード）ページ ===
-    logger.info('\n[6/6] Low Hunter ページ生成')
+    logger.info('\n[6/7] Low Hunter ページ生成')
     lh_data = cache.load_low_hunter_result()
     if lh_data and lh_data.get('stocks'):
         lh_stocks = lh_data['stocks']
@@ -1151,6 +1171,25 @@ def generate_all():
                         **sub_ctx)
     else:
         logger.info('  Low Hunterデータなし（スキップ）')
+
+    # === 7. High Hunter（黄金の空売りボード）ページ ===
+    logger.info('\n[7/7] High Hunter ページ生成')
+    hh_data = cache.load_high_hunter_result()
+    if hh_data and hh_data.get('stocks'):
+        hh_stocks = hh_data['stocks']
+        hh_params = hh_data.get('parameters', {})
+        hh_json = json.dumps({
+            'stocks': hh_stocks,
+        }, ensure_ascii=False)
+
+        render_template(env, 'static_high_hunter.html',
+                        DOCS_DIR / 'high-hunter' / 'index.html',
+                        stocks=hh_stocks,
+                        parameters=hh_params,
+                        hh_json=hh_json,
+                        **sub_ctx)
+    else:
+        logger.info('  High Hunterデータなし（スキップ）')
 
     # 一時テンプレートを削除
     shutil.rmtree(static_templates_dir)
