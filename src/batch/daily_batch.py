@@ -86,16 +86,19 @@ class LowPriorityExecutor:
     
     def throttle_if_needed(self, check_interval: float = 0.5):
         """
-        CPU/メモリ使用率が高い場合はスリープ
+        CPU使用率が高い場合はスリープ
+        
+        Note:
+            メモリ制限は _stock_indicators の蓄積により RSS が単調増加し
+            永遠に break できない無限ループを引き起こすため除去済み。
         
         Args:
             check_interval: チェック間隔（秒）
         """
         while True:
             cpu_percent = psutil.cpu_percent(interval=0.1)
-            memory_mb = psutil.Process().memory_info().rss / (1024 * 1024)
             
-            if cpu_percent < self.max_cpu and memory_mb < self.max_memory:
+            if cpu_percent < self.max_cpu:
                 break
             
             time.sleep(check_interval)
@@ -146,8 +149,11 @@ class DailyBatchProcessor:
         # High Hunter（黄金の空売りボード）
         self.high_hunter_pipeline = HighHunterPipeline()
         
-        # スクリーナー/Low Hunter用: 指標計算済みDataFrameの一時保持
-        self._stock_indicators: dict[str, pd.DataFrame] = {}
+        # スクリーナー/Hunter用: 最終行サマリの一時保持
+        # Note: DataFrame全体を保持すると ~4.2GB のメモリを消費し
+        #       throttle_if_needed のメモリ制限でデッドロックを引き起こすため、
+        #       最終行のスカラー値のみ保持する（~1.5MB）
+        self._stock_summaries: dict[str, dict] = {}
         self._stock_names: dict[str, str] = {}
         
         # ATR閾値（バッチ開始時に前回値を読み込み、なければ初回2パス処理）
@@ -234,8 +240,8 @@ class DailyBatchProcessor:
             # テクニカル指標計算
             df = self.indicator_calc.calculate_all_indicators(df)
             
-            # スクリーナー用にDataFrameを保持（バッチ完了後に一括処理）
-            self._stock_indicators[str(code)] = df
+            # スクリーナー/Hunter用にサマリを保持（バッチ完了後に一括処理）
+            self._stock_summaries[str(code)] = self._extract_summary(df)
             self._stock_names[str(code)] = name
             
             # 全戦略で適合度計算
@@ -562,26 +568,116 @@ class DailyBatchProcessor:
         
         return approaching_results
 
+    def _extract_summary(self, df: pd.DataFrame) -> dict:
+        """
+        指標計算済みDataFrameから、スクリーナー/Hunter用のサマリを抽出する。
+        
+        DataFrame全体（~1.12MB/銘柄）ではなく、最終行のスカラー値のみ保持
+        することでメモリ消費を99%以上削減する。
+        
+        Args:
+            df: 指標計算済みDataFrame
+            
+        Returns:
+            最終行の必要カラム値を格納した辞書（~400bytes/銘柄）
+        """
+        last = df.iloc[-1]
+        return {
+            'Close': last.get('Close'),
+            'Volume_MA_5': last.get('Volume_MA_5'),
+            'Volume_MA_10': last.get('Volume_MA_10'),
+            'Volume_MA_100': last.get('Volume_MA_100'),
+            'ATR_10': last.get('ATR_10'),
+            'ATR_100': last.get('ATR_100'),
+            'SMA_5': last.get('SMA_5'),
+            'SMA_25': last.get('SMA_25'),
+            'SMA_75': last.get('SMA_75'),
+        }
+
+    def _rebuild_indicator_dataframes(
+        self, summaries: dict[str, dict]
+    ) -> dict[str, pd.DataFrame]:
+        """
+        サマリ辞書から、スクリーナーパイプライン互換の
+        {コード: 1行DataFrame} 辞書を再構築する。
+        
+        スクリーナーは各銘柄の最終行（df.iloc[-1]）しか参照しないため、
+        1行DataFrameで十分にインターフェースを満たせる。
+        
+        Args:
+            summaries: _stock_summaries 辞書
+            
+        Returns:
+            {銘柄コード: 1行DataFrame} の辞書
+        """
+        result = {}
+        for code, summary in summaries.items():
+            result[code] = pd.DataFrame([summary])
+        return result
+
+    def _rebuild_stock_data_from_cache(
+        self, codes: list[str]
+    ) -> dict[str, pd.DataFrame]:
+        """
+        DataCacheから指定銘柄のDataFrameを再取得し、指標計算を行う。
+        
+        Hunter用: バックテスト・β値計算には時系列データが必要なため、
+        ユニバース候補銘柄（日経225, ~225銘柄）のみを再取得する。
+        
+        Args:
+            codes: 再取得対象の銘柄コードリスト
+            
+        Returns:
+            {銘柄コード: 指標計算済みDataFrame} の辞書
+        """
+        stock_data = {}
+        indicator_logger = logging.getLogger('src.indicators.technical')
+        original_level = indicator_logger.level
+
+        try:
+            # 指標再計算のログを抑制（呼び出し元で進捗を表示するため）
+            indicator_logger.setLevel(logging.WARNING)
+
+            for i, code in enumerate(codes):
+                df = self.data_cache.get(str(code))
+                if df is not None and len(df) >= 200:
+                    df = self.indicator_calc.calculate_all_indicators(df)
+                    stock_data[str(code)] = df
+
+                if (i + 1) % 50 == 0 or (i + 1) == len(codes):
+                    self.logger.info(
+                        f"  DataCache再取得・指標計算中: {i + 1}/{len(codes)}銘柄完了"
+                    )
+        finally:
+            indicator_logger.setLevel(original_level)
+
+        return stock_data
+
     def _run_volatility_screener(self):
         """
         ボラティリティ乖離スクリーナーを実行
 
-        バッチ処理のメインループで収集した指標計算済みDataFrameを流用し、
+        サマリ辞書から1行DataFrameを再構築し、
         三段階フィルタリング → 結果保存を実行する。
         追加のデータ取得は行わない。
         """
-        if not self._stock_indicators:
+        if not self._stock_summaries:
             self.logger.warning("スクリーナー: 指標データがありません（スキップ）")
             return
 
         self.logger.info(
             f"=== ボラティリティスクリーナー実行: "
-            f"{len(self._stock_indicators)}銘柄のデータを使用 ==="
+            f"{len(self._stock_summaries)}銘柄のデータを使用 ==="
         )
 
         try:
+            # サマリからスクリーナー互換の1行DataFrameを再構築
+            stock_indicators = self._rebuild_indicator_dataframes(
+                self._stock_summaries
+            )
+
             results = self.screener_pipeline.run(
-                self._stock_indicators, self._stock_names
+                stock_indicators, self._stock_names
             )
 
             result_dict = self.screener_pipeline.to_json_dict(results)
@@ -602,19 +698,26 @@ class DailyBatchProcessor:
         """
         Low Hunter（黄金の指値ボード）を実行
 
-        バッチ処理のメインループで収集した指標計算済みDataFrameを流用し、
-        日経平均データのみ追加取得してバックテストを実行する。
+        日経225銘柄のDataFrameをDataCacheから再取得し、
+        日経平均データと合わせてバックテストを実行する。
         """
-        if not self._stock_indicators:
+        if not self._stock_summaries:
             self.logger.warning("Low Hunter: 指標データがありません（スキップ）")
             return
 
-        self.logger.info(
-            f"=== Low Hunter 実行: "
-            f"{len(self._stock_indicators)}銘柄のデータを使用 ==="
-        )
+        self.logger.info("=== Low Hunter 実行 ===")
 
         try:
+            # 日経225銘柄コード取得
+            stock_list = self.low_hunter_pipeline.nikkei_fetcher.fetch()
+            hunter_codes = [code for code, _ in stock_list]
+
+            # 日経225銘柄のみDataCacheから再取得（~225銘柄、数秒）
+            stock_data = self._rebuild_stock_data_from_cache(hunter_codes)
+            self.logger.info(
+                f"Low Hunter: DataCacheから{len(stock_data)}/{len(hunter_codes)}銘柄を再取得"
+            )
+
             # 日経平均データを取得（β値算出に必要）
             market_df = self.fetcher.fetch_stock_data(lh_config.NIKKEI225_INDEX_CODE)
             if market_df is None or market_df.empty:
@@ -623,7 +726,7 @@ class DailyBatchProcessor:
 
             # パイプライン実行
             results = self.low_hunter_pipeline.run(
-                self._stock_indicators, market_df
+                stock_data, market_df
             )
 
             # 結果保存
@@ -642,26 +745,33 @@ class DailyBatchProcessor:
         """
         High Hunter（黄金の空売りボード）を実行
 
-        バッチ処理のメインループで収集した指標計算済みDataFrameを流用し、
-        日経平均データのみ追加取得してバックテストを実行する。
+        日経225銘柄のDataFrameをDataCacheから再取得し、
+        日経平均データと合わせてバックテストを実行する。
         """
-        if not self._stock_indicators:
+        if not self._stock_summaries:
             self.logger.warning("High Hunter: 指標データがありません（スキップ）")
             return
 
-        self.logger.info(
-            f"=== High Hunter 実行: "
-            f"{len(self._stock_indicators)}銘柄のデータを使用 ==="
-        )
+        self.logger.info("=== High Hunter 実行 ===")
 
         try:
+            # 日経225銘柄コード取得
+            stock_list = self.high_hunter_pipeline.nikkei_fetcher.fetch()
+            hunter_codes = [code for code, _ in stock_list]
+
+            # 日経225銘柄のみDataCacheから再取得（~225銘柄、数秒）
+            stock_data = self._rebuild_stock_data_from_cache(hunter_codes)
+            self.logger.info(
+                f"High Hunter: DataCacheから{len(stock_data)}/{len(hunter_codes)}銘柄を再取得"
+            )
+
             market_df = self.fetcher.fetch_stock_data(hh_config.NIKKEI225_INDEX_CODE)
             if market_df is None or market_df.empty:
                 self.logger.error("High Hunter: 日経平均データの取得に失敗（スキップ）")
                 return
 
             results = self.high_hunter_pipeline.run(
-                self._stock_indicators, market_df
+                stock_data, market_df
             )
 
             result_dict = self.high_hunter_pipeline.to_json_dict(results)
@@ -676,8 +786,8 @@ class DailyBatchProcessor:
             self.logger.error(f"High Hunter 実行エラー: {e}", exc_info=True)
 
         finally:
-            # 全サブパイプライン完了後にメモリ解放
-            self._stock_indicators.clear()
+            # 全サブパイプライン完了後にサマリ解放
+            self._stock_summaries.clear()
             self._stock_names.clear()
 
 
