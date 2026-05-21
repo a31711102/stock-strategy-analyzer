@@ -26,12 +26,15 @@ class DataCache:
         self.ttl_hours = ttl_hours
         self.cache_dir.mkdir(parents=True, exist_ok=True)
     
-    def get(self, code: str) -> Optional[pd.DataFrame]:
+    def get(self, code: str, ignore_ttl: bool = False) -> Optional[pd.DataFrame]:
         """
         キャッシュからデータを取得
         
         Args:
             code: 銘柄コード
+            ignore_ttl: Trueの場合、TTLチェックをスキップする。
+                        同一バッチ内でのデータ再利用など、
+                        キャッシュの鮮度が保証されている場合に使用。
         
         Returns:
             キャッシュされたデータ、存在しないか期限切れの場合はNone
@@ -43,7 +46,7 @@ class DataCache:
             return None
         
         # 有効期限チェック
-        if not self._is_valid(cache_file):
+        if not ignore_ttl and not self._is_valid(cache_file):
             logger.debug(f"Cache expired for {code}")
             return None
         

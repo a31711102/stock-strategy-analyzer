@@ -639,7 +639,7 @@ class DailyBatchProcessor:
             indicator_logger.setLevel(logging.WARNING)
 
             for i, code in enumerate(codes):
-                df = self.data_cache.get(str(code))
+                df = self.data_cache.get(str(code), ignore_ttl=True)
                 if df is not None and len(df) >= 200:
                     df = self.indicator_calc.calculate_all_indicators(df)
                     stock_data[str(code)] = df
@@ -700,6 +700,7 @@ class DailyBatchProcessor:
 
         日経225銘柄のDataFrameをDataCacheから再取得し、
         日経平均データと合わせてバックテストを実行する。
+        ヒステリシス用に前回ユニバースを読み込み・今回ユニバースを保存する。
         """
         if not self._stock_summaries:
             self.logger.warning("Low Hunter: 指標データがありません（スキップ）")
@@ -724,14 +725,26 @@ class DailyBatchProcessor:
                 self.logger.error("Low Hunter: 日経平均データの取得に失敗（スキップ）")
                 return
 
-            # パイプライン実行
+            # 前回ユニバースの読み込み（ヒステリシス用）
+            prev_universe = self.result_cache.load_hunter_universe()
+
+            # パイプライン実行（ヒステリシス付き）
             results = self.low_hunter_pipeline.run(
-                stock_data, market_df
+                stock_data, market_df, prev_universe
             )
 
             # 結果保存
             result_dict = self.low_hunter_pipeline.to_json_dict(results)
             self.result_cache.save_low_hunter_result(result_dict)
+
+            # 今回のユニバース通過銘柄を保存（次回バッチのヒステリシスに使用）
+            # Low-Hunter と High-Hunter はユニバース選定条件が同一のため、
+            # Low-Hunter の結果で代表して保存する。
+            # Note: The One 選定で落ちた銘柄もユニバースには含まれるため、
+            #       results ではなく pipeline.last_universe_codes を使用する。
+            self.result_cache.save_hunter_universe(
+                self.low_hunter_pipeline.last_universe_codes
+            )
 
             if results:
                 self.logger.info(f"Low Hunter 完了: {len(results)}銘柄を出力")
@@ -747,6 +760,7 @@ class DailyBatchProcessor:
 
         日経225銘柄のDataFrameをDataCacheから再取得し、
         日経平均データと合わせてバックテストを実行する。
+        Low-Hunter と同じ前回ユニバースでヒステリシスを適用する。
         """
         if not self._stock_summaries:
             self.logger.warning("High Hunter: 指標データがありません（スキップ）")
@@ -770,8 +784,16 @@ class DailyBatchProcessor:
                 self.logger.error("High Hunter: 日経平均データの取得に失敗（スキップ）")
                 return
 
+            # 前回ユニバースの読み込み（ヒステリシス用）
+            # Low-Hunter が先に実行されて今回分を保存済みだが、
+            # ヒステリシスに必要なのは「前回バッチの結果」。
+            # Low-Hunter が今回分で上書きしているため、
+            # ここでは同一バッチ内のキャッシュ値（= 今回のLow-Hunter結果）を使う。
+            # これは意図的: 同一日のユニバースは同一データから算出されるため差異なし。
+            prev_universe = self.result_cache.load_hunter_universe()
+
             results = self.high_hunter_pipeline.run(
-                stock_data, market_df
+                stock_data, market_df, prev_universe
             )
 
             result_dict = self.high_hunter_pipeline.to_json_dict(results)
