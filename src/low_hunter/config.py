@@ -17,6 +17,12 @@ MIN_BETA: float = 1.2             # 最低β値
 MIN_NORM_ATR: float = 2.0         # 最低Norm_ATR（%）
 MIN_AVG_VOLUME: int = 1_000_000   # 最低5日平均出来高（株）
 
+# === ヒステリシス（継続採用の緩和閾値） ===
+# 一度ユニバースに入った銘柄は、以下の緩和閾値を下回るまでリストに残す。
+# 目的: 閾値境界上の銘柄が日々出入りする「チャタリング」の防止。
+HYSTERESIS_MIN_AVG_VOLUME: int = 800_000      # 継続: 5日平均出来高下限（新規: 1,000,000）
+HYSTERESIS_MIN_NORM_ATR: float = 1.8           # 継続: Norm_ATR下限（新規: 2.0%）
+
 # === 有効データ ===
 MIN_VALID_DAYS: int = 100         # β算出・BT実行に必要な最低営業日数
 

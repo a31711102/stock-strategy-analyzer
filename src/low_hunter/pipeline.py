@@ -42,11 +42,13 @@ class LowHunterPipeline:
         self.universe_filter = UniverseFilter()
         self.backtest_engine = BacktestEngine()
         self.selector = TheOneSelector()
+        self.last_universe_codes: List[str] = []  # 直近run()のユニバース通過コード
 
     def run(
         self,
         stock_data: Dict[str, pd.DataFrame],
         market_df: pd.DataFrame,
+        previous_universe_codes: Optional[set] = None,
     ) -> List[TheOneResult]:
         """
         パイプラインを実行する。
@@ -54,6 +56,8 @@ class LowHunterPipeline:
         Args:
             stock_data: {銘柄コード: 指標計算済みDataFrame} の辞書
             market_df: 日経平均のOHLCVデータ
+            previous_universe_codes: 前回ユニバースの銘柄コード集合（ヒステリシス用）。
+                None の場合は全銘柄に厳格閾値を適用。
 
         Returns:
             TheOneResult のリスト（Win_Rate 降順、ランク付き）。
@@ -62,11 +66,17 @@ class LowHunterPipeline:
         stock_list = self.nikkei_fetcher.fetch()
         logger.info(f"日経225銘柄リスト: {len(stock_list)}銘柄")
 
-        # 2. ユニバース選定
-        universe = self.universe_filter.apply(stock_list, stock_data, market_df)
+        # 2. ユニバース選定（ヒステリシス対応）
+        universe = self.universe_filter.apply(
+            stock_list, stock_data, market_df, previous_universe_codes
+        )
         if not universe:
             logger.warning("ユニバースに該当する銘柄がありません")
+            self.last_universe_codes = []
             return []
+
+        # ユニバース通過銘柄コードを保持（ヒステリシス用に呼び出し元が参照）
+        self.last_universe_codes = [s.code for s in universe]
 
         # 3. 悉皆バックテスト + "The One" 選定
         the_ones: List[TheOneResult] = []

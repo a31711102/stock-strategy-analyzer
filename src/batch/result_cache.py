@@ -395,6 +395,67 @@ class ResultCache:
             strategies.append(path.stem)
         return sorted(strategies)
 
+    # ==================== Hunter ユニバース ====================
+
+    def save_hunter_universe(self, codes: List[str]) -> bool:
+        """
+        Hunter ユニバース（前回通過銘柄）を保存
+
+        ヒステリシス制御に使用。次回バッチ実行時に読み込み、
+        前回ユニバースに含まれる銘柄には緩和閾値を適用する。
+
+        Low-Hunter と High-Hunter はユニバース選定条件が同一のため、
+        1ファイルで共有する。
+
+        Args:
+            codes: ユニバース通過した銘柄コードのリスト
+
+        Returns:
+            成功時True
+        """
+        universe_path = self.cache_dir / "hunter_universe.json"
+
+        data = {
+            'updated_at': datetime.now().isoformat(),
+            'count': len(codes),
+            'codes': codes,
+        }
+
+        try:
+            with open(universe_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            logger.info(f"Hunterユニバース保存完了: {len(codes)}銘柄")
+            return True
+        except Exception as e:
+            logger.error(f"Hunterユニバース保存エラー: {e}")
+            return False
+
+    def load_hunter_universe(self) -> Optional[set]:
+        """
+        前回の Hunter ユニバースを読み込み
+
+        Returns:
+            銘柄コードのセット。ファイルなし・破損時は None。
+        """
+        universe_path = self.cache_dir / "hunter_universe.json"
+
+        if not universe_path.exists():
+            logger.info("Hunterユニバースなし（初回実行）")
+            return None
+
+        try:
+            with open(universe_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            codes = set(data.get('codes', []))
+            logger.info(
+                f"Hunterユニバース読み込み: {len(codes)}銘柄 "
+                f"(updated_at={data.get('updated_at', 'unknown')})"
+            )
+            return codes
+        except Exception as e:
+            logger.error(f"Hunterユニバース読み込みエラー: {e}")
+            return None
+
     # ==================== ATR閾値管理 ====================
 
     def save_atr_thresholds(self, thresholds: Dict[str, Any]) -> bool:

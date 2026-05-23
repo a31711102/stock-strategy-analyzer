@@ -11,7 +11,7 @@ Project-high-hunter: 統合パイプライン（空売り版）
 """
 import logging
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pandas as pd
 
@@ -38,6 +38,7 @@ class HighHunterPipeline:
         self,
         stock_data: Dict[str, pd.DataFrame],
         market_df: pd.DataFrame,
+        previous_universe_codes: Optional[set] = None,
     ) -> List[TheOneShortResult]:
         """
         パイプラインを実行する。
@@ -45,6 +46,8 @@ class HighHunterPipeline:
         Args:
             stock_data: {銘柄コード: 指標計算済みDataFrame} の辞書
             market_df: 日経平均のOHLCVデータ
+            previous_universe_codes: 前回ユニバースの銘柄コード集合（ヒステリシス用）。
+                None の場合は全銘柄に厳格閾値を適用。
 
         Returns:
             TheOneShortResult のリスト（Win_Rate 降順、ランク付き）。
@@ -52,7 +55,10 @@ class HighHunterPipeline:
         stock_list = self.nikkei_fetcher.fetch()
         logger.info(f"日経225銘柄リスト: {len(stock_list)}銘柄")
 
-        universe = self.universe_filter.apply(stock_list, stock_data, market_df)
+        # ユニバース選定（ヒステリシス対応）
+        universe = self.universe_filter.apply(
+            stock_list, stock_data, market_df, previous_universe_codes
+        )
         if not universe:
             logger.warning("ユニバースに該当する銘柄がありません")
             return []
