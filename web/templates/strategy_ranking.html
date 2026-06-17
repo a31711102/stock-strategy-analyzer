@@ -3,8 +3,9 @@
 {% block title %}{{ strategy_name }} ランキング - Stock Strategy Analyzer{% endblock %}
 
 {% block content %}
+{% set mq = 'prime' if market == 'prime' else None %}
 <nav class="breadcrumb">
-    <a href="{{ url_for('index') }}">トップ</a>
+    <a href="{{ url_for('index', market=mq) }}">トップ</a>
     <span>›</span>
     <span>{{ strategy_name }}</span>
 </nav>
@@ -12,12 +13,18 @@
 <section class="ranking-section">
     <header class="section-header">
         <h1>{{ strategy_name }}</h1>
-        <p class="subtitle">適合度ランキング Top {{ rankings|length }}</p>
+        <p class="subtitle">適合度ランキング Top {{ rankings|length }}{{ '（東証プライム）' if market == 'prime' else '' }}</p>
     </header>
+
+    <div class="market-filter">
+        <span class="market-filter-label">市場:</span>
+        <a href="{{ url_for('strategy_ranking', name=strategy_name) }}" class="market-tab {{ 'active' if market != 'prime' else '' }}">全市場</a>
+        <a href="{{ url_for('strategy_ranking', name=strategy_name, market='prime') }}" class="market-tab {{ 'active' if market == 'prime' else '' }}">東証プライム</a>
+    </div>
 
     <div class="strategy-nav">
         {% for s in strategies %}
-        <a href="{{ url_for('strategy_ranking', name=s) }}"
+        <a href="{{ url_for('strategy_ranking', name=s, market=mq) }}"
             class="strategy-tab {{ 'active' if s == strategy_name else '' }}">
             {{ s }}
         </a>

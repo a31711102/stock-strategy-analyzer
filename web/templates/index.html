@@ -3,6 +3,7 @@
 {% block title %}戦略一覧 - Stock Strategy Analyzer{% endblock %}
 
 {% block content %}
+{% set mq = 'prime' if market == 'prime' else None %}
 <section class="hero">
     <h1>Stock Strategy Analyzer</h1>
     <p class="hero-sub">バックテスト結果に基づく銘柄・戦略の適合度分析</p>
@@ -25,13 +26,19 @@
     {% endif %}
 
     <div class="nav-links">
-        <a href="/" class="nav-link active">📊 適合度ランキング</a>
-        <a href="/approaching" class="nav-link">🎯 シグナル接近中</a>
+        <a href="{{ url_for('index', market=mq) }}" class="nav-link active">📊 適合度ランキング</a>
+        <a href="{{ url_for('approaching_index', market=mq) }}" class="nav-link">🎯 シグナル接近中</a>
         <a href="/screener" class="nav-link">🔥 ボラティリティスクリーナー</a>
         <a href="/low_hunter" class="nav-link">📉 黄金の指値ボード</a>
         <a href="/high_hunter" class="nav-link">📈 黄金の空売りボード</a>
     </div>
 </section>
+
+<div class="market-filter">
+    <span class="market-filter-label">市場:</span>
+    <a href="{{ url_for('index') }}" class="market-tab {{ 'active' if market != 'prime' else '' }}">全市場</a>
+    <a href="{{ url_for('index', market='prime') }}" class="market-tab {{ 'active' if market == 'prime' else '' }}">東証プライム</a>
+</div>
 
 <style>
     .nav-links {
@@ -110,7 +117,7 @@
     <h2>戦略別ランキング</h2>
     <div class="strategy-grid">
         {% for strategy in strategies %}
-        <a href="{{ url_for('strategy_ranking', name=strategy.name) }}" class="strategy-card">
+        <a href="{{ url_for('strategy_ranking', name=strategy.name, market=mq) }}" class="strategy-card">
             <h3 class="strategy-name">{{ strategy.name }}</h3>
 
             {% if strategy.top3 %}

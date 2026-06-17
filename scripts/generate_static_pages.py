@@ -22,6 +22,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from jinja2 import Environment, FileSystemLoader
 from src.batch.result_cache import ResultCache
+from src.data.market_segments import load_market_map, is_prime
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
@@ -31,8 +32,26 @@ RESULTS_DIR = PROJECT_ROOT / 'results'
 DOCS_DIR = PROJECT_ROOT / 'docs'
 TEMPLATES_DIR = PROJECT_ROOT / 'web' / 'templates'
 STATIC_DIR = PROJECT_ROOT / 'web' / 'static'
+STOCK_LIST_PATH = PROJECT_ROOT / 'data_j.xls'
 
 MIN_SCORE_THRESHOLD = 40.0
+
+# 市場フィルタのバリエーション: (ファイル名サフィックス, 表示ラベル)
+MARKET_VARIANTS = [('', '全市場'), ('_prime', '東証プライム')]
+
+
+def filter_prime(items: list, market_map: dict) -> list:
+    """東証プライム銘柄のみに絞り込み、順位を振り直す（元リストは変更しない）"""
+    filtered = []
+    for item in items:
+        segment = item.get('market') or market_map.get(str(item.get('code', '')), '')
+        if is_prime(segment):
+            filtered.append(dict(item))
+
+    for i, item in enumerate(filtered, 1):
+        item['rank'] = i
+
+    return filtered
 
 
 def setup_jinja_env() -> Environment:
@@ -130,13 +149,19 @@ def generate_index_html():
     {% endif %}
 
     <div class="nav-links">
-        <a href="{{ site_root }}index.html" class="nav-link active">📊 適合度ランキング</a>
-        <a href="{{ site_root }}approaching/index.html" class="nav-link">🎯 シグナル接近中</a>
+        <a href="{{ site_root }}index{{ market_suffix }}.html" class="nav-link active">📊 適合度ランキング</a>
+        <a href="{{ site_root }}approaching/index{{ market_suffix }}.html" class="nav-link">🎯 シグナル接近中</a>
         <a href="{{ site_root }}screener/index.html" class="nav-link">🔥 ボラティリティスクリーナー</a>
         <a href="{{ site_root }}low-hunter/index.html" class="nav-link">📉 黄金の指値ボード</a>
         <a href="{{ site_root }}high-hunter/index.html" class="nav-link">📈 黄金の空売りボード</a>
     </div>
 </section>
+
+<div class="market-filter">
+    <span class="market-filter-label">市場:</span>
+    <a href="{{ site_root }}index.html" class="market-tab {{ 'active' if not market_suffix else '' }}">全市場</a>
+    <a href="{{ site_root }}index_prime.html" class="market-tab {{ 'active' if market_suffix else '' }}">東証プライム</a>
+</div>
 
 <section class="criteria-section">
     <details class="criteria-details">
@@ -187,7 +212,7 @@ def generate_index_html():
     <h2>戦略別ランキング</h2>
     <div class="strategy-grid">
         {% for strategy in strategies %}
-        <a href="{{ site_root }}strategy/{{ strategy.name_encoded }}.html" class="strategy-card">
+        <a href="{{ site_root }}strategy/{{ strategy.name_encoded }}{{ market_suffix }}.html" class="strategy-card">
             <h3 class="strategy-name">{{ strategy.name }}</h3>
 
             {% if strategy.top3 %}
@@ -219,7 +244,7 @@ def generate_strategy_ranking_html():
 
 {% block content %}
 <nav class="breadcrumb">
-    <a href="{{ site_root }}index.html">トップ</a>
+    <a href="{{ site_root }}index{{ market_suffix }}.html">トップ</a>
     <span>›</span>
     <span>{{ strategy_name }}</span>
 </nav>
@@ -227,12 +252,18 @@ def generate_strategy_ranking_html():
 <section class="ranking-section">
     <header class="section-header">
         <h1>{{ strategy_name }}</h1>
-        <p class="subtitle">適合度ランキング Top {{ rankings|length }}</p>
+        <p class="subtitle">適合度ランキング Top {{ rankings|length }}{{ '（東証プライム）' if market_suffix else '' }}</p>
     </header>
+
+    <div class="market-filter">
+        <span class="market-filter-label">市場:</span>
+        <a href="{{ site_root }}strategy/{{ strategy_name_encoded }}.html" class="market-tab {{ 'active' if not market_suffix else '' }}">全市場</a>
+        <a href="{{ site_root }}strategy/{{ strategy_name_encoded }}_prime.html" class="market-tab {{ 'active' if market_suffix else '' }}">東証プライム</a>
+    </div>
 
     <div class="strategy-nav">
         {% for s in strategies %}
-        <a href="{{ site_root }}strategy/{{ s.encoded }}.html"
+        <a href="{{ site_root }}strategy/{{ s.encoded }}{{ market_suffix }}.html"
             class="strategy-tab {{ 'active' if s.name == strategy_name else '' }}">
             {{ s.name }}
         </a>
@@ -301,13 +332,19 @@ def generate_approaching_index_html():
     {% endif %}
 
     <div class="nav-links">
-        <a href="{{ site_root }}index.html" class="nav-link">📊 適合度ランキング</a>
-        <a href="{{ site_root }}approaching/index.html" class="nav-link active">🎯 シグナル接近中</a>
+        <a href="{{ site_root }}index{{ market_suffix }}.html" class="nav-link">📊 適合度ランキング</a>
+        <a href="{{ site_root }}approaching/index{{ market_suffix }}.html" class="nav-link active">🎯 シグナル接近中</a>
         <a href="{{ site_root }}screener/index.html" class="nav-link">🔥 ボラティリティスクリーナー</a>
         <a href="{{ site_root }}low-hunter/index.html" class="nav-link">📉 黄金の指値ボード</a>
         <a href="{{ site_root }}high-hunter/index.html" class="nav-link">📈 黄金の空売りボード</a>
     </div>
 </section>
+
+<div class="market-filter">
+    <span class="market-filter-label">市場:</span>
+    <a href="{{ site_root }}approaching/index.html" class="market-tab {{ 'active' if not market_suffix else '' }}">全市場</a>
+    <a href="{{ site_root }}approaching/index_prime.html" class="market-tab {{ 'active' if market_suffix else '' }}">東証プライム</a>
+</div>
 
 <section class="criteria-section">
     <details class="criteria-details">
@@ -338,7 +375,7 @@ def generate_approaching_index_html():
     {% if strategies %}
     <div class="strategy-grid">
         {% for strategy in strategies %}
-        <a href="{{ site_root }}approaching/{{ strategy.name_encoded }}.html" class="strategy-card approaching-card">
+        <a href="{{ site_root }}approaching/{{ strategy.name_encoded }}{{ market_suffix }}.html" class="strategy-card approaching-card">
             <h3 class="strategy-name">{{ strategy.name }}</h3>
 
             {% if strategy.top3 %}
@@ -430,14 +467,20 @@ def generate_approaching_strategy_html():
 {% block content %}
 <section class="hero strategy-hero approaching-hero">
     <h1>🎯 {{ strategy_name }}</h1>
-    <p class="hero-sub">シグナル接近中の銘柄（Top 50・出来高50万以上）</p>
+    <p class="hero-sub">シグナル接近中の銘柄（Top 50・出来高50万以上{{ '・東証プライム' if market_suffix else '' }}）</p>
 
     <div class="nav-links">
-        <a href="{{ site_root }}approaching/index.html" class="nav-link">← 戦略一覧へ戻る</a>
-        <a href="{{ site_root }}strategy/{{ strategy_name_encoded }}.html" class="nav-link">📊 適合度ランキング</a>
+        <a href="{{ site_root }}approaching/index{{ market_suffix }}.html" class="nav-link">← 戦略一覧へ戻る</a>
+        <a href="{{ site_root }}strategy/{{ strategy_name_encoded }}{{ market_suffix }}.html" class="nav-link">📊 適合度ランキング</a>
         <a href="{{ site_root }}screener/index.html" class="nav-link">🔥 スクリーナー</a>
     </div>
 </section>
+
+<div class="market-filter">
+    <span class="market-filter-label">市場:</span>
+    <a href="{{ site_root }}approaching/{{ strategy_name_encoded }}.html" class="market-tab {{ 'active' if not market_suffix else '' }}">全市場</a>
+    <a href="{{ site_root }}approaching/{{ strategy_name_encoded }}_prime.html" class="market-tab {{ 'active' if market_suffix else '' }}">東証プライム</a>
+</div>
 
 <section class="ranking-section">
     {% if signals %}
@@ -1072,62 +1115,84 @@ def generate_all():
         'static_root': './',
     }
 
+    # 市場区分マップ（東証プライム絞込用）
+    market_map = load_market_map(str(STOCK_LIST_PATH))
+
     # === 1. トップページ ===
     logger.info('\n[1/5] トップページ生成')
     ranking_strategies = cache.get_available_strategies()
-    strategy_info = []
-    for name in ranking_strategies:
-        raw = cache.load_ranking(name, limit=10)
-        filtered = [r for r in raw if r.get('score', 0) >= MIN_SCORE_THRESHOLD]
-        strategy_info.append({
-            'name': name,
-            'name_encoded': safe_filename(name),
-            'top3': filtered[:3],
-        })
+    for suffix, label in MARKET_VARIANTS:
+        strategy_info = []
+        for name in ranking_strategies:
+            raw = cache.load_ranking(name, limit=None if suffix else 10)
+            if suffix:
+                raw = filter_prime(raw, market_map)
+            filtered = [r for r in raw if r.get('score', 0) >= MIN_SCORE_THRESHOLD]
+            strategy_info.append({
+                'name': name,
+                'name_encoded': safe_filename(name),
+                'top3': filtered[:3],
+            })
 
-    render_template(env, 'static_index.html', DOCS_DIR / 'index.html',
-                    strategies=strategy_info, metadata=metadata, **base_ctx)
+        render_template(env, 'static_index.html', DOCS_DIR / f'index{suffix}.html',
+                        strategies=strategy_info, metadata=metadata,
+                        market_suffix=suffix, **base_ctx)
 
     # === 2. 戦略別ランキングページ ===
     logger.info('\n[2/5] 戦略別ランキングページ生成')
     strategy_nav = [{'name': n, 'encoded': safe_filename(n)} for n in ranking_strategies]
     sub_ctx = {**base_ctx, 'site_root': '../', 'static_root': '../'}
 
-    for name in ranking_strategies:
-        raw = cache.load_ranking(name, limit=100)
-        rankings = [r for r in raw if r.get('score', 0) >= MIN_SCORE_THRESHOLD][:30]
+    for suffix, label in MARKET_VARIANTS:
+        for name in ranking_strategies:
+            raw = cache.load_ranking(name, limit=None if suffix else 100)
+            if suffix:
+                raw = filter_prime(raw, market_map)
+            rankings = [r for r in raw if r.get('score', 0) >= MIN_SCORE_THRESHOLD][:30]
 
-        render_template(env, 'static_strategy_ranking.html',
-                        DOCS_DIR / 'strategy' / f'{safe_filename(name)}.html',
-                        strategy_name=name, rankings=rankings,
-                        strategies=strategy_nav, **sub_ctx)
+            render_template(env, 'static_strategy_ranking.html',
+                            DOCS_DIR / 'strategy' / f'{safe_filename(name)}{suffix}.html',
+                            strategy_name=name,
+                            strategy_name_encoded=safe_filename(name),
+                            rankings=rankings,
+                            strategies=strategy_nav,
+                            market_suffix=suffix, **sub_ctx)
 
     # === 3. 接近シグナル トップページ ===
     logger.info('\n[3/5] 接近シグナル一覧ページ生成')
     approaching_strategies = cache.get_available_approaching_strategies()
-    approaching_info = []
-    for name in approaching_strategies:
-        signals = cache.load_approaching_signals(name, limit=3)
-        approaching_info.append({
-            'name': name,
-            'name_encoded': safe_filename(name),
-            'top3': signals,
-        })
+    for suffix, label in MARKET_VARIANTS:
+        approaching_info = []
+        for name in approaching_strategies:
+            signals = cache.load_approaching_signals(name, limit=None if suffix else 3)
+            if suffix:
+                signals = filter_prime(signals, market_map)
+            approaching_info.append({
+                'name': name,
+                'name_encoded': safe_filename(name),
+                'top3': signals[:3],
+            })
 
-    render_template(env, 'static_approaching_index.html',
-                    DOCS_DIR / 'approaching' / 'index.html',
-                    strategies=approaching_info, metadata=metadata, **sub_ctx)
+        render_template(env, 'static_approaching_index.html',
+                        DOCS_DIR / 'approaching' / f'index{suffix}.html',
+                        strategies=approaching_info, metadata=metadata,
+                        market_suffix=suffix, **sub_ctx)
 
     # === 4. 戦略別接近シグナルページ ===
     logger.info('\n[4/5] 戦略別接近シグナルページ生成')
-    for name in approaching_strategies:
-        signals = cache.load_approaching_signals(name, limit=50)
+    for suffix, label in MARKET_VARIANTS:
+        for name in approaching_strategies:
+            signals = cache.load_approaching_signals(name, limit=None if suffix else 50)
+            if suffix:
+                signals = filter_prime(signals, market_map)
+            signals = signals[:50]
 
-        render_template(env, 'static_approaching_strategy.html',
-                        DOCS_DIR / 'approaching' / f'{safe_filename(name)}.html',
-                        strategy_name=name,
-                        strategy_name_encoded=safe_filename(name),
-                        signals=signals, **sub_ctx)
+            render_template(env, 'static_approaching_strategy.html',
+                            DOCS_DIR / 'approaching' / f'{safe_filename(name)}{suffix}.html',
+                            strategy_name=name,
+                            strategy_name_encoded=safe_filename(name),
+                            signals=signals,
+                            market_suffix=suffix, **sub_ctx)
 
     # === 5. ボラティリティスクリーナーページ ===
     logger.info('\n[5/5] ボラティリティスクリーナーページ生成')

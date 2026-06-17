@@ -209,17 +209,19 @@ class DailyBatchProcessor:
         return df
     
     def process_single_stock(
-        self, 
-        code: str, 
-        name: str
+        self,
+        code: str,
+        name: str,
+        market: str = ''
     ) -> Tuple[str, Optional[Dict], Optional[Dict]]:
         """
         単一銘柄を処理
-        
+
         Args:
             code: 銘柄コード
             name: 銘柄名
-            
+            market: 市場区分（例: プライム（内国株式））
+
         Returns:
             (銘柄コード, 結果dict or None, 接近シグナルdict or None)
         """
@@ -262,6 +264,7 @@ class DailyBatchProcessor:
             result = {
                 'code': str(code),
                 'name': name,
+                'market': market,
                 'strategies': {}
             }
             
@@ -299,6 +302,7 @@ class DailyBatchProcessor:
                     signal_data = {
                         'code': signal.code,
                         'name': signal.name,
+                        'market': market,
                         'estimated_days': signal.estimated_days,
                         'conditions_met': signal.conditions_met,
                         'conditions_pending': signal.conditions_pending,
@@ -393,9 +397,10 @@ class DailyBatchProcessor:
                     continue
                 
                 name = row['銘柄名'].values[0]
-                
+                market = str(row['市場区分'].values[0])
+
                 # 処理実行
-                code_result = self.process_single_stock(code, name)
+                code_result = self.process_single_stock(code, name, market)
                 result_code, result_data, approaching_data, atr_info = code_result
                 
                 if result_data:
@@ -413,6 +418,7 @@ class DailyBatchProcessor:
                         strategy_results[strategy_name].append({
                             'code': result_code,
                             'name': name,
+                            'market': market,
                             'score': strategy_data.get('score', 0),
                             'win_rate': strategy_data.get('win_rate', 0),
                             'return': strategy_data.get('total_return', 0),
@@ -449,11 +455,12 @@ class DailyBatchProcessor:
             sorted_results = sorted(results, key=lambda x: x['score'], reverse=True)
             self.result_cache.save_ranking(strategy_name, sorted_results)
         
-        # 接近シグナル保存（出来高50万以上、スコア降順、Top50）
+        # 接近シグナル保存（出来高50万以上、スコア降順）
+        # Note: Top50カットは表示側で実施（市場区分フィルタ後でも50件確保するため全件保存）
         MIN_AVG_VOLUME = 500_000
         for strategy_name, signals in approaching_results.items():
             filtered_signals = [s for s in signals if s.get('avg_volume', 0) >= MIN_AVG_VOLUME]
-            sorted_signals = sorted(filtered_signals, key=lambda x: x['score'], reverse=True)[:50]
+            sorted_signals = sorted(filtered_signals, key=lambda x: x['score'], reverse=True)
             self.result_cache.save_approaching_signals(strategy_name, sorted_signals)
         
         self.logger.info(f"接近シグナル保存完了: {len(approaching_results)}戦略")

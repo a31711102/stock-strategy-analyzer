@@ -28,6 +28,9 @@ def create_app(config_path: str = "config.yaml") -> Flask:
     app.config['SECRET_KEY'] = 'dev-secret-key-change-in-production'
     app.config['RESULTS_DIR'] = str(project_root / 'results')
     app.config['WEB_CONFIG'] = config.get('web', {})
+
+    stock_list_path = config.get('data', {}).get('stock_list_path', 'data_j.xls')
+    app.config['STOCK_LIST_PATH'] = str(project_root / stock_list_path)
     
     # ルート登録
     from src.web.routes import register_routes

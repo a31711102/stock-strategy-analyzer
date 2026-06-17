@@ -8,6 +8,8 @@ import numpy as np
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from enum import Enum
+from src.analysis.cup_with_handle import CupWithHandleDetector
+from src.analysis.vcp_detector import VCPDetector
 
 
 class StrategyType(Enum):
@@ -56,6 +58,8 @@ class SignalDetector:
             lookback_days: 分析対象期間（日数）
         """
         self.lookback_days = lookback_days
+        self.cwh_detector = CupWithHandleDetector("config.yaml")
+        self.vcp_detector = VCPDetector("config.yaml")
     
     def detect_all_strategies(self, df: pd.DataFrame, code: str, name: str) -> Dict[str, ApproachingSignal]:
         """
@@ -177,11 +181,31 @@ class SignalDetector:
                 conditions_pending.append("5日MA上抜けまで距離あり")
         
         # スコア計算
-        total_conditions = len(conditions_met) + len(conditions_pending)
-        score = (len(conditions_met) / total_conditions * 100) if total_conditions > 0 else 0
+        base_met_count = len(conditions_met)
+        base_pending_count = len(conditions_pending)
+        total_conditions = base_met_count + base_pending_count
+        base_score = (base_met_count / total_conditions * 100) if total_conditions > 0 else 0
+        
+        # CWH/VCP 判定の実行
+        cwh_res = self.cwh_detector.detect(df_full)
+        vcp_res = self.vcp_detector.detect(df_full)
+        
+        # 達成条件への追加
+        if cwh_res.status == "formed":
+            conditions_met.append("カップウィズハンドル形成済")
+        elif cwh_res.status == "forming":
+            conditions_met.append("カップウィズハンドル形成間近")
+            
+        if vcp_res.status == "detected":
+            conditions_met.append(f"VCP{vcp_res.num_contractions}回後")
+            
+        # 加点と統合信頼度スコア (200点満点)
+        cwh_bonus = cwh_res.score * 0.5
+        vcp_bonus = vcp_res.score * 0.5
+        reliability_score = base_score + cwh_bonus + vcp_bonus
         
         # 残り日数推定
-        estimated_days = self._estimate_days_to_signal(diff_to_high, score)
+        estimated_days = self._estimate_days_to_signal(diff_to_high, base_score)
         
         avg_vol = float(df_full['Volume'].tail(60).mean()) if 'Volume' in df_full.columns else 0.0
         
@@ -192,7 +216,7 @@ class SignalDetector:
             estimated_days=estimated_days,
             conditions_met=conditions_met,
             conditions_pending=conditions_pending,
-            score=score,
+            score=reliability_score,
             current_price=current_price,
             last_updated=str(df_recent.index[-1]),
             avg_volume=avg_vol

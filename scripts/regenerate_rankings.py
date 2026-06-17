@@ -33,13 +33,15 @@ def regenerate_rankings():
             
             code = detail.get('code', detail_path.stem)
             name = detail.get('name', '')
+            market = detail.get('market', '')
             strategies = detail.get('strategies', {})
-            
+
             for strategy_name, strategy_data in strategies.items():
                 score = strategy_data.get('score', 0)
                 strategy_results[strategy_name].append({
                     'code': code,
                     'name': name,
+                    'market': market,
                     'score': score,
                     'win_rate': strategy_data.get('win_rate', 0),
                     'return': strategy_data.get('total_return', 0),

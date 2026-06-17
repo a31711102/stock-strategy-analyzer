@@ -799,3 +799,33 @@ def count_consecutive_candles_vectorized(df: pd.DataFrame, candle_type: str = 'b
     # 各グループ内での累積カウント
     return is_target.groupby(groups).cumsum()
 
+
+def find_swing_highs_vectorized(series: pd.Series, window: int = 10) -> pd.Series:
+    """
+    スイングハイ（ローカル高値）を検出（ベクトル化版）
+    当日時点では判断できない（window日経過後に確定する）ため、
+    center=True を使わずに、過去のデータのみで判定するか、
+    あるいはバックテストの未来視を防ぐため、検出位置にタイムラグ（window分）を反映する。
+    ここでは、各行について、自身が前後window日の最大値であるかを判定（未来情報を含むため、検出後はshift(window)などでラグを持たせる必要がある）。
+    """
+    rolling_max = series.rolling(window=window*2+1, center=True, min_periods=1).max()
+    return series == rolling_max
+
+
+def find_swing_lows_vectorized(series: pd.Series, window: int = 10) -> pd.Series:
+    """
+    スイングロー（ローカル安値）を検出（ベクトル化版）
+    """
+    rolling_min = series.rolling(window=window*2+1, center=True, min_periods=1).min()
+    return series == rolling_min
+
+
+def calculate_depth_pct(high: float, low: float) -> float:
+    """
+    高値と安値から下落の深さ（%）を計算する
+    """
+    if high <= 0:
+        return 0.0
+    return ((high - low) / high) * 100
+
+

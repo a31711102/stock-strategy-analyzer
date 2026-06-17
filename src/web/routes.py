@@ -9,14 +9,37 @@ Web UIルート定義
 """
 from flask import Flask, render_template, request, jsonify, abort, send_from_directory
 from src.batch.result_cache import ResultCache
+from src.data.market_segments import load_market_map, is_prime
 import time
 
 
 def register_routes(app: Flask):
     """ルートをFlaskアプリに登録"""
-    
+
     cache = ResultCache(app.config['RESULTS_DIR'])
-    
+    # 市場区分マップ（バッチ結果にmarket未付与の旧キャッシュ用フォールバック）
+    market_map = load_market_map(app.config.get('STOCK_LIST_PATH', 'data_j.xls'))
+
+    def get_market_param() -> str:
+        """クエリパラメータから市場フィルタを取得（'prime' or 'all'）"""
+        return 'prime' if request.args.get('market') == 'prime' else 'all'
+
+    def filter_by_market(items: list, market: str) -> list:
+        """market='prime'なら東証プライム銘柄のみに絞り込み、順位を振り直す"""
+        if market != 'prime':
+            return items
+
+        filtered = []
+        for item in items:
+            segment = item.get('market') or market_map.get(str(item.get('code', '')), '')
+            if is_prime(segment):
+                filtered.append(item)
+
+        for i, item in enumerate(filtered, 1):
+            item['rank'] = i
+
+        return filtered
+
     @app.route('/robots.txt')
     def robots_txt():
         """クローラー禁止ファイルを配信"""
@@ -26,29 +49,32 @@ def register_routes(app: Flask):
     def index():
         """トップページ - 戦略一覧"""
         start = time.time()
-        
+
+        market = get_market_param()
         metadata = cache.get_metadata()
         strategies = cache.get_available_strategies()
-        
+
         # 戦略情報を構築（適合度40%以上のみ表示）
         MIN_SCORE_THRESHOLD = 40.0
         strategy_info = []
         for name in strategies:
-            # 上位を多めに取得してフィルタリング
-            raw_rankings = cache.load_ranking(name, limit=10)
+            # 上位を多めに取得してフィルタリング（プライム絞込時は全件から抽出）
+            limit = None if market == 'prime' else 10
+            raw_rankings = filter_by_market(cache.load_ranking(name, limit=limit), market)
             filtered = [r for r in raw_rankings if r.get('score', 0) >= MIN_SCORE_THRESHOLD]
             top3 = filtered[:3]
             strategy_info.append({
                 'name': name,
                 'top3': top3
             })
-        
+
         elapsed = time.time() - start
-        
+
         return render_template(
             'index.html',
             strategies=strategy_info,
             metadata=metadata,
+            market=market,
             elapsed=f"{elapsed:.3f}"
         )
     
@@ -56,25 +82,31 @@ def register_routes(app: Flask):
     def strategy_ranking(name: str):
         """戦略別ランキング"""
         start = time.time()
-        
+
+        market = get_market_param()
+
         # ランキング取得（Top 30、適合度40%以上のみ）
         MIN_SCORE_THRESHOLD = 40.0
-        raw_rankings = cache.load_ranking(name, limit=100)  # 多めに取得
-        rankings = [r for r in raw_rankings if r.get('score', 0) >= MIN_SCORE_THRESHOLD][:30]
-        
-        if not rankings:
+        limit = None if market == 'prime' else 100  # プライム絞込時は全件から抽出
+        raw_rankings = cache.load_ranking(name, limit=limit)
+
+        if not raw_rankings:
             abort(404, description=f"戦略「{name}」が見つかりません")
-        
+
+        raw_rankings = filter_by_market(raw_rankings, market)
+        rankings = [r for r in raw_rankings if r.get('score', 0) >= MIN_SCORE_THRESHOLD][:30]
+
         # 利用可能な戦略一覧（ナビ用）
         strategies = cache.get_available_strategies()
-        
+
         elapsed = time.time() - start
-        
+
         return render_template(
             'strategy_ranking.html',
             strategy_name=name,
             rankings=rankings,
             strategies=strategies,
+            market=market,
             elapsed=f"{elapsed:.3f}"
         )
     
@@ -109,28 +141,33 @@ def register_routes(app: Flask):
         """接近シグナル一覧"""
         start = time.time()
         
+        market = get_market_param()
         metadata = cache.get_metadata()
         strategies = cache.get_available_approaching_strategies()
-        
+
         # 戦略情報を構築
         strategy_info = []
         for name in strategies:
-            signals = cache.load_approaching_signals(name, limit=3)
+            limit = None if market == 'prime' else 3
+            signals = filter_by_market(
+                cache.load_approaching_signals(name, limit=limit), market
+            )[:3]
             strategy_info.append({
                 'name': name,
                 'top3': signals
             })
-        
+
         # ランキング戦略も表示用に取得
         ranking_strategies = cache.get_available_strategies()
-        
+
         elapsed = time.time() - start
-        
+
         return render_template(
             'approaching.html',
             strategies=strategy_info,
             ranking_strategies=ranking_strategies,
             metadata=metadata,
+            market=market,
             elapsed=f"{elapsed:.3f}"
         )
     
@@ -139,21 +176,27 @@ def register_routes(app: Flask):
         """戦略別接近シグナル"""
         start = time.time()
         
+        market = get_market_param()
+
         # 接近シグナル取得（Top 50）
-        signals = cache.load_approaching_signals(name, limit=50)
-        
+        limit = None if market == 'prime' else 50
+        signals = filter_by_market(
+            cache.load_approaching_signals(name, limit=limit), market
+        )[:50]
+
         # 利用可能な戦略一覧（ナビ用）
         strategies = cache.get_available_approaching_strategies()
         ranking_strategies = cache.get_available_strategies()
-        
+
         elapsed = time.time() - start
-        
+
         return render_template(
             'approaching_strategy.html',
             strategy_name=name,
             signals=signals,
             strategies=strategies,
             ranking_strategies=ranking_strategies,
+            market=market,
             elapsed=f"{elapsed:.3f}"
         )
     

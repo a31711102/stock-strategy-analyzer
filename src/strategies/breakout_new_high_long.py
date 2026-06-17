@@ -9,7 +9,7 @@
 """
 import pandas as pd
 import numpy as np
-from typing import Dict
+from typing import Dict, Any
 from .base import BaseStrategy
 from .utils import (
     is_bullish_candle,
@@ -23,23 +23,27 @@ from .utils import (
     check_ma_order_vectorized,
     generate_position_signals_vectorized
 )
-
+from src.analysis.cup_with_handle import CupWithHandleDetector
+from src.analysis.vcp_detector import VCPDetector
 
 
 class BreakoutNewHighLong(BaseStrategy):
     """新高値ブレイク手法（買い）"""
     
-    def __init__(self, lookback: int = 60, threshold_pct: float = 3.0, use_vectorized: bool = True):
+    def __init__(self, lookback: int = 60, threshold_pct: float = 3.0, use_vectorized: bool = True, config_path: str = "config.yaml"):
         """
         Args:
             lookback: 新高値判定の期間
             threshold_pct: 高値との差が何%以内で「そろそろ」とするか（デフォルト: 3.0%）
             use_vectorized: ベクトル化版を使用するか（デフォルト: True）
+            config_path: 設定ファイルのパス
         """
         super().__init__()
         self.lookback = lookback
         self.threshold_pct = threshold_pct
         self.use_vectorized = use_vectorized
+        self.cwh_detector = CupWithHandleDetector(config_path)
+        self.vcp_detector = VCPDetector(config_path)
     
     def name(self) -> str:
         return "新高値ブレイク"
@@ -162,8 +166,12 @@ class BreakoutNewHighLong(BaseStrategy):
             
             conditions = self.check_conditions(df, i)
             
+            # エントリー判定のための基礎4条件
+            base_keys = ['そろそろ新高値', '出来高増加', '陽線かつ5日MA上抜け', '移動平均順行配列']
+            is_entry = all(conditions.get(k, False) for k in base_keys)
+            
             # 全条件を満たす場合、買いシグナル
-            if all(conditions.values()):
+            if is_entry:
                 signals.iloc[i] = 1
             
             # 簡易的な決済ルール: 5日移動平均を下回ったら決済
@@ -175,7 +183,7 @@ class BreakoutNewHighLong(BaseStrategy):
         
         return signals
     
-    def check_conditions(self, df: pd.DataFrame, index: int) -> Dict[str, bool]:
+    def check_conditions(self, df: pd.DataFrame, index: int) -> Dict[str, Any]:
         """各条件のチェック"""
         row = df.iloc[index]
         prev_row = df.iloc[index - 1] if index > 0 else row
@@ -195,14 +203,59 @@ class BreakoutNewHighLong(BaseStrategy):
         above_ma5 = row['Close'] > row['SMA_5'] if 'SMA_5' in row and not pd.isna(row['SMA_5']) else False
         conditions['陽線かつ5日MA上抜け'] = is_bullish and above_ma5
         
-        # 4. 移動平均線が5日＞25日＞75日＞200日
+        # 4. 移動平均線が5日＞25日＞75日＞200日（OR条件グループ）
         ma_values = []
         for period in [5, 25, 75, 200]:
             ma_col = f'SMA_{period}'
             if ma_col in row and not pd.isna(row[ma_col]):
                 ma_values.append(row[ma_col])
         
-        conditions['移動平均順行配列'] = check_ma_order(ma_values, ascending=True) if len(ma_values) == 4 else False
+        # A) MA完全順行配列
+        cond_ma_full = check_ma_order(ma_values, ascending=True) if len(ma_values) == 4 else False
+        # B) 5日 > 25日 かつ 終値 > 75日MA
+        cond_short_over_mid = row['SMA_5'] > row['SMA_25'] if 'SMA_5' in row and 'SMA_25' in row else False
+        cond_above_ma75 = row['Close'] > row['SMA_75'] if 'SMA_75' in row else False
+        cond_early_uptrend = cond_short_over_mid and cond_above_ma75
+        # C) 新高値更新 かつ 出来高2倍
+        high_rolling = df['High'].iloc[max(0, index - self.lookback):index].max() if index >= self.lookback else 0.0
+        cond_new_high = row['High'] >= high_rolling if high_rolling > 0 else False
+        cond_vol_2x = row['Volume'] >= prev_row['Volume'] * 2 if 'Volume' in row and 'Volume' in prev_row else False
+        cond_breakout_confirmed = cond_new_high and cond_vol_2x
+
+        conditions['移動平均順行配列'] = cond_ma_full or cond_early_uptrend or cond_breakout_confirmed
+        
+        # パターン検出（CWH, VCP）
+        cwh_res = self.cwh_detector.detect_at(df, index)
+        vcp_res = self.vcp_detector.detect_at(df, index)
+        
+        conditions['ベース品質_CWH'] = cwh_res.status
+        conditions['ベース品質_VCP'] = vcp_res.status
+        
+        # 信頼度スコアの計算
+        base_score = 0.0
+        base_keys = ['そろそろ新高値', '出来高増加', '陽線かつ5日MA上抜け', '移動平均順行配列']
+        for k in base_keys:
+            if conditions.get(k, False):
+                base_score += 25.0
+                
+        cwh_bonus = cwh_res.score * 0.5
+        vcp_bonus = vcp_res.score * 0.5
+        
+        reliability_score = base_score + cwh_bonus + vcp_bonus
+        
+        # ランク判定
+        if reliability_score >= 160:
+            rank = "S"
+        elif reliability_score >= 130:
+            rank = "A"
+        elif reliability_score >= 100:
+            rank = "B"
+        elif reliability_score >= 80:
+            rank = "C"
+        else:
+            rank = "D"
+            
+        conditions['ブレイク信頼度'] = f"{reliability_score:.1f} ({rank})"
         
         return conditions
 

@@ -68,3 +68,27 @@ output:
   chart_enabled: true
   chart_timeframes: ["daily", "weekly", "monthly"]  # 日足・週足・月足
   signal_display_months: 3  # 直近3カ月の売買シグナルを表示
+
+pattern_detection:
+  cup_with_handle:
+    cup_depth_min: 10
+    cup_depth_max: 40
+    cup_duration_min: 25   # 5週
+    cup_duration_max: 260  # 52週
+    handle_depth_ratio_max: 0.50
+    handle_ideal_depth_min: 8
+    handle_ideal_depth_max: 12
+    handle_duration_min: 5
+    handle_duration_max: 20
+    u_shape_min_stay_ratio: 0.15
+
+  vcp:
+    min_contractions: 3
+    contraction_shrink_threshold: 0.80
+    volume_dry_up_threshold: 0.80
+    trend_template_ma: [25, 75, 200]
+    max_distance_from_52w_high: 25
+    min_distance_from_52w_low: 30
+
+  max_pattern_bonus: 100 # CWH 50 + VCP 50
+
