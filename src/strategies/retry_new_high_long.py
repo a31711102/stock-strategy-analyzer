@@ -14,8 +14,9 @@
 """
 import pandas as pd
 import numpy as np
-from typing import Dict
+from typing import Dict, Any
 from .base import BaseStrategy
+from src.analysis.cup_with_handle import CupWithHandleDetector
 from .utils import (
     is_bullish_candle,
     is_bearish_candle,
@@ -36,17 +37,19 @@ from .utils import (
 class RetryNewHighLong(BaseStrategy):
     """新高値リトライ手法"""
     
-    def __init__(self, lookback: int = 60, price_change_threshold: float = 5.0, use_vectorized: bool = True):
+    def __init__(self, lookback: int = 60, price_change_threshold: float = 5.0, use_vectorized: bool = True, config_path: str = "config.yaml"):
         """
         Args:
             lookback: 新高値判定の期間
             price_change_threshold: 前日比の閾値（%）
             use_vectorized: ベクトル化版を使用するか
+            config_path: 設定ファイルのパス
         """
         super().__init__()
         self.lookback = lookback
         self.price_change_threshold = price_change_threshold
         self.use_vectorized = use_vectorized
+        self.cwh_detector = CupWithHandleDetector(config_path)
     
     def name(self) -> str:
         return "新高値リトライ"
@@ -141,7 +144,14 @@ class RetryNewHighLong(BaseStrategy):
             
             conditions = self.check_conditions(df, i)
             
-            if all(conditions.values()):
+            # エントリー判定のための基礎条件
+            base_keys = [
+                'そろそろ新高値', '本日新高値ではない', '本日陽線', '当日安値が前日安値以上',
+                '出来高明確に増加', 'OR条件グループ'
+            ]
+            is_entry = all(conditions.get(k, False) for k in base_keys)
+            
+            if is_entry:
                 signals.iloc[i] = 1
             
             elif i > 0 and signals.iloc[i-1] == 1:
@@ -152,7 +162,7 @@ class RetryNewHighLong(BaseStrategy):
         
         return signals
     
-    def check_conditions(self, df: pd.DataFrame, index: int) -> Dict[str, bool]:
+    def check_conditions(self, df: pd.DataFrame, index: int) -> Dict[str, Any]:
         """各条件のチェック"""
         row = df.iloc[index]
         prev_row = df.iloc[index - 1]
@@ -189,5 +199,37 @@ class RetryNewHighLong(BaseStrategy):
             or_conditions['前日中期MA近辺'] = False
         
         conditions['OR条件グループ'] = any(or_conditions.values())
+        
+        # パターン検出（CWH）
+        cwh_res = self.cwh_detector.detect_at(df, index)
+        conditions['ベース品質_CWH'] = cwh_res.status
+        
+        # 信頼度スコアの計算
+        base_score = 0.0
+        base_keys = [
+            'そろそろ新高値', '本日新高値ではない', '本日陽線', '当日安値が前日安値以上',
+            '出来高明確に増加'
+        ]
+        for k in base_keys:
+            if conditions.get(k, False):
+                base_score += 20.0
+                
+        # CWHはformingのみ加点
+        cwh_score = cwh_res.score if cwh_res.status == "forming" else 0.0
+        reliability_score = (base_score * 0.70) + (cwh_score * 0.30)
+        
+        # ランク判定
+        if reliability_score >= 90:
+            rank = "S"
+        elif reliability_score >= 80:
+            rank = "A"
+        elif reliability_score >= 70:
+            rank = "B"
+        elif reliability_score >= 50:
+            rank = "C"
+        else:
+            rank = "D"
+            
+        conditions['ブレイク信頼度'] = f"{reliability_score:.1f} ({rank})"
         
         return conditions

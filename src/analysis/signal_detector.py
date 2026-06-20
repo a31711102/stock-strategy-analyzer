@@ -191,18 +191,17 @@ class SignalDetector:
         vcp_res = self.vcp_detector.detect(df_full)
         
         # 達成条件への追加
-        if cwh_res.status == "formed":
-            conditions_met.append("カップウィズハンドル形成済")
-        elif cwh_res.status == "forming":
+        if cwh_res.status == "forming":
             conditions_met.append("カップウィズハンドル形成間近")
             
         if vcp_res.status == "detected":
             conditions_met.append(f"VCP{vcp_res.num_contractions}回後")
             
-        # 加点と統合信頼度スコア (200点満点)
-        cwh_bonus = cwh_res.score * 0.5
-        vcp_bonus = vcp_res.score * 0.5
-        reliability_score = base_score + cwh_bonus + vcp_bonus
+        # CWHはformingのみ加点
+        cwh_score = cwh_res.score if cwh_res.status == "forming" else 0.0
+        vcp_score = vcp_res.score
+        
+        reliability_score = (base_score * 0.70) + (cwh_score * 0.15) + (vcp_score * 0.15)
         
         # 残り日数推定
         estimated_days = self._estimate_days_to_signal(diff_to_high, base_score)
@@ -353,9 +352,17 @@ class SignalDetector:
                     conditions_pending.append(f"5日MAと25日MAの差{ma_diff:.1f}%")
         
         total_conditions = len(conditions_met) + len(conditions_pending)
-        score = (len(conditions_met) / total_conditions * 100) if total_conditions > 0 else 0
+        base_score = (len(conditions_met) / total_conditions * 100) if total_conditions > 0 else 0
         
-        estimated_days = self._estimate_days_to_signal(diff_to_high, score)
+        # CWH判定の実行
+        cwh_res = self.cwh_detector.detect(df_full)
+        if cwh_res.status == "forming":
+            conditions_met.append("カップウィズハンドル形成間近")
+            
+        cwh_score = cwh_res.score if cwh_res.status == "forming" else 0.0
+        reliability_score = (base_score * 0.70) + (cwh_score * 0.30)
+        
+        estimated_days = self._estimate_days_to_signal(diff_to_high, base_score)
         
         avg_vol = float(df_full['Volume'].tail(60).mean()) if 'Volume' in df_full.columns else 0.0
         
@@ -366,7 +373,7 @@ class SignalDetector:
             estimated_days=estimated_days,
             conditions_met=conditions_met,
             conditions_pending=conditions_pending,
-            score=score,
+            score=reliability_score,
             current_price=current_price,
             last_updated=str(df_recent.index[-1]),
             avg_volume=avg_vol
@@ -439,9 +446,17 @@ class SignalDetector:
                 conditions_pending.append("陽線時出来高増加待ち")
         
         total_conditions = len(conditions_met) + len(conditions_pending)
-        score = (len(conditions_met) / total_conditions * 100) if total_conditions > 0 else 0
+        base_score = (len(conditions_met) / total_conditions * 100) if total_conditions > 0 else 0
         
-        estimated_days = 3 if score >= 70 else 5
+        # VCP判定の実行
+        vcp_res = self.vcp_detector.detect(df_full)
+        if vcp_res.status == "detected":
+            conditions_met.append(f"VCP{vcp_res.num_contractions}回後")
+            
+        vcp_score = vcp_res.score
+        reliability_score = (base_score * 0.70) + (vcp_score * 0.30)
+        
+        estimated_days = 3 if base_score >= 70 else 5
         
         avg_vol = float(df_full['Volume'].tail(60).mean()) if 'Volume' in df_full.columns else 0.0
         
@@ -452,7 +467,7 @@ class SignalDetector:
             estimated_days=estimated_days,
             conditions_met=conditions_met,
             conditions_pending=conditions_pending,
-            score=score,
+            score=reliability_score,
             current_price=current_price,
             last_updated=str(df_recent.index[-1]),
             avg_volume=avg_vol

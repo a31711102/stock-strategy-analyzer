@@ -18,8 +18,9 @@
 """
 import pandas as pd
 import numpy as np
-from typing import Dict
+from typing import Dict, Any
 from .base import BaseStrategy
+from src.analysis.vcp_detector import VCPDetector
 from .utils import (
     is_bullish_candle,
     is_golden_cross,
@@ -62,17 +63,19 @@ class TrendReversalUpLong(BaseStrategy):
     - 2日以上連続陽線で出来高増加
     """
     
-    def __init__(self, min_volume: int = 100000, or_conditions_required: bool = False, use_vectorized: bool = True):
+    def __init__(self, min_volume: int = 100000, or_conditions_required: bool = False, use_vectorized: bool = True, config_path: str = "config.yaml"):
         """
         Args:
             min_volume: 最小出来高
             or_conditions_required: OR条件を必須とするか（False=オプショナル、True=必須）
             use_vectorized: ベクトル化版を使用するか
+            config_path: 設定ファイルのパス
         """
         super().__init__()
         self.min_volume = min_volume
         self.or_conditions_required = or_conditions_required
         self.use_vectorized = use_vectorized
+        self.vcp_detector = VCPDetector(config_path)
     
     def name(self) -> str:
         return "下降トレンド反転"
@@ -205,7 +208,15 @@ class TrendReversalUpLong(BaseStrategy):
             
             conditions = self.check_conditions(df, i)
             
-            if all(conditions.values()):
+            # エントリー判定のための基礎条件
+            base_keys = [
+                '出来高前日比1.2倍以上', '出来高10万以上', '短期MA>中期MA', 'ゴールデンクロス',
+                '長期MA上向き', '実体が大きすぎない', '下ヒゲ長い', '株価>長期MA',
+                '当日or前日陽線', 'RCI反転', 'OR条件グループ'
+            ]
+            is_entry = all(conditions.get(k, False) for k in base_keys)
+            
+            if is_entry:
                 signals.iloc[i] = 1
             
             elif i > 0 and signals.iloc[i-1] == 1:
@@ -216,7 +227,7 @@ class TrendReversalUpLong(BaseStrategy):
         
         return signals
     
-    def check_conditions(self, df: pd.DataFrame, index: int) -> Dict[str, bool]:
+    def check_conditions(self, df: pd.DataFrame, index: int) -> Dict[str, Any]:
         """各条件のチェック"""
         row = df.iloc[index]
         prev_row = df.iloc[index - 1]
@@ -280,5 +291,37 @@ class TrendReversalUpLong(BaseStrategy):
             conditions['OR条件グループ'] = any(or_conditions.values())
         else:
             conditions['OR条件グループ'] = True
+            
+        # パターン検出（VCP）
+        vcp_res = self.vcp_detector.detect_at(df, index)
+        conditions['ベース品質_VCP'] = vcp_res.status
+        
+        # 信頼度スコアの計算
+        base_score = 0.0
+        base_keys = [
+            '出来高前日比1.2倍以上', '出来高10万以上', '短期MA>中期MA', 'ゴールデンクロス',
+            '長期MA上向き', '実体が大きすぎない', '下ヒゲ長い', '株価>長期MA',
+            '当日or前日陽線', 'RCI反転'
+        ]
+        for k in base_keys:
+            if conditions.get(k, False):
+                base_score += 10.0
+                
+        vcp_score = vcp_res.score
+        reliability_score = (base_score * 0.70) + (vcp_score * 0.30)
+        
+        # ランク判定
+        if reliability_score >= 90:
+            rank = "S"
+        elif reliability_score >= 80:
+            rank = "A"
+        elif reliability_score >= 70:
+            rank = "B"
+        elif reliability_score >= 50:
+            rank = "C"
+        else:
+            rank = "D"
+            
+        conditions['ブレイク信頼度'] = f"{reliability_score:.1f} ({rank})"
         
         return conditions

@@ -129,3 +129,67 @@ class TestStrategyInterface:
         strategy = cls()
         params = strategy.get_parameters()
         assert isinstance(params, dict)
+
+
+# ===========================================================================
+# Test: 100点満点化およびCWH/VCP加点ロジックの検証
+# ===========================================================================
+
+class TestStrategiesScoring:
+    """戦略の100点満点化およびCWH/VCP加点ロジックのテスト"""
+
+    def test_breakout_scoring_structure(self, indicator_df):
+        """BreakoutNewHighLongのスコアリングと戻り値構造の検証"""
+        strategy = BreakoutNewHighLong()
+        # 最新インデックスでの判定
+        idx = len(indicator_df) - 1
+        res = strategy.check_conditions(indicator_df, idx)
+        
+        # 必要なキーが存在することを確認
+        assert 'ベース品質_CWH' in res
+        assert 'ベース品質_VCP' in res
+        assert 'ブレイク信頼度' in res
+        
+        # スコアとランクのパース
+        reliability = res['ブレイク信頼度']
+        score_part, rank_part = reliability.split(" (")
+        score = float(score_part)
+        rank = rank_part.rstrip(")")
+        
+        assert 0.0 <= score <= 100.0
+        assert rank in ["S", "A", "B", "C", "D"]
+
+    def test_trend_reversal_scoring_structure(self, indicator_df):
+        """TrendReversalUpLongのスコアリングと戻り値構造の検証"""
+        strategy = TrendReversalUpLong()
+        idx = len(indicator_df) - 1
+        res = strategy.check_conditions(indicator_df, idx)
+        
+        assert 'ベース品質_VCP' in res
+        assert 'ブレイク信頼度' in res
+        
+        reliability = res['ブレイク信頼度']
+        score_part, rank_part = reliability.split(" (")
+        score = float(score_part)
+        rank = rank_part.rstrip(")")
+        
+        assert 0.0 <= score <= 100.0
+        assert rank in ["S", "A", "B", "C", "D"]
+
+    def test_retry_new_high_scoring_structure(self, indicator_df):
+        """RetryNewHighLongのスコアリングと戻り値構造の検証"""
+        strategy = RetryNewHighLong()
+        idx = len(indicator_df) - 1
+        res = strategy.check_conditions(indicator_df, idx)
+        
+        assert 'ベース品質_CWH' in res
+        assert 'ブレイク信頼度' in res
+        
+        reliability = res['ブレイク信頼度']
+        score_part, rank_part = reliability.split(" (")
+        score = float(score_part)
+        rank = rank_part.rstrip(")")
+        
+        assert 0.0 <= score <= 100.0
+        assert rank in ["S", "A", "B", "C", "D"]
+

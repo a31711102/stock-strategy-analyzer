@@ -238,19 +238,20 @@ class BreakoutNewHighLong(BaseStrategy):
             if conditions.get(k, False):
                 base_score += 25.0
                 
-        cwh_bonus = cwh_res.score * 0.5
-        vcp_bonus = vcp_res.score * 0.5
+        # CWHはformingのみ加点
+        cwh_score = cwh_res.score if cwh_res.status == "forming" else 0.0
+        vcp_score = vcp_res.score
         
-        reliability_score = base_score + cwh_bonus + vcp_bonus
+        reliability_score = (base_score * 0.70) + (cwh_score * 0.15) + (vcp_score * 0.15)
         
-        # ランク判定
-        if reliability_score >= 160:
+        # ランク判定（100点満点ベース）
+        if reliability_score >= 90:
             rank = "S"
-        elif reliability_score >= 130:
-            rank = "A"
-        elif reliability_score >= 100:
-            rank = "B"
         elif reliability_score >= 80:
+            rank = "A"
+        elif reliability_score >= 70:
+            rank = "B"
+        elif reliability_score >= 50:
             rank = "C"
         else:
             rank = "D"
