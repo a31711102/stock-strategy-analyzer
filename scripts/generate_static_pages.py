@@ -871,8 +871,10 @@ def generate_low_hunter_html():
 
     html = template_path.read_text(encoding='utf-8')
     html = html.replace('extends "base.html"', 'extends "static_base.html"')
-    import re
-    html = re.sub(r"{{ url_for.*?\s*}}", "{{ static_root }}static/js/low_hunter.js", html)
+    # 適切な置換処理
+    html = html.replace("{{ url_for('index') }}", "{{ site_root }}index.html")
+    html = html.replace("{{ url_for('stock_detail', code=stock.ticker) }}", "https://finance.yahoo.co.jp/quote/{{ stock.ticker }}.T")
+    html = html.replace("{{ url_for('static', filename='js/low_hunter.js') }}", "{{ static_root }}static/js/low_hunter.js")
     return html
 
 
@@ -884,8 +886,10 @@ def generate_high_hunter_html():
 
     html = template_path.read_text(encoding='utf-8')
     html = html.replace('extends "base.html"', 'extends "static_base.html"')
-    import re
-    html = re.sub(r"{{ url_for.*?\s*}}", "{{ static_root }}static/js/high_hunter.js", html)
+    # 適切な置換処理
+    html = html.replace("{{ url_for('index') }}", "{{ site_root }}index.html")
+    html = html.replace("{{ url_for('stock_detail', code=stock.ticker) }}", "https://finance.yahoo.co.jp/quote/{{ stock.ticker }}.T")
+    html = html.replace("{{ url_for('static', filename='js/high_hunter.js') }}", "{{ static_root }}static/js/high_hunter.js")
     return html
 
 def generate_all():
