@@ -93,14 +93,19 @@ def generate_base_html():
     <meta name="robots" content="noindex, nofollow">
     <title>{% block title %}Stock Strategy Analyzer{% endblock %}</title>
     <link rel="stylesheet" href="{{ static_root }}static/css/main.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header class="header">
         <div class="container">
             <a href="{{ site_root }}index.html" class="logo">
-                📊 Stock Strategy Analyzer
+                <span class="logo-icon">S</span>
+                <span>Stock Strategy Analyzer</span>
             </a>
+            <nav class="nav">
+                <a href="{{ site_root }}low-hunter/index.html" class="nav-link">📉 黄金の指値ボード</a>
+                <a href="{{ site_root }}high-hunter/index.html" class="nav-link">📈 黄金の空売りボード</a>
+            </nav>
         </div>
     </header>
 
@@ -124,115 +129,132 @@ def generate_index_html():
     """トップページ（戦略一覧）のテンプレート"""
     return '''{% extends "static_base.html" %}
 
-{% block title %}戦略一覧 - Stock Strategy Analyzer{% endblock %}
+{% block title %}今日のおすすめ候補 - Stock Strategy Analyzer{% endblock %}
 
 {% block content %}
-<section class="hero">
-    <h1>Stock Strategy Analyzer</h1>
-    <p class="hero-sub">バックテスト結果に基づく銘柄・戦略の適合度分析</p>
-
-    {% if metadata %}
-    <div class="stats-bar">
-        <div class="stat">
-            <span class="stat-value">{{ metadata.processed_stocks or 0 }}</span>
-            <span class="stat-label">処理済み銘柄</span>
-        </div>
-        <div class="stat">
-            <span class="stat-value">{{ metadata.strategies|length }}</span>
-            <span class="stat-label">投資戦略</span>
-        </div>
-        <div class="stat">
-            <span class="stat-value">{{ metadata.last_updated[:10] if metadata.last_updated else '-' }}</span>
-            <span class="stat-label">最終更新</span>
-        </div>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div style="font-size:12px;font-weight:700;letter-spacing:.14em;color:#4338CA;text-transform:uppercase">COCKPIT · 司令塔</div>
+    <div class="market-filter">
+        <a href="{{ site_root }}index.html" class="market-tab {{ 'active' if not market_suffix else '' }}">全市場</a>
+        <a href="{{ site_root }}index_prime.html" class="market-tab {{ 'active' if market_suffix else '' }}">東証プライム</a>
     </div>
-    {% endif %}
-
-    <div class="nav-links">
-        <a href="{{ site_root }}index{{ market_suffix }}.html" class="nav-link active">📊 適合度ランキング</a>
-        <a href="{{ site_root }}approaching/index{{ market_suffix }}.html" class="nav-link">🎯 シグナル接近中</a>
-        <a href="{{ site_root }}screener/index.html" class="nav-link">🔥 ボラティリティスクリーナー</a>
-        <a href="{{ site_root }}low-hunter/index.html" class="nav-link">📉 黄金の指値ボード</a>
-        <a href="{{ site_root }}high-hunter/index.html" class="nav-link">📈 黄金の空売りボード</a>
-    </div>
-</section>
-
-<div class="market-filter">
-    <span class="market-filter-label">市場:</span>
-    <a href="{{ site_root }}index.html" class="market-tab {{ 'active' if not market_suffix else '' }}">全市場</a>
-    <a href="{{ site_root }}index_prime.html" class="market-tab {{ 'active' if market_suffix else '' }}">東証プライム</a>
 </div>
 
-<section class="criteria-section">
-    <details class="criteria-details">
-        <summary class="criteria-summary">📋 適合度の評価基準</summary>
-        <div class="criteria-content">
-            <p class="criteria-intro">適合度は以下の指標を総合的に評価して算出されます（40%以上のみランキングに表示）</p>
-            <div class="criteria-grid">
-                <div class="criteria-item">
-                    <h4>📈 リターン（40%）</h4>
-                    <ul>
-                        <li><span class="ok">OK</span> +20%以上: 高リターン</li>
-                        <li><span class="ok">OK</span> +10%〜20%: 中リターン</li>
-                        <li><span class="mid">中</span> 0%〜10%: 小リターン</li>
-                        <li><span class="ng">NG</span> マイナス: 損失</li>
-                    </ul>
+<div style="background:#F4F5F7; padding: 26px 28px 28px; border-radius: 14px; border: 1px solid var(--border);">
+    <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:4px">
+        <h2 style="font-size:22px;font-weight:700;letter-spacing:-.01em">今日のおすすめ候補</h2>
+        <span style="font-size:12.5px;color:#7A828F">全機能を横断したエントリー候補（{{ last_updated }} 時点）</span>
+    </div>
+    <div style="height:1px;background:#E4E7EC;margin:14px 0 20px"></div>
+
+    <div class="cockpit-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
+        <!-- DAYTRADE column -->
+        <div>
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:13px">
+                <span style="width:9px;height:9px;border-radius:50%;background:#D97706"></span>
+                <span style="font-weight:700;font-size:15px">デイトレ・当日</span>
+                <span style="font-size:11.5px;color:#C2740A;background:#FBF0DF;border:1px solid #F0DCBE;padding:1.5px 8px;border-radius:20px;font-weight:600">本日の指値で仕込む</span>
+            </div>
+
+            <!-- 指値ボード(買い) -->
+            <div style="background:#fff;border:1px solid #E4E7EC;border-radius:12px;padding:14px 16px;margin-bottom:14px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                    <span style="font-weight:700;font-size:13.5px">黄金の指値ボード <span style="color:#15803D">▲買い</span></span>
+                    <a href="{{ site_root }}low-hunter/index.html" style="font-size:12px;color:#5A6172;text-decoration:none">全件を見る →</a>
                 </div>
-                <div class="criteria-item">
-                    <h4>🎯 勝率（30%）</h4>
-                    <ul>
-                        <li><span class="ok">OK</span> 60%以上: 高勝率</li>
-                        <li><span class="mid">中</span> 40%〜60%: 中勝率</li>
-                        <li><span class="ng">NG</span> 40%未満: 低勝率</li>
-                    </ul>
+                <div style="display:grid;grid-template-columns:20px 44px minmax(0,1fr) 54px 82px;gap:8px;font-size:10.5px;color:#98A0AE;font-weight:600;padding:0 2px 5px;border-bottom:1px solid #E4E7EC">
+                    <span></span><span>コード</span><span>銘柄名</span><span style="text-align:right">勝率</span><span style="text-align:right">指値</span>
                 </div>
-                <div class="criteria-item">
-                    <h4>🔢 取引回数（30%）</h4>
-                    <ul>
-                        <li><span class="ok">OK</span> 10回以上: 十分な機会</li>
-                        <li><span class="mid">中</span> 5〜9回: 機会あり</li>
-                        <li><span class="ng">NG</span> 5回未満: 機会少</li>
-                    </ul>
+                {% if low_hunter_top3 %}
+                    {% for r in low_hunter_top3 %}
+                    <div style="display:grid;grid-template-columns:20px 44px minmax(0,1fr) 54px 82px;gap:8px;align-items:center;font-size:13px;padding:8px 2px;border-bottom:1px solid #F1F3F5">
+                        <span style="color:#B58A1B;font-weight:700;font-variant-numeric:tabular-nums">{{ loop.index }}</span>
+                        <a href="https://finance.yahoo.co.jp/quote/{{ r.ticker }}.T" target="_blank" style="font-family:Inter,sans-serif;color:#C2740A;font-weight:600;font-variant-numeric:tabular-nums;text-decoration:none;">{{ r.ticker }}</a>
+                        <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span>
+                        <span style="text-align:right;color:#15803D;font-weight:600;font-variant-numeric:tabular-nums">{{ "%.1f"|format(r.win_rate) if r.win_rate is not none else '-' }}%</span>
+                        <span style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">¥{{ "{:,.0f}".format(r.target_price|int) if r.target_price is not none else '-' }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="font-size:12px;color:#98A0AE;text-align:center;padding:10px 0;">候補がありません</div>
+                {% endif %}
+            </div>
+
+            <!-- 空売りボード(売り) -->
+            <div style="background:#fff;border:1px solid #E4E7EC;border-radius:12px;padding:14px 16px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                    <span style="font-weight:700;font-size:13.5px">黄金の空売りボード <span style="color:#C03434">▼売り</span></span>
+                    <a href="{{ site_root }}high-hunter/index.html" style="font-size:12px;color:#5A6172;text-decoration:none">全件を見る →</a>
                 </div>
-                <div class="criteria-item">
-                    <h4>📉 最大下落率</h4>
-                    <ul>
-                        <li><span class="ok">OK</span> 20%未満: 低リスク</li>
-                        <li><span class="mid">中</span> 20%〜40%: 中リスク</li>
-                        <li><span class="ng">NG</span> 40%以上: 高リスク</li>
-                    </ul>
-                    <p class="note">※最高値からの最大下落幅</p>
+                <div style="display:grid;grid-template-columns:20px 44px minmax(0,1fr) 54px 82px;gap:8px;font-size:10.5px;color:#98A0AE;font-weight:600;padding:0 2px 5px;border-bottom:1px solid #E4E7EC">
+                    <span></span><span>コード</span><span>銘柄名</span><span style="text-align:right">勝率</span><span style="text-align:right">空売り</span>
                 </div>
+                {% if high_hunter_top3 %}
+                    {% for r in high_hunter_top3 %}
+                    <div style="display:grid;grid-template-columns:20px 44px minmax(0,1fr) 54px 82px;gap:8px;align-items:center;font-size:13px;padding:8px 2px;border-bottom:1px solid #F1F3F5">
+                        <span style="color:#B58A1B;font-weight:700;font-variant-numeric:tabular-nums">{{ loop.index }}</span>
+                        <a href="https://finance.yahoo.co.jp/quote/{{ r.ticker }}.T" target="_blank" style="font-family:Inter,sans-serif;color:#C2740A;font-weight:600;font-variant-numeric:tabular-nums;text-decoration:none;">{{ r.ticker }}</a>
+                        <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span>
+                        <span style="text-align:right;color:#15803D;font-weight:600;font-variant-numeric:tabular-nums">{{ "%.1f"|format(r.win_rate) if r.win_rate is not none else '-' }}%</span>
+                        <span style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">¥{{ "{:,.0f}".format(r.target_price|int) if r.target_price is not none else '-' }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="font-size:12px;color:#98A0AE;text-align:center;padding:10px 0;">候補がありません</div>
+                {% endif %}
             </div>
         </div>
-    </details>
-</section>
 
-<section class="strategies-section">
-    <h2>戦略別ランキング</h2>
-    <div class="strategy-grid">
-        {% for strategy in strategies %}
-        <a href="{{ site_root }}strategy/{{ strategy.name_encoded }}{{ market_suffix }}.html" class="strategy-card">
-            <h3 class="strategy-name">{{ strategy.name }}</h3>
-
-            {% if strategy.top3 %}
-            <div class="top3-preview">
-                {% for item in strategy.top3 %}
-                <div class="preview-item">
-                    <span class="rank">#{{ item.rank }}</span>
-                    <span class="code">{{ item.code }}</span>
-                    <span class="name">{{ item.name }}</span>
-                    <span class="score">{{ "%.1f"|format(item.score) }}%</span>
-                </div>
-                {% endfor %}
+        <!-- SWING column -->
+        <div>
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:13px">
+                <span style="width:9px;height:9px;border-radius:50%;background:#4338CA"></span>
+                <span style="font-weight:700;font-size:15px">スイング・中長期</span>
+                <span style="font-size:11.5px;color:#4338CA;background:#EEF0FB;border:1px solid #D9DCF6;padding:1.5px 8px;border-radius:20px;font-weight:600">数日〜数週で狙う</span>
             </div>
-            {% endif %}
 
-            <span class="card-arrow">→</span>
-        </a>
-        {% endfor %}
+            <!-- シグナル接近中 -->
+            <div style="background:#fff;border:1px solid #E4E7EC;border-radius:12px;padding:14px 16px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                    <span style="font-weight:700;font-size:13.5px">シグナル接近中</span>
+                    <a href="{{ site_root }}approaching/index{{ market_suffix }}.html" style="font-size:12px;color:#5A6172;text-decoration:none">全件を見る →</a>
+                </div>
+                <div style="display:grid;grid-template-columns:minmax(0,108px) 44px minmax(0,1fr) 72px;gap:8px;font-size:10.5px;color:#98A0AE;font-weight:600;padding:0 2px 5px;border-bottom:1px solid #E4E7EC">
+                    <span>戦略</span><span>コード</span><span>銘柄名</span><span style="text-align:right">発生まで</span>
+                </div>
+                {% if approaching_top %}
+                    {% for r in approaching_top %}
+                    <div style="display:grid;grid-template-columns:minmax(0,108px) 44px minmax(0,1fr) 72px;gap:8px;align-items:center;font-size:13px;padding:8px 2px;border-bottom:1px solid #F1F3F5">
+                        <span style="color:#4338CA;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px">{{ r.strat }}</span>
+                        <a href="https://finance.yahoo.co.jp/quote/{{ r.code }}.T" target="_blank" style="font-family:Inter,sans-serif;color:#5A6172;font-weight:600;font-variant-numeric:tabular-nums;text-decoration:none;">{{ r.code }}</a>
+                        <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span>
+                        <span style="text-align:right;color:#C2740A;font-weight:600;font-size:12px">約{{ r.estimated_days or '?' }}日後</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="font-size:12px;color:#98A0AE;text-align:center;padding:10px 0;">接近中の銘柄はありません</div>
+                {% endif %}
+            </div>
+        </div>
     </div>
-</section>
+
+    <!-- secondary nav -->
+    <div style="display:flex;align-items:center;gap:10px;margin-top:22px;padding-top:16px;border-top:1px solid #E4E7EC;flex-wrap:wrap">
+        <span style="font-size:12px;color:#98A0AE">その他:</span>
+        {% if strategies %}
+            {% set first_strat = strategies[0].name_encoded %}
+            <a href="{{ site_root }}strategy/{{ first_strat }}{{ market_suffix }}.html" style="font-size:12.5px;color:#5A6172;background:#fff;border:1px solid #E4E7EC;padding:5px 12px;border-radius:8px;text-decoration:none;">適合度ランキング</a>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    @media (max-width: 768px) {
+        .cockpit-grid {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
 {% endblock %}'''
 
 
@@ -244,21 +266,25 @@ def generate_strategy_ranking_html():
 
 {% block content %}
 <nav class="breadcrumb">
-    <a href="{{ site_root }}index{{ market_suffix }}.html">トップ</a>
-    <span>›</span>
-    <span>{{ strategy_name }}</span>
+    <a href="{{ site_root }}index{{ market_suffix }}.html">SSA</a>
+    <span class="sep">/</span>
+    <span>スイング</span>
+    <span class="sep">/</span>
+    <span>適合度ランキング</span>
+    <span class="sep">/</span>
+    <span class="current">{{ strategy_name }}</span>
 </nav>
 
 <section class="ranking-section">
-    <header class="section-header">
-        <h1>{{ strategy_name }}</h1>
-        <p class="subtitle">適合度ランキング Top {{ rankings|length }}{{ '（東証プライム）' if market_suffix else '' }}</p>
-    </header>
-
-    <div class="market-filter">
-        <span class="market-filter-label">市場:</span>
-        <a href="{{ site_root }}strategy/{{ strategy_name_encoded }}.html" class="market-tab {{ 'active' if not market_suffix else '' }}">全市場</a>
-        <a href="{{ site_root }}strategy/{{ strategy_name_encoded }}_prime.html" class="market-tab {{ 'active' if market_suffix else '' }}">東証プライム</a>
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:18px; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2 style="font-size:21px; font-weight:700;">{{ strategy_name }}</h2>
+            <div style="font-size:13px; color:#5A6172; margin-top:2px;">適合度ランキング Top {{ rankings|length }}{{ '（東証プライム）' if market_suffix else '' }}</div>
+        </div>
+        <div class="market-filter">
+            <a href="{{ site_root }}strategy/{{ strategy_name_encoded }}.html" class="market-tab {{ 'active' if not market_suffix else '' }}">全市場</a>
+            <a href="{{ site_root }}strategy/{{ strategy_name_encoded }}_prime.html" class="market-tab {{ 'active' if market_suffix else '' }}">東証プライム</a>
+        </div>
     </div>
 
     <div class="strategy-nav">
@@ -270,39 +296,59 @@ def generate_strategy_ranking_html():
         {% endfor %}
     </div>
 
-    <div class="ranking-table-wrapper">
-        <table class="ranking-table">
-            <thead>
-                <tr>
-                    <th class="col-rank">順位</th>
-                    <th class="col-code">コード</th>
-                    <th class="col-name">銘柄名</th>
-                    <th class="col-score">スコア</th>
-                    <th class="col-reason">評価</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in rankings %}
-                <tr>
-                    <td class="col-rank">
-                        <span class="rank-badge rank-{{ item.rank }}">{{ item.rank }}</span>
-                    </td>
-                    <td class="col-code">{{ item.code }}</td>
-                    <td class="col-name">{{ item.name }}</td>
-                    <td class="col-score">
-                        <div class="score-bar">
-                            <div class="score-fill" style="width: {{ item.score }}%"></div>
-                            <span class="score-value">{{ "%.1f"|format(item.score) }}%</span>
-                        </div>
-                    </td>
-                    <td class="col-reason">
-                        <span class="reason-short">{{ item.reason.split('\\n')[0] if item.reason else '' }}</span>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    {% if rankings %}
+    <div style="background:#fff; border:1px solid #E4E7EC; border-radius:12px; overflow:hidden;">
+        <div style="overflow-x:auto;">
+            <table style="font-size:13px;">
+                <thead>
+                    <tr style="background:#FAFBFC; color:#5A6172; font-size:11.5px;">
+                        <th style="padding:9px 12px; text-align:center; font-weight:600; width:80px;">順位</th>
+                        <th style="padding:9px 12px; text-align:left; font-weight:600; width:100px;">コード</th>
+                        <th style="padding:9px 12px; text-align:left; font-weight:600;">銘柄名</th>
+                        <th style="padding:9px 12px; text-align:right; font-weight:600; width:180px;">スコア</th>
+                        <th style="padding:9px 12px; text-align:left; font-weight:600;">主要条件</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in rankings %}
+                    <tr style="background: {{ '#FFFFFF' if loop.index0 % 2 == 0 else '#FBFBFC' }};">
+                        <td style="padding:11px 12px; text-align:center;">
+                            <span style="display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; font-weight:700; font-size:11px;
+                                {% if item.rank == 1 %}background:#FBF3DC; color:#B58A1B; border:1px solid #F0DCBE;
+                                {% elif item.rank == 2 %}background:#F1F2F4; color:#5A6172; border:1px solid #E4E7EC;
+                                {% elif item.rank == 3 %}background:#EEF0FB; color:#4338CA; border:1px solid #D9DCF6;
+                                {% else %}background:transparent; color:#98A0AE;{% endif %}">
+                                {{ item.rank }}
+                            </span>
+                        </td>
+                        <td style="padding:11px 12px;">
+                            <a href="https://finance.yahoo.co.jp/quote/{{ item.code }}.T" target="_blank" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:600; text-decoration:none;">
+                                {{ item.code }}
+                            </a>
+                        </td>
+                        <td style="padding:11px 12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.name }}</td>
+                        <td style="padding:11px 12px; text-align:right;">
+                            <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end;">
+                                <div style="width:70px; height:6px; background:#EEF0FB; border-radius:3px; overflow:hidden; display:inline-block;">
+                                    <div style="height:100%; background:var(--accent-primary); width: {{ item.score }}%"></div>
+                                </div>
+                                <span style="font-weight:700; font-variant-numeric:tabular-nums; color:var(--accent-primary);">{{ "%.1f"|format(item.score) }}%</span>
+                            </div>
+                        </td>
+                        <td style="padding:11px 12px; color:#5A6172;">
+                            <span style="font-size:12px;">{{ item.reason.split('\\n')[0] if item.reason else '' }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
+    {% else %}
+    <div style="text-align: center; padding: 4rem; color: var(--text-secondary); background: var(--bg-card); border-radius: 12px; border: 1px dashed var(--border);">
+        <p>該当する適合銘柄がありませんでした。</p>
+    </div>
+    {% endif %}
 </section>
 {% endblock %}'''
 
@@ -314,147 +360,67 @@ def generate_approaching_index_html():
 {% block title %}シグナル接近中 - Stock Strategy Analyzer{% endblock %}
 
 {% block content %}
-<section class="hero approaching-hero">
-    <h1>🎯 シグナル接近中の銘柄</h1>
-    <p class="hero-sub">直近1〜3ヶ月のデータから、近日中にシグナル発生が予想される銘柄</p>
+<nav class="breadcrumb">
+    <a href="{{ site_root }}index{{ market_suffix }}.html">SSA</a>
+    <span class="sep">/</span>
+    <span>スイング</span>
+    <span class="sep">/</span>
+    <span class="current">シグナル接近中</span>
+</nav>
 
-    {% if metadata %}
-    <div class="stats-bar">
-        <div class="stat">
-            <span class="stat-value">{{ strategies|length }}</span>
-            <span class="stat-label">戦略</span>
+<section class="approaching-section">
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:18px; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2 style="font-size:21px; font-weight:700;">🎯 シグナル接近中の銘柄</h2>
+            <div style="font-size:13px; color:#5A6172; margin-top:2px;">近日中にエントリー条件を満たすと予想される銘柄</div>
         </div>
-        <div class="stat">
-            <span class="stat-value">{{ metadata.last_updated[:10] if metadata.last_updated else '-' }}</span>
-            <span class="stat-label">最終更新</span>
+        <div class="market-filter">
+            <a href="{{ site_root }}approaching/index.html" class="market-tab {{ 'active' if not market_suffix else '' }}">全市場</a>
+            <a href="{{ site_root }}approaching/index_prime.html" class="market-tab {{ 'active' if market_suffix else '' }}">東証プライム</a>
         </div>
     </div>
-    {% endif %}
-
-    <div class="nav-links">
-        <a href="{{ site_root }}index{{ market_suffix }}.html" class="nav-link">📊 適合度ランキング</a>
-        <a href="{{ site_root }}approaching/index{{ market_suffix }}.html" class="nav-link active">🎯 シグナル接近中</a>
-        <a href="{{ site_root }}screener/index.html" class="nav-link">🔥 ボラティリティスクリーナー</a>
-        <a href="{{ site_root }}low-hunter/index.html" class="nav-link">📉 黄金の指値ボード</a>
-        <a href="{{ site_root }}high-hunter/index.html" class="nav-link">📈 黄金の空売りボード</a>
-    </div>
-</section>
-
-<div class="market-filter">
-    <span class="market-filter-label">市場:</span>
-    <a href="{{ site_root }}approaching/index.html" class="market-tab {{ 'active' if not market_suffix else '' }}">全市場</a>
-    <a href="{{ site_root }}approaching/index_prime.html" class="market-tab {{ 'active' if market_suffix else '' }}">東証プライム</a>
-</div>
-
-<section class="criteria-section">
-    <details class="criteria-details">
-        <summary class="criteria-summary">📋 シグナル接近の判定基準</summary>
-        <div class="criteria-content">
-            <p class="criteria-intro">各戦略のエントリー条件にどれだけ近づいているかを分析し、残り日数を推定しています。</p>
-            <div class="criteria-grid">
-                <div class="criteria-item">
-                    <h4>🎯 接近スコア</h4>
-                    <ul>
-                        <li><span class="ok">OK</span> 80%以上: 1日以内</li>
-                        <li><span class="ok">OK</span> 60%〜80%: 3日以内</li>
-                        <li><span class="mid">中</span> 40%〜60%: 1週間以内</li>
-                    </ul>
-                </div>
-                <div class="criteria-item">
-                    <h4>📅 推定日数</h4>
-                    <p>条件の達成度合いから、シグナル発生までの推定日数を算出</p>
-                </div>
-            </div>
-        </div>
-    </details>
-</section>
-
-<section class="strategies-section">
-    <h2>戦略別 接近銘柄</h2>
 
     {% if strategies %}
-    <div class="strategy-grid">
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:18px;">
         {% for strategy in strategies %}
-        <a href="{{ site_root }}approaching/{{ strategy.name_encoded }}{{ market_suffix }}.html" class="strategy-card approaching-card">
-            <h3 class="strategy-name">{{ strategy.name }}</h3>
-
-            {% if strategy.top3 %}
-            <div class="top3-preview">
-                {% for item in strategy.top3 %}
-                <div class="preview-item approaching-item">
-                    <span class="rank">#{{ item.rank }}</span>
-                    <span class="code">{{ item.code }}</span>
-                    <span class="name">{{ item.name }}</span>
-                    <span class="days-badge">約{{ item.estimated_days or '?' }}日後</span>
+        <div style="background:#fff; border:1px solid #E4E7EC; border-radius:12px; padding:16px 18px; border-left:4px solid var(--accent-primary); display:flex; flex-direction:column; justify-content:space-between; min-height:160px; position:relative;">
+            <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h3 style="font-size:15px; font-weight:700; color:var(--text-primary);">{{ strategy.name }}</h3>
                 </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="no-signals">
-                <p>接近中の銘柄はありません</p>
-            </div>
-            {% endif %}
 
-            <span class="card-arrow">→</span>
-        </a>
+                {% if strategy.top3 %}
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    {% for item in strategy.top3 %}
+                    <div style="display:grid; grid-template-columns: 24px 44px minmax(0, 1fr) auto; gap:8px; align-items:center; font-size:13px; padding-bottom:6px; border-bottom:1px solid #F1F3F5;">
+                        <span style="color:#98A0AE; font-weight:600; font-size:11px;">#{{ loop.index }}</span>
+                        <span style="font-family:Inter,sans-serif; color:#5A6172; font-weight:600; font-variant-numeric:tabular-nums;">{{ item.code }}</span>
+                        <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.name }}</span>
+                        <span style="font-size:11px; font-weight:700; color:#C2740A; background:#FBF0DF; border:1px solid #F0DCBE; padding:1px 6px; border-radius:10px; font-variant-numeric:tabular-nums;">
+                            約{{ item.estimated_days or '?' }}日後
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div style="color:#98A0AE; font-size:12.5px; text-align:center; padding:20px 0;">接近中の銘柄はありません</div>
+                {% endif %}
+            </div>
+            
+            <div style="margin-top:14px; text-align:right;">
+                <a href="{{ site_root }}approaching/{{ strategy.name_encoded }}{{ market_suffix }}.html" style="font-size:12px; color:var(--accent-primary); text-decoration:none; font-weight:600;">
+                    すべての接近銘柄を見る →
+                </a>
+            </div>
+        </div>
         {% endfor %}
     </div>
     {% else %}
-    <div class="no-data">
+    <div style="text-align: center; padding: 4rem; color: var(--text-secondary); background: var(--bg-card); border-radius: 12px; border: 1px dashed var(--border);">
         <p>接近シグナルのデータがありません。</p>
     </div>
     {% endif %}
 </section>
-
-<style>
-    .approaching-hero {
-        background: linear-gradient(135deg, #1a365d 0%, #2d4a73 100%);
-    }
-    .nav-links {
-        margin-top: 1.5rem;
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-    .nav-link {
-        padding: 0.5rem 1rem;
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-        text-decoration: none;
-        border-radius: 20px;
-        transition: all 0.2s;
-    }
-    .nav-link:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
-    .nav-link.active {
-        background: rgba(255, 255, 255, 0.25);
-        font-weight: bold;
-    }
-    .approaching-card {
-        border-left: 4px solid #f59e0b;
-    }
-    .approaching-item .days-badge {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-        padding: 0.2rem 0.5rem;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: bold;
-        white-space: nowrap;
-    }
-    .no-signals {
-        padding: 1rem;
-        color: #6b7280;
-        text-align: center;
-    }
-    .no-data {
-        text-align: center;
-        padding: 3rem;
-        color: #6b7280;
-    }
-</style>
 {% endblock %}'''
 
 
@@ -465,257 +431,131 @@ def generate_approaching_strategy_html():
 {% block title %}{{ strategy_name }} 接近シグナル - Stock Strategy Analyzer{% endblock %}
 
 {% block content %}
-<section class="hero strategy-hero approaching-hero">
-    <h1>🎯 {{ strategy_name }}</h1>
-    <p class="hero-sub">シグナル接近中の銘柄（Top 50・出来高50万以上{{ '・東証プライム' if market_suffix else '' }}）</p>
-
-    <div class="nav-links">
-        <a href="{{ site_root }}approaching/index{{ market_suffix }}.html" class="nav-link">← 戦略一覧へ戻る</a>
-        <a href="{{ site_root }}strategy/{{ strategy_name_encoded }}{{ market_suffix }}.html" class="nav-link">📊 適合度ランキング</a>
-        <a href="{{ site_root }}screener/index.html" class="nav-link">🔥 スクリーナー</a>
-    </div>
-</section>
-
-<div class="market-filter">
-    <span class="market-filter-label">市場:</span>
-    <a href="{{ site_root }}approaching/{{ strategy_name_encoded }}.html" class="market-tab {{ 'active' if not market_suffix else '' }}">全市場</a>
-    <a href="{{ site_root }}approaching/{{ strategy_name_encoded }}_prime.html" class="market-tab {{ 'active' if market_suffix else '' }}">東証プライム</a>
-</div>
+<nav class="breadcrumb">
+    <a href="{{ site_root }}index{{ market_suffix }}.html">SSA</a>
+    <span class="sep">/</span>
+    <a href="{{ site_root }}approaching/index{{ market_suffix }}.html">シグナル接近中</a>
+    <span class="sep">/</span>
+    <span class="current">{{ strategy_name }}</span>
+</nav>
 
 <section class="ranking-section">
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:18px; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2 style="font-size:21px; font-weight:700;">🎯 {{ strategy_name }}</h2>
+            <div style="font-size:13px; color:#5A6172; margin-top:2px;">シグナル接近中の銘柄（Top 50・出来高50万以上{{ '・東証プライム' if market_suffix else '' }}）</div>
+        </div>
+        <div class="market-filter">
+            <a href="{{ site_root }}approaching/{{ strategy_name_encoded }}.html" class="market-tab {{ 'active' if not market_suffix else '' }}">全市場</a>
+            <a href="{{ site_root }}approaching/{{ strategy_name_encoded }}_prime.html" class="market-tab {{ 'active' if market_suffix else '' }}">東証プライム</a>
+        </div>
+    </div>
+
     {% if signals %}
-    <table class="ranking-table approaching-table">
-        <thead>
-            <tr>
-                <th class="rank-col">順位</th>
-                <th class="code-col">コード</th>
-                <th class="name-col">銘柄名</th>
-                <th class="days-col">推定日数</th>
-                <th class="score-col">接近度</th>
-                <th class="vol-col" colspan="3">ボラティリティ</th>
-                <th class="volume-col">平均出来高</th>
-                <th class="conditions-col">達成条件</th>
-            </tr>
-            <tr class="sub-header">
-                <th></th><th></th><th></th><th></th><th></th>
-                <th class="vol-sub-col">ATR(10)</th>
-                <th class="vol-sub-col">ATR(20)</th>
-                <th class="vol-sub-col">傾向</th>
-                <th></th><th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for signal in signals %}
-            <tr>
-                <td class="rank-col">{{ signal.rank }}</td>
-                <td class="code-col">{{ signal.code }}</td>
-                <td class="name-col">{{ signal.name }}</td>
-                <td class="days-col">
-                    <span
-                        class="days-badge {% if signal.estimated_days <= 1 %}imminent{% elif signal.estimated_days <= 3 %}soon{% else %}later{% endif %}">
-                        約{{ signal.estimated_days or '?' }}日後
-                    </span>
-                </td>
-                <td class="score-col">
-                    <span
-                        class="score-badge {% if signal.score >= 80 %}high{% elif signal.score >= 60 %}medium{% else %}low{% endif %}">
-                        {{ "%.0f"|format(signal.score) }}%
-                    </span>
-                </td>
-                <td class="vol-sub-col">
-                    {% if signal.volatility_category_10 is defined and signal.volatility_category_10 %}
-                    <span class="vol-badge vol-{{ signal.volatility_category_10 }}" {% if signal.volatility_pattern is defined and signal.volatility_pattern %}title="{{ signal.volatility_pattern }}"{% endif %}>
-                        {% if signal.volatility_category_10 == 'high' %}高{% elif signal.volatility_category_10 == 'mid' %}中{% else %}低{% endif %}
-                    </span>
-                    {% else %}-{% endif %}
-                </td>
-                <td class="vol-sub-col">
-                    {% if signal.volatility_category_20 is defined and signal.volatility_category_20 %}
-                    <span class="vol-badge vol-{{ signal.volatility_category_20 }}">
-                        {% if signal.volatility_category_20 == 'high' %}高{% elif signal.volatility_category_20 == 'mid' %}中{% else %}低{% endif %}
-                    </span>
-                    {% else %}-{% endif %}
-                </td>
-                <td class="vol-sub-col">
-                    {% if signal.volatility_trend is defined and signal.volatility_trend %}
-                        {% if signal.volatility_trend == 'expanding' %}
-                        <span class="trend-badge trend-expanding">🔺 拡大</span>
-                        {% elif signal.volatility_trend == 'contracting' %}
-                        <span class="trend-badge trend-contracting">🔻 縮小</span>
-                        {% else %}
-                        <span class="trend-badge trend-stable">➡️ 横ばい</span>
-                        {% endif %}
-                    {% else %}-{% endif %}
-                </td>
-                <td class="volume-col">
-                    {% if signal.avg_volume is defined and signal.avg_volume %}
-                    {{ signal.avg_volume|number_format }}
-                    {% else %}
-                    -
-                    {% endif %}
-                </td>
-                <td class="conditions-col">
-                    <div class="conditions-summary">
-                        {% for cond in signal.conditions_met %}
-                        <span class="condition-tag met">✓ {{ cond }}</span>
-                        {% endfor %}
-                        {% for cond in signal.conditions_pending %}
-                        <span class="condition-tag pending">⏳ {{ cond }}</span>
-                        {% endfor %}
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div style="background:#fff; border:1px solid #E4E7EC; border-radius:12px; overflow:hidden;">
+        <div style="overflow-x:auto;">
+            <table style="font-size:13px;">
+                <thead>
+                    <tr style="background:#FAFBFC; color:#5A6172; font-size:11.5px;">
+                        <th style="padding:9px 12px; text-align:center; font-weight:600; width:60px;">順位</th>
+                        <th style="padding:9px 12px; text-align:left; font-weight:600; width:90px;">コード</th>
+                        <th style="padding:9px 12px; text-align:left; font-weight:600;">銘柄名</th>
+                        <th style="padding:9px 12px; text-align:center; font-weight:600; width:100px;">推定日数</th>
+                        <th style="padding:9px 12px; text-align:center; font-weight:600; width:90px;">接近度</th>
+                        <th style="padding:9px 12px; text-align:center; font-weight:600; width:80px;">ATR(10)</th>
+                        <th style="padding:9px 12px; text-align:center; font-weight:600; width:80px;">ATR(20)</th>
+                        <th style="padding:9px 12px; text-align:center; font-weight:600; width:90px;">ボラ傾向</th>
+                        <th style="padding:9px 12px; text-align:right; font-weight:600; width:120px;">平均出来高</th>
+                        <th style="padding:9px 12px; text-align:left; font-weight:600; min-width:180px;">達成条件</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for signal in signals %}
+                    <tr style="background: {{ '#FFFFFF' if loop.index0 % 2 == 0 else '#FBFBFC' }};">
+                        <td style="padding:11px 12px; text-align:center; color:#98A0AE; font-weight:600;">{{ signal.rank }}</td>
+                        <td style="padding:11px 12px;">
+                            <a href="https://finance.yahoo.co.jp/quote/{{ signal.code }}.T" target="_blank" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:600; text-decoration:none;">
+                                {{ signal.code }}
+                            </a>
+                        </td>
+                        <td style="padding:11px 12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ signal.name }}</td>
+                        <td style="padding:11px 12px; text-align:center;">
+                            {% set is_imminent = signal.estimated_days <= 1 %}
+                            {% set is_soon = signal.estimated_days <= 3 and signal.estimated_days > 1 %}
+                            <span style="font-size:11.5px; font-weight:700; padding:2.5px 8px; border-radius:12px; font-variant-numeric:tabular-nums;
+                                {% if is_imminent %}background:#FBEBEB; color:#C03434;
+                                {% elif is_soon %}background:#FBF0DF; color:#C2740A;
+                                {% else %}background:#EEF0FB; color:#4338CA;{% endif %}">
+                                約{{ signal.estimated_days or '?' }}日後
+                            </span>
+                        </td>
+                        <td style="padding:11px 12px; text-align:center;">
+                            {% set is_high = signal.score >= 80 %}
+                            {% set is_medium = signal.score >= 60 and signal.score < 80 %}
+                            <span style="font-size:11px; font-weight:700; padding:2px 6px; border-radius:6px; font-variant-numeric:tabular-nums;
+                                {% if is_high %}background:#E7F4EC; color:#15803D;
+                                {% elif is_medium %}background:#FBF0DF; color:#C2740A;
+                                {% else %}background:#F1F2F4; color:#5A6172;{% endif %}">
+                                {{ "%.0f"|format(signal.score) }}%
+                            </span>
+                        </td>
+                        <td style="padding:11px 12px; text-align:center;">
+                            {% if signal.volatility_category_10 is defined and signal.volatility_category_10 %}
+                            <span style="font-size:11px; font-weight:700; padding:2px 6px; border-radius:6px;
+                                {% if signal.volatility_category_10 == 'high' %}background:#FBEBEB; color:#C03434;
+                                {% elif signal.volatility_category_10 == 'mid' %}background:#FBF0DF; color:#C2740A;
+                                {% else %}background:#EEF0FB; color:#4338CA;{% endif %}"
+                                {% if signal.volatility_pattern is defined and signal.volatility_pattern %}title="{{ signal.volatility_pattern }}"{% endif %}>
+                                {% if signal.volatility_category_10 == 'high' %}高{% elif signal.volatility_category_10 == 'mid' %}中{% else %}低{% endif %}
+                            </span>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td style="padding:11px 12px; text-align:center;">
+                            {% if signal.volatility_category_20 is defined and signal.volatility_category_20 %}
+                            <span style="font-size:11px; font-weight:700; padding:2px 6px; border-radius:6px;
+                                {% if signal.volatility_category_20 == 'high' %}background:#FBEBEB; color:#C03434;
+                                {% elif signal.volatility_category_20 == 'mid' %}background:#FBF0DF; color:#C2740A;
+                                {% else %}background:#EEF0FB; color:#4338CA;{% endif %}">
+                                {% if signal.volatility_category_20 == 'high' %}高{% elif signal.volatility_category_20 == 'mid' %}中{% else %}低{% endif %}
+                            </span>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td style="padding:11px 12px; text-align:center;">
+                            {% if signal.volatility_trend is defined and signal.volatility_trend %}
+                                {% if signal.volatility_trend == 'expanding' %}
+                                <span style="font-size:11px; padding:2px 6px; border-radius:6px; background:#FBEBEB; color:#C03434; font-weight:600;">🔺 拡大</span>
+                                {% elif signal.volatility_trend == 'contracting' %}
+                                <span style="font-size:11px; padding:2px 6px; border-radius:6px; background:#EEF0FB; color:#4338CA; font-weight:600;">🔻 縮小</span>
+                                {% else %}
+                                <span style="font-size:11px; padding:2px 6px; border-radius:6px; background:#F1F2F4; color:#5A6172; font-weight:600;">➡️ 横ばい</span>
+                                {% endif %}
+                            {% else %}-{% endif %}
+                        </td>
+                        <td style="padding:11px 12px; text-align:right; font-variant-numeric:tabular-nums;" class="tabular-nums">
+                            {{ "{:,.0f}".format(signal.avg_volume | default(0)) }}
+                        </td>
+                        <td style="padding:11px 12px;">
+                            <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                                {% for cond in signal.conditions_met %}
+                                <span style="font-size:11px; padding:2px 6px; border-radius:6px; background:#E7F4EC; color:#15803D; font-weight:600; white-space:nowrap;">✓ {{ cond }}</span>
+                                {% endfor %}
+                                {% for cond in signal.conditions_pending %}
+                                <span style="font-size:11px; padding:2px 6px; border-radius:6px; background:#FBF0DF; color:#C2740A; font-weight:600; white-space:nowrap;">⏳ {{ cond }}</span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
     {% else %}
-    <div class="no-data">
+    <div style="text-align: center; padding: 4rem; color: var(--text-secondary); background: var(--bg-card); border-radius: 12px; border: 1px dashed var(--border);">
         <p>{{ strategy_name }}で接近中の銘柄はありません。</p>
     </div>
     {% endif %}
 </section>
-
-<style>
-    .approaching-hero {
-        background: linear-gradient(135deg, #1a365d 0%, #2d4a73 100%);
-    }
-    .nav-links {
-        margin-top: 1.5rem;
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-    .nav-link {
-        padding: 0.5rem 1rem;
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-        text-decoration: none;
-        border-radius: 20px;
-        transition: all 0.2s;
-    }
-    .nav-link:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
-    .approaching-table .days-col,
-    .approaching-table .score-col,
-    .approaching-table .vol-sub-col {
-        text-align: center;
-    }
-    .sub-header th {
-        font-size: 0.75rem;
-        font-weight: 500;
-        color: #9ca3af;
-        padding: 0.2rem 0.5rem;
-        border-top: none;
-    }
-    .vol-col {
-        text-align: center;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .days-badge {
-        display: inline-block;
-        padding: 0.3rem 0.6rem;
-        border-radius: 15px;
-        font-size: 0.85rem;
-        font-weight: bold;
-    }
-    .days-badge.imminent {
-        background: linear-gradient(135deg, #ef4444, #dc2626);
-        color: white;
-    }
-    .days-badge.soon {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-    }
-    .days-badge.later {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
-        color: white;
-    }
-    .score-badge {
-        display: inline-block;
-        padding: 0.3rem 0.6rem;
-        border-radius: 15px;
-        font-size: 0.85rem;
-        font-weight: bold;
-    }
-    .score-badge.high {
-        background: #10b981;
-        color: white;
-    }
-    .score-badge.medium {
-        background: #f59e0b;
-        color: white;
-    }
-    .score-badge.low {
-        background: #6b7280;
-        color: white;
-    }
-    .vol-badge {
-        display: inline-block;
-        padding: 0.2rem 0.5rem;
-        border-radius: 10px;
-        font-size: 0.8rem;
-        font-weight: bold;
-        min-width: 2rem;
-        text-align: center;
-        cursor: help;
-    }
-    .vol-badge.vol-high {
-        background: linear-gradient(135deg, #ef4444, #dc2626);
-        color: white;
-    }
-    .vol-badge.vol-mid {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-    }
-    .vol-badge.vol-low {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
-        color: white;
-    }
-    .trend-badge {
-        font-size: 0.8rem;
-        padding: 0.2rem 0.4rem;
-        border-radius: 8px;
-        white-space: nowrap;
-    }
-    .trend-badge.trend-expanding {
-        background: #fef2f2;
-        color: #991b1b;
-    }
-    .trend-badge.trend-contracting {
-        background: #eff6ff;
-        color: #1e40af;
-    }
-    .trend-badge.trend-stable {
-        background: #f9fafb;
-        color: #6b7280;
-    }
-    .conditions-summary {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.3rem;
-    }
-    .condition-tag {
-        font-size: 0.75rem;
-        padding: 0.2rem 0.4rem;
-        border-radius: 8px;
-        white-space: nowrap;
-    }
-    .condition-tag.met {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    .condition-tag.pending {
-        background: #fef3c7;
-        color: #92400e;
-    }
-    .no-data {
-        text-align: center;
-        padding: 3rem;
-        color: #6b7280;
-    }
-</style>
 {% endblock %}'''
 
 
@@ -1121,6 +961,18 @@ def generate_all():
     # === 1. トップページ ===
     logger.info('\n[1/5] トップページ生成')
     ranking_strategies = cache.get_available_strategies()
+    
+    # 黄金の指値ボード（Low Hunter）のロード
+    lh_data = cache.load_low_hunter_result()
+    lh_stocks_all = lh_data.get('stocks', []) if lh_data else []
+    
+    # 黄金の空売りボード（High Hunter）のロード
+    hh_data = cache.load_high_hunter_result()
+    hh_stocks_all = hh_data.get('stocks', []) if hh_data else []
+
+    # 接近シグナルのロード（全戦略からマージ用）
+    approaching_strategies = cache.get_available_approaching_strategies()
+
     for suffix, label in MARKET_VARIANTS:
         strategy_info = []
         for name in ranking_strategies:
@@ -1134,9 +986,42 @@ def generate_all():
                 'top3': filtered[:3],
             })
 
+        # 指値ボード（東証プライムフィルタ適用）
+        lh_stocks = filter_prime(lh_stocks_all, market_map) if suffix else lh_stocks_all
+        low_hunter_top3 = lh_stocks[:3]
+
+        # 空売りボード（東証プライムフィルタ適用）
+        hh_stocks = filter_prime(hh_stocks_all, market_map) if suffix else hh_stocks_all
+        high_hunter_top3 = hh_stocks[:3]
+
+        # 接近シグナル（東証プライムフィルタ適用＆マージ＆ソート）
+        approaching_signals = []
+        for name in approaching_strategies:
+            signals = cache.load_approaching_signals(name)
+            if suffix:
+                signals = filter_prime(signals, market_map)
+            for s in signals:
+                s_copy = s.copy()
+                s_copy['strat'] = name
+                approaching_signals.append(s_copy)
+
+        def get_days(x):
+            try:
+                val = x.get('estimated_days')
+                return int(val) if val is not None else 999
+            except:
+                return 999
+        
+        approaching_signals.sort(key=get_days)
+        approaching_top6 = approaching_signals[:6]
+
         render_template(env, 'static_index.html', DOCS_DIR / f'index{suffix}.html',
                         strategies=strategy_info, metadata=metadata,
-                        market_suffix=suffix, **base_ctx)
+                        market_suffix=suffix,
+                        low_hunter_top3=low_hunter_top3,
+                        high_hunter_top3=high_hunter_top3,
+                        approaching_top=approaching_top6,
+                        **base_ctx)
 
     # === 2. 戦略別ランキングページ ===
     logger.info('\n[2/5] 戦略別ランキングページ生成')

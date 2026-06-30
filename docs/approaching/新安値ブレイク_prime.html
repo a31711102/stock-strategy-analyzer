@@ -6,186 +6,51 @@
     <meta name="robots" content="noindex, nofollow">
     <title>新安値ブレイク 接近シグナル - Stock Strategy Analyzer</title>
     <link rel="stylesheet" href="../static/css/main.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header class="header">
         <div class="container">
             <a href="../index.html" class="logo">
-                📊 Stock Strategy Analyzer
+                <span class="logo-icon">S</span>
+                <span>Stock Strategy Analyzer</span>
             </a>
+            <nav class="nav">
+                <a href="../low-hunter/index.html" class="nav-link">📉 黄金の指値ボード</a>
+                <a href="../high-hunter/index.html" class="nav-link">📈 黄金の空売りボード</a>
+            </nav>
         </div>
     </header>
 
     <main class="main">
         <div class="container">
             
-<section class="hero strategy-hero approaching-hero">
-    <h1>🎯 新安値ブレイク</h1>
-    <p class="hero-sub">シグナル接近中の銘柄（Top 50・出来高50万以上・東証プライム）</p>
-
-    <div class="nav-links">
-        <a href="../approaching/index_prime.html" class="nav-link">← 戦略一覧へ戻る</a>
-        <a href="../strategy/新安値ブレイク_prime.html" class="nav-link">📊 適合度ランキング</a>
-        <a href="../screener/index.html" class="nav-link">🔥 スクリーナー</a>
-    </div>
-</section>
-
-<div class="market-filter">
-    <span class="market-filter-label">市場:</span>
-    <a href="../approaching/新安値ブレイク.html" class="market-tab ">全市場</a>
-    <a href="../approaching/新安値ブレイク_prime.html" class="market-tab active">東証プライム</a>
-</div>
+<nav class="breadcrumb">
+    <a href="../index_prime.html">SSA</a>
+    <span class="sep">/</span>
+    <a href="../approaching/index_prime.html">シグナル接近中</a>
+    <span class="sep">/</span>
+    <span class="current">新安値ブレイク</span>
+</nav>
 
 <section class="ranking-section">
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:18px; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2 style="font-size:21px; font-weight:700;">🎯 新安値ブレイク</h2>
+            <div style="font-size:13px; color:#5A6172; margin-top:2px;">シグナル接近中の銘柄（Top 50・出来高50万以上・東証プライム）</div>
+        </div>
+        <div class="market-filter">
+            <a href="../approaching/新安値ブレイク.html" class="market-tab ">全市場</a>
+            <a href="../approaching/新安値ブレイク_prime.html" class="market-tab active">東証プライム</a>
+        </div>
+    </div>
+
     
-    <div class="no-data">
+    <div style="text-align: center; padding: 4rem; color: var(--text-secondary); background: var(--bg-card); border-radius: 12px; border: 1px dashed var(--border);">
         <p>新安値ブレイクで接近中の銘柄はありません。</p>
     </div>
     
 </section>
-
-<style>
-    .approaching-hero {
-        background: linear-gradient(135deg, #1a365d 0%, #2d4a73 100%);
-    }
-    .nav-links {
-        margin-top: 1.5rem;
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-    .nav-link {
-        padding: 0.5rem 1rem;
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-        text-decoration: none;
-        border-radius: 20px;
-        transition: all 0.2s;
-    }
-    .nav-link:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
-    .approaching-table .days-col,
-    .approaching-table .score-col,
-    .approaching-table .vol-sub-col {
-        text-align: center;
-    }
-    .sub-header th {
-        font-size: 0.75rem;
-        font-weight: 500;
-        color: #9ca3af;
-        padding: 0.2rem 0.5rem;
-        border-top: none;
-    }
-    .vol-col {
-        text-align: center;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .days-badge {
-        display: inline-block;
-        padding: 0.3rem 0.6rem;
-        border-radius: 15px;
-        font-size: 0.85rem;
-        font-weight: bold;
-    }
-    .days-badge.imminent {
-        background: linear-gradient(135deg, #ef4444, #dc2626);
-        color: white;
-    }
-    .days-badge.soon {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-    }
-    .days-badge.later {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
-        color: white;
-    }
-    .score-badge {
-        display: inline-block;
-        padding: 0.3rem 0.6rem;
-        border-radius: 15px;
-        font-size: 0.85rem;
-        font-weight: bold;
-    }
-    .score-badge.high {
-        background: #10b981;
-        color: white;
-    }
-    .score-badge.medium {
-        background: #f59e0b;
-        color: white;
-    }
-    .score-badge.low {
-        background: #6b7280;
-        color: white;
-    }
-    .vol-badge {
-        display: inline-block;
-        padding: 0.2rem 0.5rem;
-        border-radius: 10px;
-        font-size: 0.8rem;
-        font-weight: bold;
-        min-width: 2rem;
-        text-align: center;
-        cursor: help;
-    }
-    .vol-badge.vol-high {
-        background: linear-gradient(135deg, #ef4444, #dc2626);
-        color: white;
-    }
-    .vol-badge.vol-mid {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-    }
-    .vol-badge.vol-low {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
-        color: white;
-    }
-    .trend-badge {
-        font-size: 0.8rem;
-        padding: 0.2rem 0.4rem;
-        border-radius: 8px;
-        white-space: nowrap;
-    }
-    .trend-badge.trend-expanding {
-        background: #fef2f2;
-        color: #991b1b;
-    }
-    .trend-badge.trend-contracting {
-        background: #eff6ff;
-        color: #1e40af;
-    }
-    .trend-badge.trend-stable {
-        background: #f9fafb;
-        color: #6b7280;
-    }
-    .conditions-summary {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.3rem;
-    }
-    .condition-tag {
-        font-size: 0.75rem;
-        padding: 0.2rem 0.4rem;
-        border-radius: 8px;
-        white-space: nowrap;
-    }
-    .condition-tag.met {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    .condition-tag.pending {
-        background: #fef3c7;
-        color: #92400e;
-    }
-    .no-data {
-        text-align: center;
-        padding: 3rem;
-        color: #6b7280;
-    }
-</style>
 
         </div>
     </main>
