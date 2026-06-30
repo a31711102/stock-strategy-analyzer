@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>黄金の空売りボード - Stock Strategy Analyzer</title>
+    <title>黄金 of 空売りボード - Stock Strategy Analyzer</title>
     <link rel="stylesheet" href="../static/css/main.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -20,264 +20,318 @@
     <main class="main">
         <div class="container">
             
-<section class="hero">
-    <h1>📈 黄金の空売りボード</h1>
-    <p class="hero-sub">過去1年間の上昇パターンに基づく最適な押し目売りポイント（空売り）</p>
+<nav class="breadcrumb">
+    <a href="../static/js/high_hunter.js">SSA</a>
+    <span class="sep">/</span>
+    <span>デイトレ</span>
+    <span class="sep">/</span>
+    <span class="current">黄金の空売りボード</span>
+</nav>
+
+<section class="hh-header" style="display:flex; align-items:flex-start; gap:14px; margin-bottom:18px;">
+    <span style="display:inline-flex; width:40px; height:40px; border-radius:11px; background:#FDEBEB; border:1px solid #F5C2C2; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">📈</span>
+    <div>
+        <div style="display:flex; align-items:center; gap:9px;">
+            <h2 style="font-size:21px; font-weight:700;">黄金の空売りボード</h2>
+            <span style="font-size:11.5px; color:#C03434; background:#FBEBEB; border:1px solid #F5C2C2; padding:2px 9px; border-radius:20px; font-weight:700;">デイトレ・空売り</span>
+        </div>
+        <div style="font-size:13px; color:#5A6172; margin-top:3px;">
+            過去1年間の上昇パターンに基づく、最適な空売りの指値ポイント。許容リスクを入れると株数・必要証拠金を自動計算します。
+        </div>
+    </div>
 </section>
 
-<!-- Controls -->
-<section class="hh-controls">
-    <div class="control-card">
-        <div class="control-group">
-            <label for="hh-risk-input" class="control-label">許容リスク（万円）:</label>
-            <input type="number" id="hh-risk-input" class="control-input" value="3.0" step="1" min="1">
+<!-- Reactively manipulated UI -->
+<section class="hh-controls" style="margin-bottom: 18px;">
+    <div class="control-card" style="display:flex; align-items:center; gap:18px; background:#fff; border:1px solid #E4E7EC; border-radius:12px; padding:13px 18px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:13px; font-weight:600; color:#3F4654;">許容リスク</span>
+            <span style="display:inline-flex; align-items:center; border:1px solid #D7DCE3; border-radius:9px; overflow:hidden;">
+                <input type="number" id="hh-risk-input" style="font-family:Inter,sans-serif; font-size:15px; font-weight:700; padding:7px 12px; color:#1B1F2A; width: 80px; border: none; outline: none;" value="3.0" step="1" min="1">
+                <span style="font-size:12px; color:#7A828F; padding:7px 11px; background:#F4F5F7; border-left:1px solid #E4E7EC; user-select: none;">万円</span>
+            </span>
         </div>
-        <div class="control-group">
-            <label class="checkbox-wrapper">
-                <input type="checkbox" id="hh-unit-checkbox" checked>
-                <span class="custom-checkbox"></span>
+        <div>
+            <label style="display:flex; align-items:center; gap:7px; font-size:13px; color:#3F4654; cursor:pointer; user-select:none;">
+                <input type="checkbox" id="hh-unit-checkbox" style="width:16px; height:16px;" checked>
                 100株単位で計算する
             </label>
         </div>
-        <div class="risk-summary">
-            現在設定リスク: <span id="hh-risk-display" class="highlight-value">3.0万円</span>
-        </div>
+        <span style="font-size:12px; color:#98A0AE; margin-left:auto;">
+            どの銘柄が逆行損切りでも損失が約<span id="hh-risk-display" style="font-weight:700;">3.0万円</span>に収まる株数で揃えています
+        </span>
     </div>
 </section>
 
 <section class="hh-table-section">
     
-    <div class="table-responsive glass-table">
-        <table id="hh-table" class="data-table">
-            <thead>
-                <tr>
-                    <th class="sortable asc" data-sort-key="rank"># <span class="sort-icon"></span></th>
-                    <th class="sortable" data-sort-key="ticker">コード <span class="sort-icon"></span></th>
-                    <th>銘柄名</th>
-                    <th class="sortable" data-sort-key="winrate">勝率 <span class="sort-icon"></span></th>
-                    <th class="sortable" data-sort-key="median">下落率(中央値)<br><small style="font-size:0.75em; color:#94a3b8; font-weight:normal;">*デイトレ単発</small> <span class="sort-icon"></span></th>
-                    <th class="sortable" data-sort-key="annual">年間推計R<br><small style="font-size:0.75em; color:#94a3b8; font-weight:normal;">*下落率×出現数</small> <span class="sort-icon"></span></th>
-                    <th class="sortable" data-sort-key="rise">上昇条件 <span class="sort-icon"></span></th>
-                    <th class="sortable" data-sort-key="target">空売り指値 <span class="sort-icon"></span></th>
-                    <th class="sortable" data-sort-key="qty">売建株数 <span class="sort-icon"></span></th>
-                    <th class="sortable" data-sort-key="cap">必要証拠金目安 <span class="sort-icon"></span></th>
-                    <th class="sortable" data-sort-key="wins">実績(成功/出現) <span class="sort-icon"></span></th>
-                </tr>
-            </thead>
-            <tbody id="hh-tbody">
-                
-                <tr data-idx="0">
-                    <td class="col-rank rank-cell">1</td>
-                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6473.T" target="_blank">6473</a></td>
-                    <td class="name-cell">ジェイテクト</td>
-                    <td class="col-winrate highlight-ok">64.7%</td>
-                    <td class="col-median highlight-ok">+0.28%</td>
-                    <td class="col-annual highlight-strong">+4.8%</td>
-                    <td class="col-rise">+4.7%</td>
-                    <td class="col-target short-price">¥2,112</td>
-                    <td class="col-qty js-quantity highlighted-val">-</td>
-                    <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-wins text-muted">11回 / 17回</td>
-                </tr>
-                
-                <tr data-idx="1">
-                    <td class="col-rank rank-cell">2</td>
-                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6472.T" target="_blank">6472</a></td>
-                    <td class="name-cell">NTN</td>
-                    <td class="col-winrate highlight-ok">61.1%</td>
-                    <td class="col-median highlight-ok">+0.19%</td>
-                    <td class="col-annual highlight-strong">+3.4%</td>
-                    <td class="col-rise">+4.6%</td>
-                    <td class="col-target short-price">¥452</td>
-                    <td class="col-qty js-quantity highlighted-val">-</td>
-                    <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-wins text-muted">11回 / 18回</td>
-                </tr>
-                
-                <tr data-idx="2">
-                    <td class="col-rank rank-cell">3</td>
-                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6526.T" target="_blank">6526</a></td>
-                    <td class="name-cell">ソシオネクスト</td>
-                    <td class="col-winrate highlight-ok">60.0%</td>
-                    <td class="col-median highlight-ok">+0.21%</td>
-                    <td class="col-annual highlight-strong">+6.3%</td>
-                    <td class="col-rise">+6.6%</td>
-                    <td class="col-target short-price">¥2,825</td>
-                    <td class="col-qty js-quantity highlighted-val">-</td>
-                    <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-wins text-muted">18回 / 30回</td>
-                </tr>
-                
-                <tr data-idx="3">
-                    <td class="col-rank rank-cell">4</td>
-                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/8015.T" target="_blank">8015</a></td>
-                    <td class="name-cell">豊田通商</td>
-                    <td class="col-winrate highlight-ok">58.8%</td>
-                    <td class="col-median highlight-ok">+0.23%</td>
-                    <td class="col-annual highlight-strong">+7.8%</td>
-                    <td class="col-rise">+3.8%</td>
-                    <td class="col-target short-price">¥6,312</td>
-                    <td class="col-qty js-quantity highlighted-val">-</td>
-                    <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-wins text-muted">20回 / 34回</td>
-                </tr>
-                
-                <tr data-idx="4">
-                    <td class="col-rank rank-cell">5</td>
-                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/3436.T" target="_blank">3436</a></td>
-                    <td class="name-cell">SUMCO</td>
-                    <td class="col-winrate highlight-ok">56.8%</td>
-                    <td class="col-median highlight-ok">+0.18%</td>
-                    <td class="col-annual highlight-strong">+6.7%</td>
-                    <td class="col-rise">+6.6%</td>
-                    <td class="col-target short-price">¥3,956</td>
-                    <td class="col-qty js-quantity highlighted-val">-</td>
-                    <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-wins text-muted">21回 / 37回</td>
-                </tr>
-                
-                <tr data-idx="5">
-                    <td class="col-rank rank-cell">6</td>
-                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6305.T" target="_blank">6305</a></td>
-                    <td class="name-cell">日立建機</td>
-                    <td class="col-winrate highlight-ok">56.2%</td>
-                    <td class="col-median highlight-ok">+0.17%</td>
-                    <td class="col-annual highlight-strong">+5.4%</td>
-                    <td class="col-rise">+3.1%</td>
-                    <td class="col-target short-price">¥5,451</td>
-                    <td class="col-qty js-quantity highlighted-val">-</td>
-                    <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-wins text-muted">18回 / 32回</td>
-                </tr>
-                
-                <tr data-idx="6">
-                    <td class="col-rank rank-cell">7</td>
-                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/5631.T" target="_blank">5631</a></td>
-                    <td class="name-cell">日本製鋼所</td>
-                    <td class="col-winrate highlight-ok">55.4%</td>
-                    <td class="col-median highlight-ok">+0.18%</td>
-                    <td class="col-annual highlight-strong">+11.7%</td>
-                    <td class="col-rise">+3.6%</td>
-                    <td class="col-target short-price">¥8,318</td>
-                    <td class="col-qty js-quantity highlighted-val">-</td>
-                    <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-wins text-muted">36回 / 65回</td>
-                </tr>
-                
-                <tr data-idx="7">
-                    <td class="col-rank rank-cell">8</td>
-                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6504.T" target="_blank">6504</a></td>
-                    <td class="name-cell">富士電機</td>
-                    <td class="col-winrate highlight-ok">55.0%</td>
-                    <td class="col-median highlight-ok">+0.26%</td>
-                    <td class="col-annual highlight-strong">+5.2%</td>
-                    <td class="col-rise">+5.9%</td>
-                    <td class="col-target short-price">¥15,557</td>
-                    <td class="col-qty js-quantity highlighted-val">-</td>
-                    <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-wins text-muted">11回 / 20回</td>
-                </tr>
-                
-                <tr data-idx="8">
-                    <td class="col-rank rank-cell">9</td>
-                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/9201.T" target="_blank">9201</a></td>
-                    <td class="name-cell">日本航空</td>
-                    <td class="col-winrate highlight-ok">53.9%</td>
-                    <td class="col-median highlight-ok">+0.06%</td>
-                    <td class="col-annual highlight-strong">+3.1%</td>
-                    <td class="col-rise">+1.7%</td>
-                    <td class="col-target short-price">¥2,822</td>
-                    <td class="col-qty js-quantity highlighted-val">-</td>
-                    <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-wins text-muted">28回 / 52回</td>
-                </tr>
-                
-                <tr data-idx="9">
-                    <td class="col-rank rank-cell">10</td>
-                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6723.T" target="_blank">6723</a></td>
-                    <td class="name-cell">ルネサスエレクトロニクス</td>
-                    <td class="col-winrate highlight-ok">53.3%</td>
-                    <td class="col-median highlight-ok">+0.10%</td>
-                    <td class="col-annual highlight-strong">+3.0%</td>
-                    <td class="col-rise">+7.0%</td>
-                    <td class="col-target short-price">¥5,032</td>
-                    <td class="col-qty js-quantity highlighted-val">-</td>
-                    <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-wins text-muted">16回 / 30回</td>
-                </tr>
-                
-                <tr data-idx="10">
-                    <td class="col-rank rank-cell">11</td>
-                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6479.T" target="_blank">6479</a></td>
-                    <td class="name-cell">ミネベアミツミ</td>
-                    <td class="col-winrate highlight-ok">52.6%</td>
-                    <td class="col-median highlight-ok">+0.06%</td>
-                    <td class="col-annual highlight-strong">+1.1%</td>
-                    <td class="col-rise">+5.3%</td>
-                    <td class="col-target short-price">¥5,183</td>
-                    <td class="col-qty js-quantity highlighted-val">-</td>
-                    <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-wins text-muted">10回 / 19回</td>
-                </tr>
-                
-                <tr data-idx="11">
-                    <td class="col-rank rank-cell">12</td>
-                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6762.T" target="_blank">6762</a></td>
-                    <td class="name-cell">TDK</td>
-                    <td class="col-winrate highlight-ok">52.4%</td>
-                    <td class="col-median highlight-ok">+0.42%</td>
-                    <td class="col-annual highlight-strong">+8.8%</td>
-                    <td class="col-rise">+6.4%</td>
-                    <td class="col-target short-price">¥4,060</td>
-                    <td class="col-qty js-quantity highlighted-val">-</td>
-                    <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-wins text-muted">11回 / 21回</td>
-                </tr>
-                
-                <tr data-idx="12">
-                    <td class="col-rank rank-cell">13</td>
-                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/8035.T" target="_blank">8035</a></td>
-                    <td class="name-cell">東京エレクトロン</td>
-                    <td class="col-winrate highlight-ok">51.9%</td>
-                    <td class="col-median highlight-ok">+0.08%</td>
-                    <td class="col-annual highlight-strong">+2.2%</td>
-                    <td class="col-rise">+5.6%</td>
-                    <td class="col-target short-price">¥73,814</td>
-                    <td class="col-qty js-quantity highlighted-val">-</td>
-                    <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-wins text-muted">14回 / 27回</td>
-                </tr>
-                
-                <tr data-idx="13">
-                    <td class="col-rank rank-cell">14</td>
-                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/7735.T" target="_blank">7735</a></td>
-                    <td class="name-cell">SCREENホールディングス</td>
-                    <td class="col-winrate highlight-ok">50.0%</td>
-                    <td class="col-median highlight-ok">+-0.02%</td>
-                    <td class="col-annual highlight-strong">+-1.5%</td>
-                    <td class="col-rise">+3.6%</td>
-                    <td class="col-target short-price">¥16,711</td>
-                    <td class="col-qty js-quantity highlighted-val">-</td>
-                    <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-wins text-muted">37回 / 74回</td>
-                </tr>
-                
-                <tr data-idx="14">
-                    <td class="col-rank rank-cell">15</td>
-                    <td class="col-ticker"><a href="https://finance.yahoo.co.jp/quote/6506.T" target="_blank">6506</a></td>
-                    <td class="name-cell">安川電機</td>
-                    <td class="col-winrate highlight-ok">50.0%</td>
-                    <td class="col-median highlight-ok">+-0.03%</td>
-                    <td class="col-annual highlight-strong">+-2.2%</td>
-                    <td class="col-rise">+3.3%</td>
-                    <td class="col-target short-price">¥7,304</td>
-                    <td class="col-qty js-quantity highlighted-val">-</td>
-                    <td class="col-cap js-capital highlighted-val">-</td>
-                    <td class="col-wins text-muted">36回 / 72回</td>
-                </tr>
-                
-            </tbody>
-        </table>
+    <div style="background:#fff; border:1px solid #E4E7EC; border-radius:12px; overflow:hidden;">
+        <div style="overflow-x:auto;">
+            <table id="hh-table" style="font-size:13px; min-width:920px;">
+                <thead>
+                    <tr>
+                        <th colspan="3" style="text-align:left; padding:9px 12px; background:#F2F3F6; color:#7A828F; font-size:11px; font-weight:700; letter-spacing:.04em; border-bottom:1px solid #E4E7EC;">識別</th>
+                        <th colspan="3" style="text-align:left; padding:9px 12px; background:#FDF2F2; color:#C03434; font-size:11px; font-weight:700; letter-spacing:.04em; border-bottom:1px solid #E4E7EC; border-left:2px solid #fff;">戦績（デイトレ単発）</th>
+                        <th colspan="2" style="text-align:left; padding:9px 12px; background:#F2F3F6; color:#7A828F; font-size:11px; font-weight:700; letter-spacing:.04em; border-bottom:1px solid #E4E7EC; border-left:2px solid #fff;">エントリー</th>
+                        <th colspan="2" style="text-align:left; padding:9px 12px; background:#F1F2F7; color:#4338CA; font-size:11px; font-weight:700; letter-spacing:.04em; border-bottom:1px solid #E4E7EC; border-left:2px solid #fff;">資金（リスク連動）</th>
+                        <th style="text-align:left; padding:9px 12px; background:#F2F3F6; color:#7A828F; font-size:11px; font-weight:700; letter-spacing:.04em; border-bottom:1px solid #E4E7EC; border-left:2px solid #fff;">実績</th>
+                    </tr>
+                    <tr style="color:#5A6172; font-size:11.5px; background:#FAFBFC;">
+                        <th style="padding:9px 12px; text-align:center; border-bottom:1px solid #E4E7EC; font-weight:600;" class="sortable asc" data-sort-key="rank">#</th>
+                        <th style="padding:9px 12px; text-align:left; border-bottom:1px solid #E4E7EC; font-weight:600;" class="sortable" data-sort-key="ticker">コード</th>
+                        <th style="padding:9px 12px; text-align:left; border-bottom:1px solid #E4E7EC; font-weight:600;">銘柄名</th>
+                        <th style="padding:9px 12px; text-align:right; background:#FFF5F5; border-bottom:1px solid #E4E7EC; font-weight:600;" class="sortable" data-sort-key="winrate">勝率</th>
+                        <th style="padding:9px 12px; text-align:right; background:#FFF5F5; border-bottom:1px solid #E4E7EC; font-weight:600;" class="sortable" data-sort-key="median">下落率中央値</th>
+                        <th style="padding:9px 12px; text-align:right; background:#FFF5F5; border-bottom:1px solid #E4E7EC; font-weight:600;" class="sortable" data-sort-key="annual">年間推計R</th>
+                        <th style="padding:9px 12px; text-align:right; border-bottom:1px solid #E4E7EC; font-weight:600;" class="sortable" data-sort-key="rise">上昇条件</th>
+                        <th style="padding:9px 12px; text-align:right; border-bottom:1px solid #E4E7EC; font-weight:600;" class="sortable" data-sort-key="target">空売り指値</th>
+                        <th style="padding:9px 12px; text-align:right; background:#F7F8FB; border-bottom:1px solid #E4E7EC; font-weight:600;" class="sortable" data-sort-key="qty">売建株数</th>
+                        <th style="padding:9px 12px; text-align:right; background:#F7F8FB; border-bottom:1px solid #E4E7EC; font-weight:600;" class="sortable" data-sort-key="cap">必要証拠金目安</th>
+                        <th style="padding:9px 12px; text-align:right; border-bottom:1px solid #E4E7EC; font-weight:600;" class="sortable" data-sort-key="wins">成功/出現</th>
+                    </tr>
+                </thead>
+                <tbody id="hh-tbody">
+                    
+                    <tr data-idx="0" style="background: #FFFFFF;">
+                        <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">1</td>
+                        <td style="padding:11px 12px;" class="col-ticker">
+                            <a href="../static/js/high_hunter.js" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:600; text-decoration:none;">6473</a>
+                        </td>
+                        <td style="padding:11px 12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="name-cell">ジェイテクト</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-weight:700; font-variant-numeric:tabular-nums;" class="col-winrate">
+                            64.7%
+                        </td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-variant-numeric:tabular-nums;" class="col-median">+0.28%</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; font-weight:600; font-variant-numeric:tabular-nums;" class="col-annual">+4.8%</td>
+                        <td style="padding:11px 12px; text-align:right; color:#5A6172; font-variant-numeric:tabular-nums;" class="col-rise">+4.7%</td>
+                        <td style="padding:11px 12px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums;" class="col-target short-price">¥2,129</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-qty js-quantity">-</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-cap js-capital">-</td>
+                        <td style="padding:11px 12px; text-align:right; color:#98A0AE; font-size:12.5px; font-variant-numeric:tabular-nums;" class="col-wins">11 / 17</td>
+                    </tr>
+                    
+                    <tr data-idx="1" style="background: #FBFBFC;">
+                        <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">2</td>
+                        <td style="padding:11px 12px;" class="col-ticker">
+                            <a href="../static/js/high_hunter.js" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:600; text-decoration:none;">6472</a>
+                        </td>
+                        <td style="padding:11px 12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="name-cell">NTN</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-weight:700; font-variant-numeric:tabular-nums;" class="col-winrate">
+                            61.1%
+                        </td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-variant-numeric:tabular-nums;" class="col-median">+0.19%</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; font-weight:600; font-variant-numeric:tabular-nums;" class="col-annual">+3.4%</td>
+                        <td style="padding:11px 12px; text-align:right; color:#5A6172; font-variant-numeric:tabular-nums;" class="col-rise">+4.6%</td>
+                        <td style="padding:11px 12px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums;" class="col-target short-price">¥420</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-qty js-quantity">-</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-cap js-capital">-</td>
+                        <td style="padding:11px 12px; text-align:right; color:#98A0AE; font-size:12.5px; font-variant-numeric:tabular-nums;" class="col-wins">11 / 18</td>
+                    </tr>
+                    
+                    <tr data-idx="2" style="background: #FFFFFF;">
+                        <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">3</td>
+                        <td style="padding:11px 12px;" class="col-ticker">
+                            <a href="../static/js/high_hunter.js" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:600; text-decoration:none;">6526</a>
+                        </td>
+                        <td style="padding:11px 12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="name-cell">ソシオネクスト</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-weight:700; font-variant-numeric:tabular-nums;" class="col-winrate">
+                            60.0%
+                        </td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-variant-numeric:tabular-nums;" class="col-median">+0.21%</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; font-weight:600; font-variant-numeric:tabular-nums;" class="col-annual">+6.3%</td>
+                        <td style="padding:11px 12px; text-align:right; color:#5A6172; font-variant-numeric:tabular-nums;" class="col-rise">+6.6%</td>
+                        <td style="padding:11px 12px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums;" class="col-target short-price">¥2,684</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-qty js-quantity">-</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-cap js-capital">-</td>
+                        <td style="padding:11px 12px; text-align:right; color:#98A0AE; font-size:12.5px; font-variant-numeric:tabular-nums;" class="col-wins">18 / 30</td>
+                    </tr>
+                    
+                    <tr data-idx="3" style="background: #FBFBFC;">
+                        <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">4</td>
+                        <td style="padding:11px 12px;" class="col-ticker">
+                            <a href="../static/js/high_hunter.js" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:600; text-decoration:none;">3436</a>
+                        </td>
+                        <td style="padding:11px 12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="name-cell">SUMCO</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-weight:700; font-variant-numeric:tabular-nums;" class="col-winrate">
+                            56.8%
+                        </td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-variant-numeric:tabular-nums;" class="col-median">+0.18%</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; font-weight:600; font-variant-numeric:tabular-nums;" class="col-annual">+6.7%</td>
+                        <td style="padding:11px 12px; text-align:right; color:#5A6172; font-variant-numeric:tabular-nums;" class="col-rise">+6.6%</td>
+                        <td style="padding:11px 12px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums;" class="col-target short-price">¥4,092</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-qty js-quantity">-</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-cap js-capital">-</td>
+                        <td style="padding:11px 12px; text-align:right; color:#98A0AE; font-size:12.5px; font-variant-numeric:tabular-nums;" class="col-wins">21 / 37</td>
+                    </tr>
+                    
+                    <tr data-idx="4" style="background: #FFFFFF;">
+                        <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">5</td>
+                        <td style="padding:11px 12px;" class="col-ticker">
+                            <a href="../static/js/high_hunter.js" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:600; text-decoration:none;">6504</a>
+                        </td>
+                        <td style="padding:11px 12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="name-cell">富士電機</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-weight:700; font-variant-numeric:tabular-nums;" class="col-winrate">
+                            55.0%
+                        </td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-variant-numeric:tabular-nums;" class="col-median">+0.26%</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; font-weight:600; font-variant-numeric:tabular-nums;" class="col-annual">+5.2%</td>
+                        <td style="padding:11px 12px; text-align:right; color:#5A6172; font-variant-numeric:tabular-nums;" class="col-rise">+5.9%</td>
+                        <td style="padding:11px 12px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums;" class="col-target short-price">¥14,530</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-qty js-quantity">-</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-cap js-capital">-</td>
+                        <td style="padding:11px 12px; text-align:right; color:#98A0AE; font-size:12.5px; font-variant-numeric:tabular-nums;" class="col-wins">11 / 20</td>
+                    </tr>
+                    
+                    <tr data-idx="5" style="background: #FBFBFC;">
+                        <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">6</td>
+                        <td style="padding:11px 12px;" class="col-ticker">
+                            <a href="../static/js/high_hunter.js" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:600; text-decoration:none;">6723</a>
+                        </td>
+                        <td style="padding:11px 12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="name-cell">ルネサスエレクトロニクス</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-weight:700; font-variant-numeric:tabular-nums;" class="col-winrate">
+                            54.8%
+                        </td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-variant-numeric:tabular-nums;" class="col-median">+0.15%</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; font-weight:600; font-variant-numeric:tabular-nums;" class="col-annual">+4.6%</td>
+                        <td style="padding:11px 12px; text-align:right; color:#5A6172; font-variant-numeric:tabular-nums;" class="col-rise">+7.0%</td>
+                        <td style="padding:11px 12px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums;" class="col-target short-price">¥5,147</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-qty js-quantity">-</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-cap js-capital">-</td>
+                        <td style="padding:11px 12px; text-align:right; color:#98A0AE; font-size:12.5px; font-variant-numeric:tabular-nums;" class="col-wins">17 / 31</td>
+                    </tr>
+                    
+                    <tr data-idx="6" style="background: #FFFFFF;">
+                        <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">7</td>
+                        <td style="padding:11px 12px;" class="col-ticker">
+                            <a href="../static/js/high_hunter.js" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:600; text-decoration:none;">9201</a>
+                        </td>
+                        <td style="padding:11px 12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="name-cell">日本航空</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-weight:700; font-variant-numeric:tabular-nums;" class="col-winrate">
+                            54.7%
+                        </td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-variant-numeric:tabular-nums;" class="col-median">+0.07%</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; font-weight:600; font-variant-numeric:tabular-nums;" class="col-annual">+3.7%</td>
+                        <td style="padding:11px 12px; text-align:right; color:#5A6172; font-variant-numeric:tabular-nums;" class="col-rise">+1.7%</td>
+                        <td style="padding:11px 12px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums;" class="col-target short-price">¥2,914</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-qty js-quantity">-</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-cap js-capital">-</td>
+                        <td style="padding:11px 12px; text-align:right; color:#98A0AE; font-size:12.5px; font-variant-numeric:tabular-nums;" class="col-wins">29 / 53</td>
+                    </tr>
+                    
+                    <tr data-idx="7" style="background: #FBFBFC;">
+                        <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">8</td>
+                        <td style="padding:11px 12px;" class="col-ticker">
+                            <a href="../static/js/high_hunter.js" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:600; text-decoration:none;">5631</a>
+                        </td>
+                        <td style="padding:11px 12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="name-cell">日本製鋼所</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-weight:700; font-variant-numeric:tabular-nums;" class="col-winrate">
+                            54.7%
+                        </td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-variant-numeric:tabular-nums;" class="col-median">+0.17%</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; font-weight:600; font-variant-numeric:tabular-nums;" class="col-annual">+10.9%</td>
+                        <td style="padding:11px 12px; text-align:right; color:#5A6172; font-variant-numeric:tabular-nums;" class="col-rise">+3.6%</td>
+                        <td style="padding:11px 12px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums;" class="col-target short-price">¥7,864</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-qty js-quantity">-</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-cap js-capital">-</td>
+                        <td style="padding:11px 12px; text-align:right; color:#98A0AE; font-size:12.5px; font-variant-numeric:tabular-nums;" class="col-wins">35 / 64</td>
+                    </tr>
+                    
+                    <tr data-idx="8" style="background: #FFFFFF;">
+                        <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">9</td>
+                        <td style="padding:11px 12px;" class="col-ticker">
+                            <a href="../static/js/high_hunter.js" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:600; text-decoration:none;">6762</a>
+                        </td>
+                        <td style="padding:11px 12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="name-cell">TDK</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-weight:700; font-variant-numeric:tabular-nums;" class="col-winrate">
+                            52.4%
+                        </td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-variant-numeric:tabular-nums;" class="col-median">+0.42%</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; font-weight:600; font-variant-numeric:tabular-nums;" class="col-annual">+8.8%</td>
+                        <td style="padding:11px 12px; text-align:right; color:#5A6172; font-variant-numeric:tabular-nums;" class="col-rise">+6.4%</td>
+                        <td style="padding:11px 12px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums;" class="col-target short-price">¥3,823</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-qty js-quantity">-</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-cap js-capital">-</td>
+                        <td style="padding:11px 12px; text-align:right; color:#98A0AE; font-size:12.5px; font-variant-numeric:tabular-nums;" class="col-wins">11 / 21</td>
+                    </tr>
+                    
+                    <tr data-idx="9" style="background: #FBFBFC;">
+                        <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">10</td>
+                        <td style="padding:11px 12px;" class="col-ticker">
+                            <a href="../static/js/high_hunter.js" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:600; text-decoration:none;">6506</a>
+                        </td>
+                        <td style="padding:11px 12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="name-cell">安川電機</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-weight:700; font-variant-numeric:tabular-nums;" class="col-winrate">
+                            50.7%
+                        </td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-variant-numeric:tabular-nums;" class="col-median">+0.05%</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; font-weight:600; font-variant-numeric:tabular-nums;" class="col-annual">+3.7%</td>
+                        <td style="padding:11px 12px; text-align:right; color:#5A6172; font-variant-numeric:tabular-nums;" class="col-rise">+3.3%</td>
+                        <td style="padding:11px 12px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums;" class="col-target short-price">¥7,130</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-qty js-quantity">-</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-cap js-capital">-</td>
+                        <td style="padding:11px 12px; text-align:right; color:#98A0AE; font-size:12.5px; font-variant-numeric:tabular-nums;" class="col-wins">37 / 73</td>
+                    </tr>
+                    
+                    <tr data-idx="10" style="background: #FFFFFF;">
+                        <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">11</td>
+                        <td style="padding:11px 12px;" class="col-ticker">
+                            <a href="../static/js/high_hunter.js" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:600; text-decoration:none;">7735</a>
+                        </td>
+                        <td style="padding:11px 12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="name-cell">SCREENホールディングス</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-weight:700; font-variant-numeric:tabular-nums;" class="col-winrate">
+                            50.0%
+                        </td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-variant-numeric:tabular-nums;" class="col-median">+-0.02%</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; font-weight:600; font-variant-numeric:tabular-nums;" class="col-annual">+-1.5%</td>
+                        <td style="padding:11px 12px; text-align:right; color:#5A6172; font-variant-numeric:tabular-nums;" class="col-rise">+3.6%</td>
+                        <td style="padding:11px 12px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums;" class="col-target short-price">¥17,368</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-qty js-quantity">-</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-cap js-capital">-</td>
+                        <td style="padding:11px 12px; text-align:right; color:#98A0AE; font-size:12.5px; font-variant-numeric:tabular-nums;" class="col-wins">37 / 74</td>
+                    </tr>
+                    
+                    <tr data-idx="11" style="background: #FBFBFC;">
+                        <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">12</td>
+                        <td style="padding:11px 12px;" class="col-ticker">
+                            <a href="../static/js/high_hunter.js" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:600; text-decoration:none;">8035</a>
+                        </td>
+                        <td style="padding:11px 12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="name-cell">東京エレクトロン</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-weight:700; font-variant-numeric:tabular-nums;" class="col-winrate">
+                            50.0%
+                        </td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-variant-numeric:tabular-nums;" class="col-median">+-0.03%</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; font-weight:600; font-variant-numeric:tabular-nums;" class="col-annual">+-1.0%</td>
+                        <td style="padding:11px 12px; text-align:right; color:#5A6172; font-variant-numeric:tabular-nums;" class="col-rise">+5.4%</td>
+                        <td style="padding:11px 12px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums;" class="col-target short-price">¥78,734</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-qty js-quantity">-</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-cap js-capital">-</td>
+                        <td style="padding:11px 12px; text-align:right; color:#98A0AE; font-size:12.5px; font-variant-numeric:tabular-nums;" class="col-wins">16 / 32</td>
+                    </tr>
+                    
+                    <tr data-idx="12" style="background: #FFFFFF;">
+                        <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">13</td>
+                        <td style="padding:11px 12px;" class="col-ticker">
+                            <a href="../static/js/high_hunter.js" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:600; text-decoration:none;">6479</a>
+                        </td>
+                        <td style="padding:11px 12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="name-cell">ミネベアミツミ</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-weight:700; font-variant-numeric:tabular-nums;" class="col-winrate">
+                            50.0%
+                        </td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; color:#C03434; font-variant-numeric:tabular-nums;" class="col-median">+-0.12%</td>
+                        <td style="padding:11px 12px; text-align:right; background:#FFF5F5; font-weight:600; font-variant-numeric:tabular-nums;" class="col-annual">+-2.4%</td>
+                        <td style="padding:11px 12px; text-align:right; color:#5A6172; font-variant-numeric:tabular-nums;" class="col-rise">+5.3%</td>
+                        <td style="padding:11px 12px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums;" class="col-target short-price">¥5,024</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-qty js-quantity">-</td>
+                        <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-cap js-capital">-</td>
+                        <td style="padding:11px 12px; text-align:right; color:#98A0AE; font-size:12.5px; font-variant-numeric:tabular-nums;" class="col-wins">10 / 20</td>
+                    </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div style="font-size:11.5px; color:#98A0AE; margin-top:10px;">
+        「単元未満」＝株価が高く、設定されたリスク枠では100株に満たない銘柄。信用空売りのため単元単位での取引が推奨されます。
     </div>
     
 </section>
@@ -285,48 +339,28 @@
 <!-- JSON Data Mount for JS -->
 <script>
     window.HIGH_HUNTER_DATA = {
-        stocks: [{"atr_10": 74.1, "best_rise_pct": 4.7, "beta": 1.3, "hit_count": 17, "median_return": 0.28, "name": "\u30b8\u30a7\u30a4\u30c6\u30af\u30c8", "norm_atr": 3.67, "prev_close": 2017.0, "rank": 1, "target_price": 2111.8, "ticker": "6473", "win_count": 11, "win_rate": 64.7}, {"atr_10": 16.2, "best_rise_pct": 4.6, "beta": 1.23, "hit_count": 18, "median_return": 0.19, "name": "NTN", "norm_atr": 3.74, "prev_close": 432.5, "rank": 2, "target_price": 452.4, "ticker": "6472", "win_count": 11, "win_rate": 61.1}, {"atr_10": 188.6, "best_rise_pct": 6.6, "beta": 1.48, "hit_count": 30, "median_return": 0.21, "name": "\u30bd\u30b7\u30aa\u30cd\u30af\u30b9\u30c8", "norm_atr": 7.11, "prev_close": 2650.5, "rank": 3, "target_price": 2825.4, "ticker": "6526", "win_count": 18, "win_rate": 60.0}, {"atr_10": 213.9, "best_rise_pct": 3.8, "beta": 1.21, "hit_count": 34, "median_return": 0.23, "name": "\u8c4a\u7530\u901a\u5546", "norm_atr": 3.52, "prev_close": 6081.0, "rank": 4, "target_price": 6312.1, "ticker": "8015", "win_count": 20, "win_rate": 58.8}, {"atr_10": 380.1, "best_rise_pct": 6.6, "beta": 1.31, "hit_count": 37, "median_return": 0.18, "name": "SUMCO", "norm_atr": 10.24, "prev_close": 3711.0, "rank": 5, "target_price": 3955.9, "ticker": "3436", "win_count": 21, "win_rate": 56.8}, {"atr_10": 164.7, "best_rise_pct": 3.1, "beta": 1.21, "hit_count": 32, "median_return": 0.17, "name": "\u65e5\u7acb\u5efa\u6a5f", "norm_atr": 3.12, "prev_close": 5287.0, "rank": 6, "target_price": 5450.9, "ticker": "6305", "win_count": 18, "win_rate": 56.2}, {"atr_10": 458.3, "best_rise_pct": 3.6, "beta": 1.23, "hit_count": 65, "median_return": 0.18, "name": "\u65e5\u672c\u88fd\u92fc\u6240", "norm_atr": 5.71, "prev_close": 8029.0, "rank": 7, "target_price": 8318.0, "ticker": "5631", "win_count": 36, "win_rate": 55.4}, {"atr_10": 614.5, "best_rise_pct": 5.9, "beta": 1.24, "hit_count": 20, "median_return": 0.26, "name": "\u5bcc\u58eb\u96fb\u6a5f", "norm_atr": 4.18, "prev_close": 14690.0, "rank": 8, "target_price": 15556.7, "ticker": "6504", "win_count": 11, "win_rate": 55.0}, {"atr_10": 71.8, "best_rise_pct": 1.7, "beta": 21.18, "hit_count": 52, "median_return": 0.06, "name": "\u65e5\u672c\u822a\u7a7a", "norm_atr": 2.59, "prev_close": 2774.5, "rank": 9, "target_price": 2821.7, "ticker": "9201", "win_count": 28, "win_rate": 53.9}, {"atr_10": 304.8, "best_rise_pct": 7.0, "beta": 1.29, "hit_count": 30, "median_return": 0.1, "name": "\u30eb\u30cd\u30b5\u30b9\u30a8\u30ec\u30af\u30c8\u30ed\u30cb\u30af\u30b9", "norm_atr": 6.48, "prev_close": 4703.0, "rank": 10, "target_price": 5032.2, "ticker": "6723", "win_count": 16, "win_rate": 53.3}, {"atr_10": 270.6, "best_rise_pct": 5.3, "beta": 1.23, "hit_count": 19, "median_return": 0.06, "name": "\u30df\u30cd\u30d9\u30a2\u30df\u30c4\u30df", "norm_atr": 5.5, "prev_close": 4922.0, "rank": 11, "target_price": 5182.9, "ticker": "6479", "win_count": 10, "win_rate": 52.6}, {"atr_10": 231.1, "best_rise_pct": 6.4, "beta": 1.28, "hit_count": 21, "median_return": 0.42, "name": "TDK", "norm_atr": 6.06, "prev_close": 3816.0, "rank": 12, "target_price": 4060.2, "ticker": "6762", "win_count": 11, "win_rate": 52.4}, {"atr_10": 4708.0, "best_rise_pct": 5.6, "beta": 1.25, "hit_count": 27, "median_return": 0.08, "name": "\u6771\u4eac\u30a8\u30ec\u30af\u30c8\u30ed\u30f3", "norm_atr": 6.74, "prev_close": 69900.0, "rank": 13, "target_price": 73814.4, "ticker": "8035", "win_count": 14, "win_rate": 51.9}, {"atr_10": 996.0, "best_rise_pct": 3.6, "beta": 1.28, "hit_count": 74, "median_return": -0.02, "name": "SCREEN\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9", "norm_atr": 6.17, "prev_close": 16130.0, "rank": 14, "target_price": 16710.7, "ticker": "7735", "win_count": 37, "win_rate": 50.0}, {"atr_10": 431.3, "best_rise_pct": 3.3, "beta": 1.32, "hit_count": 72, "median_return": -0.03, "name": "\u5b89\u5ddd\u96fb\u6a5f", "norm_atr": 6.1, "prev_close": 7071.0, "rank": 15, "target_price": 7304.3, "ticker": "6506", "win_count": 36, "win_rate": 50.0}]
+        stocks: [{"atr_10": 66.2, "best_rise_pct": 4.7, "beta": 1.29, "hit_count": 17, "median_return": 0.28, "name": "\u30b8\u30a7\u30a4\u30c6\u30af\u30c8", "norm_atr": 3.26, "prev_close": 2033.5, "rank": 1, "target_price": 2129.1, "ticker": "6473", "win_count": 11, "win_rate": 64.7}, {"atr_10": 16.0, "best_rise_pct": 4.6, "beta": 1.22, "hit_count": 18, "median_return": 0.19, "name": "NTN", "norm_atr": 3.98, "prev_close": 401.9, "rank": 2, "target_price": 420.4, "ticker": "6472", "win_count": 11, "win_rate": 61.1}, {"atr_10": 194.8, "best_rise_pct": 6.6, "beta": 1.47, "hit_count": 30, "median_return": 0.21, "name": "\u30bd\u30b7\u30aa\u30cd\u30af\u30b9\u30c8", "norm_atr": 7.74, "prev_close": 2517.5, "rank": 3, "target_price": 2683.7, "ticker": "6526", "win_count": 18, "win_rate": 60.0}, {"atr_10": 292.7, "best_rise_pct": 6.6, "beta": 1.3, "hit_count": 37, "median_return": 0.18, "name": "SUMCO", "norm_atr": 7.62, "prev_close": 3839.0, "rank": 4, "target_price": 4092.4, "ticker": "3436", "win_count": 21, "win_rate": 56.8}, {"atr_10": 631.0, "best_rise_pct": 5.9, "beta": 1.24, "hit_count": 20, "median_return": 0.26, "name": "\u5bcc\u58eb\u96fb\u6a5f", "norm_atr": 4.6, "prev_close": 13720.0, "rank": 5, "target_price": 14529.5, "ticker": "6504", "win_count": 11, "win_rate": 55.0}, {"atr_10": 322.5, "best_rise_pct": 7.0, "beta": 1.28, "hit_count": 31, "median_return": 0.15, "name": "\u30eb\u30cd\u30b5\u30b9\u30a8\u30ec\u30af\u30c8\u30ed\u30cb\u30af\u30b9", "norm_atr": 6.7, "prev_close": 4810.0, "rank": 6, "target_price": 5146.7, "ticker": "6723", "win_count": 17, "win_rate": 54.8}, {"atr_10": 53.0, "best_rise_pct": 1.7, "beta": 21.1, "hit_count": 53, "median_return": 0.07, "name": "\u65e5\u672c\u822a\u7a7a", "norm_atr": 1.85, "prev_close": 2865.5, "rank": 7, "target_price": 2914.2, "ticker": "9201", "win_count": 29, "win_rate": 54.7}, {"atr_10": 428.6, "best_rise_pct": 3.6, "beta": 1.23, "hit_count": 64, "median_return": 0.17, "name": "\u65e5\u672c\u88fd\u92fc\u6240", "norm_atr": 5.65, "prev_close": 7591.0, "rank": 8, "target_price": 7864.3, "ticker": "5631", "win_count": 35, "win_rate": 54.7}, {"atr_10": 199.1, "best_rise_pct": 6.4, "beta": 1.28, "hit_count": 21, "median_return": 0.42, "name": "TDK", "norm_atr": 5.54, "prev_close": 3593.0, "rank": 9, "target_price": 3823.0, "ticker": "6762", "win_count": 11, "win_rate": 52.4}, {"atr_10": 425.1, "best_rise_pct": 3.3, "beta": 1.32, "hit_count": 73, "median_return": 0.05, "name": "\u5b89\u5ddd\u96fb\u6a5f", "norm_atr": 6.16, "prev_close": 6902.0, "rank": 10, "target_price": 7129.8, "ticker": "6506", "win_count": 37, "win_rate": 50.7}, {"atr_10": 1117.5, "best_rise_pct": 3.6, "beta": 1.29, "hit_count": 74, "median_return": -0.02, "name": "SCREEN\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9", "norm_atr": 6.67, "prev_close": 16765.0, "rank": 11, "target_price": 17368.5, "ticker": "7735", "win_count": 37, "win_rate": 50.0}, {"atr_10": 4302.0, "best_rise_pct": 5.4, "beta": 1.25, "hit_count": 32, "median_return": -0.03, "name": "\u6771\u4eac\u30a8\u30ec\u30af\u30c8\u30ed\u30f3", "norm_atr": 5.76, "prev_close": 74700.0, "rank": 12, "target_price": 78733.8, "ticker": "8035", "win_count": 16, "win_rate": 50.0}, {"atr_10": 291.3, "best_rise_pct": 5.3, "beta": 1.23, "hit_count": 20, "median_return": -0.12, "name": "\u30df\u30cd\u30d9\u30a2\u30df\u30c4\u30df", "norm_atr": 6.11, "prev_close": 4771.0, "rank": 13, "target_price": 5023.9, "ticker": "6479", "win_count": 10, "win_rate": 50.0}]
     };
 </script>
 
 <script src="../static/js/high_hunter.js"></script>
 
 <style>
-    .hh-controls { margin: 2rem 0; display: flex; justify-content: center; }
-    .control-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 12px; padding: 1.5rem 2.5rem; display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); }
-    .control-group { display: flex; align-items: center; gap: 0.8rem; }
-    .control-label { font-weight: 500; color: #e2e8f0; font-size: 0.95rem; }
-    .control-input { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(239, 68, 68, 0.4); color: white; padding: 0.5rem 1rem; border-radius: 6px; font-size: 1rem; width: 100px; transition: all 0.2s; }
-    .control-input:focus { outline: none; border-color: #f87171; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2); }
-    .checkbox-wrapper { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; color: #cbd5e1; }
-    .checkbox-wrapper input { display: none; }
-    .custom-checkbox { width: 18px; height: 18px; border: 2px solid #ef4444; border-radius: 4px; display: flex; justify-content: center; align-items: center; transition: all 0.2s; }
-    .checkbox-wrapper input:checked + .custom-checkbox { background: #ef4444; }
-    .checkbox-wrapper input:checked + .custom-checkbox::after { content: "✓"; color: white; font-size: 12px; font-weight: bold; }
-    .risk-summary { font-size: 0.9rem; color: #94a3b8; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 1.5rem; }
-    .highlight-value { font-size: 1.2rem; font-weight: 700; color: #f87171; }
-    .glass-table { background: rgba(30, 41, 59, 0.4); border-radius: 12px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.05); overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .data-table { width: 100%; border-collapse: collapse; text-align: right; white-space: nowrap; }
-    .data-table th, .data-table td { padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
-    .data-table th { background: rgba(15, 23, 42, 0.6); color: #94a3b8; font-weight: 600; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; }
-    .data-table th.sortable { cursor: pointer; user-select: none; transition: background 0.2s; }
-    .data-table th.sortable:hover { background: rgba(15, 23, 42, 0.9); color: #cbd5e1; }
-    .data-table tbody tr { transition: all 0.2s; }
-    .data-table tbody tr:hover { background: rgba(71, 85, 105, 0.2); transform: translateY(-1px); }
-    .data-table th:nth-child(2), .data-table td:nth-child(2), .data-table th:nth-child(3), .data-table td:nth-child(3) { text-align: left; }
-    .rank-cell { font-weight: 700; color: #64748b; }
-    .name-cell { font-weight: 500; color: #f8fafc; }
-    .highlight-ok { color: #34d399; font-weight: 600; }
-    .short-price { color: #f87171; font-weight: 600; font-family: 'Inter', monospace; }
-    .highlighted-val { color: #f87171; font-weight: 700; font-size: 1.05rem; }
-    .text-muted { color: #64748b; font-size: 0.85rem; }
-    .sub-unit { color: #475569; font-weight: normal; }
-    .sort-icon::after { content: '↕'; opacity: 0.3; margin-left: 4px; font-size: 0.8em; }
-    .sortable.asc .sort-icon::after { content: '↑'; opacity: 1; color: #f87171; }
-    .sortable.desc .sort-icon::after { content: '↓'; opacity: 1; color: #f87171; }
-    .fire-badge { background: rgba(239,68,68,0.2); color:#fca5a5; padding: 2px 6px; border-radius:4px; font-size:0.85em; font-weight:700; margin-right:6px; letter-spacing:0; }
-    .highlight-strong { color: #facc15; font-weight: 700; font-size: 1.05rem; }
-    .empty-state { text-align: center; padding: 4rem; color: #64748b; background: rgba(30, 41, 59, 0.4); border-radius: 12px; border: 1px dashed rgba(148, 163, 184, 0.2); }
+    .sortable { cursor: pointer; user-select: none; }
+    .sortable:hover { background: var(--bg-hover) !important; }
+    .sort-icon::after { content: ' ↕'; opacity: 0.3; font-size: 0.8em; }
+    .sortable.asc .sort-icon::after { content: ' ↑'; opacity: 1; color: var(--accent-primary); }
+    .sortable.desc .sort-icon::after { content: ' ↓'; opacity: 1; color: var(--accent-primary); }
+    
+    /* qtyStyle class replacement */
+    .col-qty.sub-unit {
+        color: #98A0AE !important;
+        font-weight: normal !important;
+    }
+    .col-qty {
+        color: #1B1F2A;
+        font-weight: 600;
+    }
 </style>
 
         </div>
@@ -334,7 +368,7 @@
 
     <footer class="footer">
         <div class="container">
-            <p>最終更新: 2026-06-26</p>
+            <p>最終更新: 2026-06-30</p>
         </div>
     </footer>
 </body>
