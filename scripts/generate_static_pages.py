@@ -986,13 +986,11 @@ def generate_all():
                 'top3': filtered[:3],
             })
 
-        # 指値ボード（東証プライムフィルタ適用）
-        lh_stocks = filter_prime(lh_stocks_all, market_map) if suffix else lh_stocks_all
-        low_hunter_top3 = lh_stocks[:3]
+        # 指値ボード（市場フィルタは適用しない）
+        low_hunter_top3 = lh_stocks_all[:3]
 
-        # 空売りボード（東証プライムフィルタ適用）
-        hh_stocks = filter_prime(hh_stocks_all, market_map) if suffix else hh_stocks_all
-        high_hunter_top3 = hh_stocks[:3]
+        # 空売りボード（市場フィルタは適用しない）
+        high_hunter_top3 = hh_stocks_all[:3]
 
         # 接近シグナル（東証プライムフィルタ適用＆マージ＆ソート）
         approaching_signals = []

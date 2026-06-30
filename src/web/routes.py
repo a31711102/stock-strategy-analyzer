@@ -68,16 +68,14 @@ def register_routes(app: Flask):
                 'top3': top3
             })
 
-        # 黄金の指値ボード（Low Hunter）上位3件
+        # 黄金の指値ボード（Low Hunter）上位3件（市場フィルタは適用しない）
         lh_data = cache.load_low_hunter_result()
         lh_stocks = lh_data.get('stocks', []) if lh_data else []
-        lh_stocks = filter_by_market(lh_stocks, market)
         low_hunter_top3 = lh_stocks[:3]
 
-        # 黄金の空売りボード（High Hunter）上位3件
+        # 黄金の空売りボード（High Hunter）上位3件（市場フィルタは適用しない）
         hh_data = cache.load_high_hunter_result()
         hh_stocks = hh_data.get('stocks', []) if hh_data else []
-        hh_stocks = filter_by_market(hh_stocks, market)
         high_hunter_top3 = hh_stocks[:3]
 
         # 接近シグナル上位6件
