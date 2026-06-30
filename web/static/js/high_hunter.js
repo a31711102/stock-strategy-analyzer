@@ -69,17 +69,17 @@
 
       if (qtyCell) {
         if (result.quantity === 0) {
-          qtyCell.textContent = '-';
+          qtyCell.textContent = '単元未満';
           qtyCell.classList.add('sub-unit');
         } else {
-          qtyCell.textContent = result.quantity.toLocaleString();
+          qtyCell.textContent = result.quantity.toLocaleString() + '株';
           qtyCell.classList.remove('sub-unit');
         }
       }
 
       if (capCell) {
         if (result.quantity === 0) {
-          capCell.textContent = '-';
+          capCell.textContent = '—';
         } else {
           capCell.textContent = '¥' + Math.round(result.capital).toLocaleString();
         }

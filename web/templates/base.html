@@ -7,20 +7,21 @@
     <meta name="robots" content="noindex, nofollow">
     <title>{% block title %}Stock Strategy Analyzer{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
     <header class="header">
         <div class="container">
             <a href="{{ url_for('index') }}" class="logo">
-                📊 Stock Strategy Analyzer
+                <span class="logo-icon">S</span>
+                <span>Stock Strategy Analyzer</span>
             </a>
             <nav class="nav">
-                <a href="{{ url_for('low_hunter') }}" class="nav-link">📉 Low Hunter</a>
-                <a href="{{ url_for('high_hunter') }}" class="nav-link">📈 High Hunter</a>
+                <a href="{{ url_for('low_hunter') }}" class="nav-link">📉 黄金の指値ボード</a>
+                <a href="{{ url_for('high_hunter') }}" class="nav-link">📈 黄金の空売りボード</a>
                 <form class="search-form" action="{{ url_for('stock_detail', code='') }}" method="GET" id="search-form">
-                    <input type="text" class="search-input" placeholder="銘柄コードで検索（例: 1332）" id="stock-search"
+                    <input type="text" class="search-input" placeholder="銘柄コード（例: 7203）" id="stock-search"
                         autocomplete="off">
                     <button type="submit" class="search-btn">検索</button>
                 </form>

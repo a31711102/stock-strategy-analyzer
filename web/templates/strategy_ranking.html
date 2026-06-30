@@ -5,21 +5,25 @@
 {% block content %}
 {% set mq = 'prime' if market == 'prime' else None %}
 <nav class="breadcrumb">
-    <a href="{{ url_for('index', market=mq) }}">トップ</a>
-    <span>›</span>
-    <span>{{ strategy_name }}</span>
+    <a href="{{ url_for('index') }}">SSA</a>
+    <span class="sep">/</span>
+    <span>スイング</span>
+    <span class="sep">/</span>
+    <span>適合度ランキング</span>
+    <span class="sep">/</span>
+    <span class="current">{{ strategy_name }}</span>
 </nav>
 
 <section class="ranking-section">
-    <header class="section-header">
-        <h1>{{ strategy_name }}</h1>
-        <p class="subtitle">適合度ランキング Top {{ rankings|length }}{{ '（東証プライム）' if market == 'prime' else '' }}</p>
-    </header>
-
-    <div class="market-filter">
-        <span class="market-filter-label">市場:</span>
-        <a href="{{ url_for('strategy_ranking', name=strategy_name) }}" class="market-tab {{ 'active' if market != 'prime' else '' }}">全市場</a>
-        <a href="{{ url_for('strategy_ranking', name=strategy_name, market='prime') }}" class="market-tab {{ 'active' if market == 'prime' else '' }}">東証プライム</a>
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:18px; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2 style="font-size:21px; font-weight:700;">{{ strategy_name }}</h2>
+            <div style="font-size:13px; color:#5A6172; margin-top:2px;">適合度ランキング Top {{ rankings|length }}{{ '（東証プライム）' if market == 'prime' else '' }}</div>
+        </div>
+        <div class="market-filter">
+            <a href="{{ url_for('strategy_ranking', name=strategy_name) }}" class="market-tab {{ 'active' if market != 'prime' else '' }}">全市場</a>
+            <a href="{{ url_for('strategy_ranking', name=strategy_name, market='prime') }}" class="market-tab {{ 'active' if market == 'prime' else '' }}">東証プライム</a>
+        </div>
     </div>
 
     <div class="strategy-nav">
@@ -31,42 +35,58 @@
         {% endfor %}
     </div>
 
-    <div class="ranking-table-wrapper">
-        <table class="ranking-table">
-            <thead>
-                <tr>
-                    <th class="col-rank">順位</th>
-                    <th class="col-code">コード</th>
-                    <th class="col-name">銘柄名</th>
-                    <th class="col-score">スコア</th>
-                    <th class="col-reason">評価</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in rankings %}
-                <tr>
-                    <td class="col-rank">
-                        <span class="rank-badge rank-{{ item.rank }}">{{ item.rank }}</span>
-                    </td>
-                    <td class="col-code">
-                        <a href="{{ url_for('stock_detail', code=item.code) }}" class="code-link">
-                            {{ item.code }}
-                        </a>
-                    </td>
-                    <td class="col-name">{{ item.name }}</td>
-                    <td class="col-score">
-                        <div class="score-bar">
-                            <div class="score-fill" style="width: {{ item.score }}%"></div>
-                            <span class="score-value">{{ "%.1f"|format(item.score) }}%</span>
-                        </div>
-                    </td>
-                    <td class="col-reason">
-                        <span class="reason-short">{{ item.reason.split('\n')[0] }}</span>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    {% if rankings %}
+    <div style="background:#fff; border:1px solid #E4E7EC; border-radius:12px; overflow:hidden;">
+        <div style="overflow-x:auto;">
+            <table style="font-size:13px;">
+                <thead>
+                    <tr style="background:#FAFBFC; color:#5A6172; font-size:11.5px;">
+                        <th style="padding:9px 12px; text-align:center; font-weight:600; width:80px;">順位</th>
+                        <th style="padding:9px 12px; text-align:left; font-weight:600; width:100px;">コード</th>
+                        <th style="padding:9px 12px; text-align:left; font-weight:600;">銘柄名</th>
+                        <th style="padding:9px 12px; text-align:right; font-weight:600; width:180px;">スコア</th>
+                        <th style="padding:9px 12px; text-align:left; font-weight:600;">主要条件</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in rankings %}
+                    <tr style="background: {{ '#FFFFFF' if loop.index0 % 2 == 0 else '#FBFBFC' }};">
+                        <td style="padding:11px 12px; text-align:center;">
+                            <span style="display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; font-weight:700; font-size:11px;
+                                {% if item.rank == 1 %}background:#FBF3DC; color:#B58A1B; border:1px solid #F0DCBE;
+                                {% elif item.rank == 2 %}background:#F1F2F4; color:#5A6172; border:1px solid #E4E7EC;
+                                {% elif item.rank == 3 %}background:#EEF0FB; color:#4338CA; border:1px solid #D9DCF6;
+                                {% else %}background:transparent; color:#98A0AE;{% endif %}">
+                                {{ item.rank }}
+                            </span>
+                        </td>
+                        <td style="padding:11px 12px;">
+                            <a href="{{ url_for('stock_detail', code=item.code) }}" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:600; text-decoration:none;">
+                                {{ item.code }}
+                            </a>
+                        </td>
+                        <td style="padding:11px 12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.name }}</td>
+                        <td style="padding:11px 12px; text-align:right;">
+                            <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end;">
+                                <div style="width:70px; height:6px; background:#EEF0FB; border-radius:3px; overflow:hidden; display:inline-block;">
+                                    <div style="height:100%; background:var(--accent-primary); width: {{ item.score }}%"></div>
+                                </div>
+                                <span style="font-weight:700; font-variant-numeric:tabular-nums; color:var(--accent-primary);">{{ "%.1f"|format(item.score) }}%</span>
+                            </div>
+                        </td>
+                        <td style="padding:11px 12px; color:#5A6172;">
+                            <span style="font-size:12px;">{{ item.reason.split('\n')[0] }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
+    {% else %}
+    <div style="text-align: center; padding: 4rem; color: var(--text-secondary); background: var(--bg-card); border-radius: 12px; border: 1px dashed var(--border);">
+        <p>該当する適合銘柄がありませんでした。</p>
+    </div>
+    {% endif %}
 </section>
 {% endblock %}

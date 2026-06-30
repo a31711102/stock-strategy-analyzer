@@ -1,141 +1,131 @@
 {% extends "base.html" %}
 
-{% block title %}戦略一覧 - Stock Strategy Analyzer{% endblock %}
+{% block title %}今日のおすすめ候補 - Stock Strategy Analyzer{% endblock %}
 
 {% block content %}
 {% set mq = 'prime' if market == 'prime' else None %}
-<section class="hero">
-    <h1>Stock Strategy Analyzer</h1>
-    <p class="hero-sub">バックテスト結果に基づく銘柄・戦略の適合度分析</p>
 
-    {% if metadata %}
-    <div class="stats-bar">
-        <div class="stat">
-            <span class="stat-value">{{ metadata.processed_stocks or 0 }}</span>
-            <span class="stat-label">処理済み銘柄</span>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div style="font-size:12px;font-weight:700;letter-spacing:.14em;color:#4338CA;text-transform:uppercase">COCKPIT · 司令塔</div>
+    <div class="market-filter">
+        <a href="{{ url_for('index') }}" class="market-tab {{ 'active' if market != 'prime' else '' }}">全市場</a>
+        <a href="{{ url_for('index', market='prime') }}" class="market-tab {{ 'active' if market == 'prime' else '' }}">東証プライム</a>
+    </div>
+</div>
+
+<div style="background:#F4F5F7; padding: 26px 28px 28px; border-radius: 14px; border: 1px solid var(--border);">
+    <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:4px">
+        <h2 style="font-size:22px;font-weight:700;letter-spacing:-.01em">今日のおすすめ候補</h2>
+        <span style="font-size:12.5px;color:#7A828F">全機能を横断したエントリー候補（{% if metadata %}{{ metadata.last_updated[:10] }}{% endif %} 時点）</span>
+    </div>
+    <div style="height:1px;background:#E4E7EC;margin:14px 0 20px"></div>
+
+    <div class="cockpit-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
+        <!-- DAYTRADE column -->
+        <div>
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:13px">
+                <span style="width:9px;height:9px;border-radius:50%;background:#D97706"></span>
+                <span style="font-weight:700;font-size:15px">デイトレ・当日</span>
+                <span style="font-size:11.5px;color:#C2740A;background:#FBF0DF;border:1px solid #F0DCBE;padding:1.5px 8px;border-radius:20px;font-weight:600">本日の指値で仕込む</span>
+            </div>
+
+            <!-- 指値ボード(買い) -->
+            <div style="background:#fff;border:1px solid #E4E7EC;border-radius:12px;padding:14px 16px;margin-bottom:14px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                    <span style="font-weight:700;font-size:13.5px">黄金の指値ボード <span style="color:#15803D">▲買い</span></span>
+                    <a href="{{ url_for('low_hunter') }}" style="font-size:12px;color:#5A6172;text-decoration:none">全件を見る →</a>
+                </div>
+                <div style="display:grid;grid-template-columns:20px 44px minmax(0,1fr) 54px 82px;gap:8px;font-size:10.5px;color:#98A0AE;font-weight:600;padding:0 2px 5px;border-bottom:1px solid #E4E7EC">
+                    <span></span><span>コード</span><span>銘柄名</span><span style="text-align:right">勝率</span><span style="text-align:right">指値</span>
+                </div>
+                {% if low_hunter_top3 %}
+                    {% for r in low_hunter_top3 %}
+                    <div style="display:grid;grid-template-columns:20px 44px minmax(0,1fr) 54px 82px;gap:8px;align-items:center;font-size:13px;padding:8px 2px;border-bottom:1px solid #F1F3F5">
+                        <span style="color:#B58A1B;font-weight:700;font-variant-numeric:tabular-nums">{{ loop.index }}</span>
+                        <a href="{{ url_for('stock_detail', code=r.code) }}" style="font-family:Inter,sans-serif;color:#C2740A;font-weight:600;font-variant-numeric:tabular-nums;text-decoration:none;">{{ r.code }}</a>
+                        <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span>
+                        <span style="text-align:right;color:#15803D;font-weight:600;font-variant-numeric:tabular-nums">{{ "%.1f"|format(r.win_rate * 100) if r.win_rate is not none else r.win }}%</span>
+                        <span style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">¥{{ "{:,}".format(r.buy_price|int) if r.buy_price is not none else r.target }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="font-size:12px;color:#98A0AE;text-align:center;padding:10px 0;">候補がありません</div>
+                {% endif %}
+            </div>
+
+            <!-- 空売りボード(売り) -->
+            <div style="background:#fff;border:1px solid #E4E7EC;border-radius:12px;padding:14px 16px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                    <span style="font-weight:700;font-size:13.5px">黄金の空売りボード <span style="color:#C03434">▼売り</span></span>
+                    <a href="{{ url_for('high_hunter') }}" style="font-size:12px;color:#5A6172;text-decoration:none">全件を見る →</a>
+                </div>
+                <div style="display:grid;grid-template-columns:20px 44px minmax(0,1fr) 54px 82px;gap:8px;font-size:10.5px;color:#98A0AE;font-weight:600;padding:0 2px 5px;border-bottom:1px solid #E4E7EC">
+                    <span></span><span>コード</span><span>銘柄名</span><span style="text-align:right">勝率</span><span style="text-align:right">空売り</span>
+                </div>
+                {% if high_hunter_top3 %}
+                    {% for r in high_hunter_top3 %}
+                    <div style="display:grid;grid-template-columns:20px 44px minmax(0,1fr) 54px 82px;gap:8px;align-items:center;font-size:13px;padding:8px 2px;border-bottom:1px solid #F1F3F5">
+                        <span style="color:#B58A1B;font-weight:700;font-variant-numeric:tabular-nums">{{ loop.index }}</span>
+                        <a href="{{ url_for('stock_detail', code=r.code) }}" style="font-family:Inter,sans-serif;color:#C2740A;font-weight:600;font-variant-numeric:tabular-nums;text-decoration:none;">{{ r.code }}</a>
+                        <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span>
+                        <span style="text-align:right;color:#15803D;font-weight:600;font-variant-numeric:tabular-nums">{{ "%.1f"|format(r.win_rate * 100) if r.win_rate is not none else r.win }}%</span>
+                        <span style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">¥{{ "{:,}".format(r.sell_price|int) if r.sell_price is not none else r.target }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="font-size:12px;color:#98A0AE;text-align:center;padding:10px 0;">候補がありません</div>
+                {% endif %}
+            </div>
         </div>
-        <div class="stat">
-            <span class="stat-value">{{ metadata.strategies|length }}</span>
-            <span class="stat-label">投資戦略</span>
-        </div>
-        <div class="stat">
-            <span class="stat-value">{{ metadata.last_updated[:10] if metadata.last_updated else '-' }}</span>
-            <span class="stat-label">最終更新</span>
+
+        <!-- SWING column -->
+        <div>
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:13px">
+                <span style="width:9px;height:9px;border-radius:50%;background:#4338CA"></span>
+                <span style="font-weight:700;font-size:15px">スイング・中長期</span>
+                <span style="font-size:11.5px;color:#4338CA;background:#EEF0FB;border:1px solid #D9DCF6;padding:1.5px 8px;border-radius:20px;font-weight:600">数日〜数週で狙う</span>
+            </div>
+
+            <!-- シグナル接近中 -->
+            <div style="background:#fff;border:1px solid #E4E7EC;border-radius:12px;padding:14px 16px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                    <span style="font-weight:700;font-size:13.5px">シグナル接近中</span>
+                    <a href="{{ url_for('approaching_index') }}" style="font-size:12px;color:#5A6172;text-decoration:none">全件を見る →</a>
+                </div>
+                <div style="display:grid;grid-template-columns:minmax(0,108px) 44px minmax(0,1fr) 72px;gap:8px;font-size:10.5px;color:#98A0AE;font-weight:600;padding:0 2px 5px;border-bottom:1px solid #E4E7EC">
+                    <span>戦略</span><span>コード</span><span>銘柄名</span><span style="text-align:right">発生まで</span>
+                </div>
+                {% if approaching_top %}
+                    {% for r in approaching_top %}
+                    <div style="display:grid;grid-template-columns:minmax(0,108px) 44px minmax(0,1fr) 72px;gap:8px;align-items:center;font-size:13px;padding:8px 2px;border-bottom:1px solid #F1F3F5">
+                        <span style="color:#4338CA;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px">{{ r.strat }}</span>
+                        <a href="{{ url_for('stock_detail', code=r.code) }}" style="font-family:Inter,sans-serif;color:#5A6172;font-weight:600;font-variant-numeric:tabular-nums;text-decoration:none;">{{ r.code }}</a>
+                        <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span>
+                        <span style="text-align:right;color:#C2740A;font-weight:600;font-size:12px">約{{ r.estimated_days or '?' }}日後</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="font-size:12px;color:#98A0AE;text-align:center;padding:10px 0;">接近中の銘柄はありません</div>
+                {% endif %}
+            </div>
         </div>
     </div>
-    {% endif %}
 
-    <div class="nav-links">
-        <a href="{{ url_for('index', market=mq) }}" class="nav-link active">📊 適合度ランキング</a>
-        <a href="{{ url_for('approaching_index', market=mq) }}" class="nav-link">🎯 シグナル接近中</a>
-        <a href="/screener" class="nav-link">🔥 ボラティリティスクリーナー</a>
-        <a href="/low_hunter" class="nav-link">📉 黄金の指値ボード</a>
-        <a href="/high_hunter" class="nav-link">📈 黄金の空売りボード</a>
+    <!-- secondary nav -->
+    <div style="display:flex;align-items:center;gap:10px;margin-top:22px;padding-top:16px;border-top:1px solid #E4E7EC;flex-wrap:wrap">
+        <span style="font-size:12px;color:#98A0AE">その他:</span>
+        {% if strategies %}
+            {% set first_strat = strategies[0].name %}
+            <a href="{{ url_for('strategy_ranking', name=first_strat) }}" style="font-size:12.5px;color:#5A6172;background:#fff;border:1px solid #E4E7EC;padding:5px 12px;border-radius:8px;text-decoration:none;">適合度ランキング</a>
+        {% endif %}
     </div>
-</section>
-
-<div class="market-filter">
-    <span class="market-filter-label">市場:</span>
-    <a href="{{ url_for('index') }}" class="market-tab {{ 'active' if market != 'prime' else '' }}">全市場</a>
-    <a href="{{ url_for('index', market='prime') }}" class="market-tab {{ 'active' if market == 'prime' else '' }}">東証プライム</a>
 </div>
 
 <style>
-    .nav-links {
-        margin-top: 1.5rem;
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-
-    .nav-link {
-        padding: 0.5rem 1rem;
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-        text-decoration: none;
-        border-radius: 20px;
-        transition: all 0.2s;
-    }
-
-    .nav-link:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
-
-    .nav-link.active {
-        background: rgba(255, 255, 255, 0.25);
-        font-weight: bold;
+    @media (max-width: 768px) {
+        .cockpit-grid {
+            grid-template-columns: 1fr !important;
+        }
     }
 </style>
-
-<section class="criteria-section">
-    <details class="criteria-details">
-        <summary class="criteria-summary">📋 適合度の評価基準</summary>
-        <div class="criteria-content">
-            <p class="criteria-intro">適合度は以下の指標を総合的に評価して算出されます（40%以上のみランキングに表示）</p>
-            <div class="criteria-grid">
-                <div class="criteria-item">
-                    <h4>📈 リターン（40%）</h4>
-                    <ul>
-                        <li><span class="ok">OK</span> +20%以上: 高リターン</li>
-                        <li><span class="ok">OK</span> +10%〜20%: 中リターン</li>
-                        <li><span class="mid">中</span> 0%〜10%: 小リターン</li>
-                        <li><span class="ng">NG</span> マイナス: 損失</li>
-                    </ul>
-                </div>
-                <div class="criteria-item">
-                    <h4>🎯 勝率（30%）</h4>
-                    <ul>
-                        <li><span class="ok">OK</span> 60%以上: 高勝率</li>
-                        <li><span class="mid">中</span> 40%〜60%: 中勝率</li>
-                        <li><span class="ng">NG</span> 40%未満: 低勝率</li>
-                    </ul>
-                </div>
-                <div class="criteria-item">
-                    <h4>🔢 取引回数（30%）</h4>
-                    <ul>
-                        <li><span class="ok">OK</span> 10回以上: 十分な機会</li>
-                        <li><span class="mid">中</span> 5〜9回: 機会あり</li>
-                        <li><span class="ng">NG</span> 5回未満: 機会少</li>
-                    </ul>
-                </div>
-                <div class="criteria-item">
-                    <h4>📉 最大下落率</h4>
-                    <ul>
-                        <li><span class="ok">OK</span> 20%未満: 低リスク</li>
-                        <li><span class="mid">中</span> 20%〜40%: 中リスク</li>
-                        <li><span class="ng">NG</span> 40%以上: 高リスク</li>
-                    </ul>
-                    <p class="note">※最高値からの最大下落幅</p>
-                </div>
-            </div>
-        </div>
-    </details>
-</section>
-
-<section class="strategies-section">
-    <h2>戦略別ランキング</h2>
-    <div class="strategy-grid">
-        {% for strategy in strategies %}
-        <a href="{{ url_for('strategy_ranking', name=strategy.name, market=mq) }}" class="strategy-card">
-            <h3 class="strategy-name">{{ strategy.name }}</h3>
-
-            {% if strategy.top3 %}
-            <div class="top3-preview">
-                {% for item in strategy.top3 %}
-                <div class="preview-item">
-                    <span class="rank">#{{ item.rank }}</span>
-                    <span class="code">{{ item.code }}</span>
-                    <span class="name">{{ item.name }}</span>
-                    <span class="score">{{ "%.1f"|format(item.score) }}%</span>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
-
-            <span class="card-arrow">→</span>
-        </a>
-        {% endfor %}
-    </div>
-</section>
 {% endblock %}

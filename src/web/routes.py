@@ -68,6 +68,40 @@ def register_routes(app: Flask):
                 'top3': top3
             })
 
+        # 黄金の指値ボード（Low Hunter）上位3件
+        lh_data = cache.load_low_hunter_result()
+        lh_stocks = lh_data.get('stocks', []) if lh_data else []
+        lh_stocks = filter_by_market(lh_stocks, market)
+        low_hunter_top3 = lh_stocks[:3]
+
+        # 黄金の空売りボード（High Hunter）上位3件
+        hh_data = cache.load_high_hunter_result()
+        hh_stocks = hh_data.get('stocks', []) if hh_data else []
+        hh_stocks = filter_by_market(hh_stocks, market)
+        high_hunter_top3 = hh_stocks[:3]
+
+        # 接近シグナル上位6件
+        approaching_signals = []
+        app_strategies = cache.get_available_approaching_strategies()
+        for name in app_strategies:
+            # 各戦略からシグナルをロードしてマージ
+            signals = filter_by_market(cache.load_approaching_signals(name), market)
+            for s in signals:
+                s_copy = s.copy()
+                s_copy['strat'] = name
+                approaching_signals.append(s_copy)
+
+        # estimated_days でソート（Noneや不正値に対応）
+        def get_days(x):
+            try:
+                val = x.get('estimated_days')
+                return int(val) if val is not None else 999
+            except:
+                return 999
+
+        approaching_signals.sort(key=get_days)
+        approaching_top6 = approaching_signals[:6]
+
         elapsed = time.time() - start
 
         return render_template(
@@ -75,6 +109,9 @@ def register_routes(app: Flask):
             strategies=strategy_info,
             metadata=metadata,
             market=market,
+            low_hunter_top3=low_hunter_top3,
+            high_hunter_top3=high_hunter_top3,
+            approaching_top=approaching_top6,
             elapsed=f"{elapsed:.3f}"
         )
     

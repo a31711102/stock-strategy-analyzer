@@ -4,282 +4,137 @@
 
 {% block content %}
 {% set mq = 'prime' if market == 'prime' else None %}
-<section class="hero strategy-hero approaching-hero">
-    <h1>🎯 {{ strategy_name }}</h1>
-    <p class="hero-sub">シグナル接近中の銘柄（Top 50・出来高50万以上{{ '・東証プライム' if market == 'prime' else '' }}）</p>
-
-    <div class="nav-links">
-        <a href="{{ url_for('approaching_index', market=mq) }}" class="nav-link">← 戦略一覧へ戻る</a>
-        <a href="{{ url_for('strategy_ranking', name=strategy_name, market=mq) }}" class="nav-link">📊 適合度ランキング</a>
-    </div>
-</section>
-
-<div class="market-filter">
-    <span class="market-filter-label">市場:</span>
-    <a href="{{ url_for('approaching_strategy', name=strategy_name) }}" class="market-tab {{ 'active' if market != 'prime' else '' }}">全市場</a>
-    <a href="{{ url_for('approaching_strategy', name=strategy_name, market='prime') }}" class="market-tab {{ 'active' if market == 'prime' else '' }}">東証プライム</a>
-</div>
+<nav class="breadcrumb">
+    <a href="{{ url_for('index') }}">SSA</a>
+    <span class="sep">/</span>
+    <span>スイング</span>
+    <span class="sep">/</span>
+    <a href="{{ url_for('approaching_index') }}">シグナル接近中</a>
+    <span class="sep">/</span>
+    <span class="current">{{ strategy_name }}</span>
+</nav>
 
 <section class="ranking-section">
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:18px; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2 style="font-size:21px; font-weight:700;">🎯 {{ strategy_name }}</h2>
+            <div style="font-size:13px; color:#5A6172; margin-top:2px;">
+                シグナル接近中の銘柄（Top 50・出来高50万以上{{ '・東証プライム' if market == 'prime' else '' }}）
+            </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+            <a href="{{ url_for('strategy_ranking', name=strategy_name, market=mq) }}" style="font-size:12.5px; color:var(--accent-primary); background:#fff; border:1px solid var(--border); padding:6px 12px; border-radius:8px; text-decoration:none; font-weight:600;">
+                📊 適合度ランキングを見る
+            </a>
+            <div class="market-filter">
+                <a href="{{ url_for('approaching_strategy', name=strategy_name) }}" class="market-tab {{ 'active' if market != 'prime' else '' }}">全市場</a>
+                <a href="{{ url_for('approaching_strategy', name=strategy_name, market='prime') }}" class="market-tab {{ 'active' if market == 'prime' else '' }}">東証プライム</a>
+            </div>
+        </div>
+    </div>
+
     {% if signals %}
-    <table class="ranking-table approaching-table">
-        <thead>
-            <tr>
-                <th class="rank-col">順位</th>
-                <th class="code-col">コード</th>
-                <th class="name-col">銘柄名</th>
-                <th class="days-col">推定日数</th>
-                <th class="score-col">接近度</th>
-                <th class="vol-col" colspan="3">ボラティリティ</th>
-                <th class="volume-col">平均出来高</th>
-                <th class="conditions-col">達成条件</th>
-            </tr>
-            <tr class="sub-header">
-                <th></th><th></th><th></th><th></th><th></th>
-                <th class="vol-sub-col">ATR(10)</th>
-                <th class="vol-sub-col">ATR(20)</th>
-                <th class="vol-sub-col">傾向</th>
-                <th></th><th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for signal in signals %}
-            <tr>
-                <td class="rank-col">{{ signal.rank }}</td>
-                <td class="code-col">
-                    <a href="{{ url_for('stock_detail', code=signal.code) }}">{{ signal.code }}</a>
-                </td>
-                <td class="name-col">{{ signal.name }}</td>
-                <td class="days-col">
-                    <span
-                        class="days-badge {% if signal.estimated_days <= 1 %}imminent{% elif signal.estimated_days <= 3 %}soon{% else %}later{% endif %}">
-                        約{{ signal.estimated_days or '?' }}日後
-                    </span>
-                </td>
-                <td class="score-col">
-                    <span
-                        class="score-badge {% if signal.score >= 80 %}high{% elif signal.score >= 60 %}medium{% else %}low{% endif %}">
-                        {{ "%.0f"|format(signal.score) }}%
-                    </span>
-                </td>
-                <td class="vol-sub-col">
-                    {% if signal.volatility_category_10 %}
-                    <span class="vol-badge vol-{{ signal.volatility_category_10 }}" {% if signal.volatility_pattern %}title="{{ signal.volatility_pattern }}"{% endif %}>
-                        {% if signal.volatility_category_10 == 'high' %}高{% elif signal.volatility_category_10 == 'mid' %}中{% else %}低{% endif %}
-                    </span>
-                    {% else %}-{% endif %}
-                </td>
-                <td class="vol-sub-col">
-                    {% if signal.volatility_category_20 %}
-                    <span class="vol-badge vol-{{ signal.volatility_category_20 }}">
-                        {% if signal.volatility_category_20 == 'high' %}高{% elif signal.volatility_category_20 == 'mid' %}中{% else %}低{% endif %}
-                    </span>
-                    {% else %}-{% endif %}
-                </td>
-                <td class="vol-sub-col">
-                    {% if signal.volatility_trend %}
-                        {% if signal.volatility_trend == 'expanding' %}
-                        <span class="trend-badge trend-expanding">🔺 拡大</span>
-                        {% elif signal.volatility_trend == 'contracting' %}
-                        <span class="trend-badge trend-contracting">🔻 縮小</span>
-                        {% else %}
-                        <span class="trend-badge trend-stable">➡️ 横ばい</span>
-                        {% endif %}
-                    {% else %}-{% endif %}
-                </td>
-                <td class="volume-col">
-                    {{ "{:,.0f}".format(signal.avg_volume | default(0)) }}
-                </td>
-                <td class="conditions-col">
-                    <div class="conditions-summary">
-                        {% for cond in signal.conditions_met %}
-                        <span class="condition-tag met">✓ {{ cond }}</span>
-                        {% endfor %}
-                        {% for cond in signal.conditions_pending %}
-                        <span class="condition-tag pending">⏳ {{ cond }}</span>
-                        {% endfor %}
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div style="background:#fff; border:1px solid #E4E7EC; border-radius:12px; overflow:hidden;">
+        <div style="overflow-x:auto;">
+            <table style="font-size:13px; min-width:920px;">
+                <thead>
+                    <tr style="background:#FAFBFC; color:#5A6172; font-size:11.5px;">
+                        <th style="padding:9px 12px; text-align:center; font-weight:600; width:60px;">順位</th>
+                        <th style="padding:9px 12px; text-align:left; font-weight:600; width:80px;">コード</th>
+                        <th style="padding:9px 12px; text-align:left; font-weight:600;">銘柄名</th>
+                        <th style="padding:9px 12px; text-align:center; font-weight:600; width:100px;">推定日数</th>
+                        <th style="padding:9px 12px; text-align:center; font-weight:600; width:80px;">接近度</th>
+                        <th colspan="3" style="padding:9px 12px; text-align:center; font-weight:600; border-left:1px solid #E4E7EC; border-right:1px solid #E4E7EC;">ボラティリティ</th>
+                        <th style="padding:9px 12px; text-align:right; font-weight:600; width:120px;">平均出来高</th>
+                        <th style="padding:9px 12px; text-align:left; font-weight:600;">達成条件</th>
+                    </tr>
+                    <tr style="background:#FAFBFC; color:#98A0AE; font-size:10px; border-bottom:1px solid #E4E7EC;">
+                        <th style="padding:2px 12px;"></th><th style="padding:2px 12px;"></th><th style="padding:2px 12px;"></th><th style="padding:2px 12px;"></th><th style="padding:2px 12px;"></th>
+                        <th style="padding:2px 6px; text-align:center; font-weight:500; border-left:1px solid #E4E7EC;">ATR(10)</th>
+                        <th style="padding:2px 6px; text-align:center; font-weight:500;">ATR(20)</th>
+                        <th style="padding:2px 6px; text-align:center; font-weight:500; border-right:1px solid #E4E7EC;">傾向</th>
+                        <th style="padding:2px 12px;"></th><th style="padding:2px 12px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for signal in signals %}
+                    <tr style="background: {{ '#FFFFFF' if loop.index0 % 2 == 0 else '#FBFBFC' }};">
+                        <td style="padding:11px 12px; text-align:center; color:#98A0AE; font-weight:600;" class="tabular-nums">{{ signal.rank }}</td>
+                        <td style="padding:11px 12px;">
+                            <a href="{{ url_for('stock_detail', code=signal.code) }}" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:600; text-decoration:none;">{{ signal.code }}</a>
+                        </td>
+                        <td style="padding:11px 12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ signal.name }}</td>
+                        <td style="padding:11px 12px; text-align:center;">
+                            <span style="font-size:11px; font-weight:700; padding:3px 8px; border-radius:12px; font-variant-numeric:tabular-nums; display:inline-block;
+                                {% if signal.estimated_days <= 1 %}background:#FBEBEB; color:#C03434; border:1px solid #F5C2C2;
+                                {% elif signal.estimated_days <= 3 %}background:#FBF0DF; color:#C2740A; border:1px solid #F0DCBE;
+                                {% else %}background:#EEF0FB; color:#4338CA; border:1px solid #D9DCF6;{% endif %}">
+                                約{{ signal.estimated_days or '?' }}日後
+                            </span>
+                        </td>
+                        <td style="padding:11px 12px; text-align:center;">
+                            <span style="font-size:11px; font-weight:700; padding:3px 8px; border-radius:12px; font-variant-numeric:tabular-nums; display:inline-block;
+                                {% if signal.score >= 80 %}background:#E7F4EC; color:#15803D; border:1px solid #D1E7DD;
+                                {% elif signal.score >= 60 %}background:#FBF0DF; color:#C2740A; border:1px solid #F0DCBE;
+                                {% else %}background:#F1F2F4; color:#5A6172; border:1px solid #E4E7EC;{% endif %}">
+                                {{ "%.0f"|format(signal.score) }}%
+                            </span>
+                        </td>
+                        <td style="padding:11px 6px; text-align:center; border-left:1px solid #F1F3F5;">
+                            {% if signal.volatility_category_10 %}
+                            <span style="font-size:11px; font-weight:700; padding:2px 6px; border-radius:6px; display:inline-block;
+                                {% if signal.volatility_category_10 == 'high' %}background:#FBEBEB; color:#C03434;
+                                {% elif signal.volatility_category_10 == 'mid' %}background:#FBF0DF; color:#C2740A;
+                                {% else %}background:#EEF0FB; color:#4338CA;{% endif %}"
+                                {% if signal.volatility_pattern %}title="{{ signal.volatility_pattern }}" style="cursor:help;"{% endif %}>
+                                {% if signal.volatility_category_10 == 'high' %}高{% elif signal.volatility_category_10 == 'mid' %}中{% else %}低{% endif %}
+                            </span>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td style="padding:11px 6px; text-align:center;">
+                            {% if signal.volatility_category_20 %}
+                            <span style="font-size:11px; font-weight:700; padding:2px 6px; border-radius:6px; display:inline-block;
+                                {% if signal.volatility_category_20 == 'high' %}background:#FBEBEB; color:#C03434;
+                                {% elif signal.volatility_category_20 == 'mid' %}background:#FBF0DF; color:#C2740A;
+                                {% else %}background:#EEF0FB; color:#4338CA;{% endif %}">
+                                {% if signal.volatility_category_20 == 'high' %}高{% elif signal.volatility_category_20 == 'mid' %}中{% else %}低{% endif %}
+                            </span>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td style="padding:11px 6px; text-align:center; border-right:1px solid #F1F3F5;">
+                            {% if signal.volatility_trend %}
+                                {% if signal.volatility_trend == 'expanding' %}
+                                <span style="font-size:11px; padding:2px 6px; border-radius:6px; background:#FBEBEB; color:#C03434; font-weight:600;">🔺 拡大</span>
+                                {% elif signal.volatility_trend == 'contracting' %}
+                                <span style="font-size:11px; padding:2px 6px; border-radius:6px; background:#E7F4EC; color:#15803D; font-weight:600;">🔻 縮小</span>
+                                {% else %}
+                                <span style="font-size:11px; padding:2px 6px; border-radius:6px; background:#F1F2F4; color:#5A6172; font-weight:600;">➡️ 横ばい</span>
+                                {% endif %}
+                            {% else %}-{% endif %}
+                        </td>
+                        <td style="padding:11px 12px; text-align:right; font-variant-numeric:tabular-nums;" class="tabular-nums">
+                            {{ "{:,.0f}".format(signal.avg_volume | default(0)) }}
+                        </td>
+                        <td style="padding:11px 12px;">
+                            <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                                {% for cond in signal.conditions_met %}
+                                <span style="font-size:11px; padding:2px 6px; border-radius:6px; background:#E7F4EC; color:#15803D; font-weight:600; white-space:nowrap;">✓ {{ cond }}</span>
+                                {% endfor %}
+                                {% for cond in signal.conditions_pending %}
+                                <span style="font-size:11px; padding:2px 6px; border-radius:6px; background:#FBF0DF; color:#C2740A; font-weight:600; white-space:nowrap;">⏳ {{ cond }}</span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
     {% else %}
-    <div class="no-data">
+    <div style="text-align: center; padding: 4rem; color: var(--text-secondary); background: var(--bg-card); border-radius: 12px; border: 1px dashed var(--border);">
         <p>{{ strategy_name }}で接近中の銘柄はありません。</p>
     </div>
     {% endif %}
 </section>
-
-<style>
-    .approaching-hero {
-        background: linear-gradient(135deg, #1a365d 0%, #2d4a73 100%);
-    }
-
-    .nav-links {
-        margin-top: 1.5rem;
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-
-    .nav-link {
-        padding: 0.5rem 1rem;
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-        text-decoration: none;
-        border-radius: 20px;
-        transition: all 0.2s;
-    }
-
-    .nav-link:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
-
-    .approaching-table .days-col,
-    .approaching-table .score-col,
-    .approaching-table .vol-sub-col {
-        text-align: center;
-    }
-
-    /* サブヘッダー行 */
-    .sub-header th {
-        font-size: 0.75rem;
-        font-weight: 500;
-        color: #9ca3af;
-        padding: 0.2rem 0.5rem;
-        border-top: none;
-    }
-
-    .vol-col {
-        text-align: center;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .days-badge {
-        display: inline-block;
-        padding: 0.3rem 0.6rem;
-        border-radius: 15px;
-        font-size: 0.85rem;
-        font-weight: bold;
-    }
-
-    .days-badge.imminent {
-        background: linear-gradient(135deg, #ef4444, #dc2626);
-        color: white;
-    }
-
-    .days-badge.soon {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-    }
-
-    .days-badge.later {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
-        color: white;
-    }
-
-    .score-badge {
-        display: inline-block;
-        padding: 0.3rem 0.6rem;
-        border-radius: 15px;
-        font-size: 0.85rem;
-        font-weight: bold;
-    }
-
-    .score-badge.high {
-        background: #10b981;
-        color: white;
-    }
-
-    .score-badge.medium {
-        background: #f59e0b;
-        color: white;
-    }
-
-    .score-badge.low {
-        background: #6b7280;
-        color: white;
-    }
-
-    /* ボラティリティバッジ */
-    .vol-badge {
-        display: inline-block;
-        padding: 0.2rem 0.5rem;
-        border-radius: 10px;
-        font-size: 0.8rem;
-        font-weight: bold;
-        min-width: 2rem;
-        text-align: center;
-        cursor: help;
-    }
-
-    .vol-badge.vol-high {
-        background: linear-gradient(135deg, #ef4444, #dc2626);
-        color: white;
-    }
-
-    .vol-badge.vol-mid {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-    }
-
-    .vol-badge.vol-low {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
-        color: white;
-    }
-
-    /* 傾向バッジ */
-    .trend-badge {
-        font-size: 0.8rem;
-        padding: 0.2rem 0.4rem;
-        border-radius: 8px;
-        white-space: nowrap;
-    }
-
-    .trend-badge.trend-expanding {
-        background: #fef2f2;
-        color: #991b1b;
-    }
-
-    .trend-badge.trend-contracting {
-        background: #eff6ff;
-        color: #1e40af;
-    }
-
-    .trend-badge.trend-stable {
-        background: #f9fafb;
-        color: #6b7280;
-    }
-
-    .conditions-summary {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.3rem;
-    }
-
-    .condition-tag {
-        font-size: 0.75rem;
-        padding: 0.2rem 0.4rem;
-        border-radius: 8px;
-        white-space: nowrap;
-    }
-
-    .condition-tag.met {
-        background: #d1fae5;
-        color: #065f46;
-    }
-
-    .condition-tag.pending {
-        background: #fef3c7;
-        color: #92400e;
-    }
-
-    .no-data {
-        text-align: center;
-        padding: 3rem;
-        color: #6b7280;
-    }
-</style>
 {% endblock %}
