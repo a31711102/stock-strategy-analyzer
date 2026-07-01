@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>ペアトレード・ボード - Stock Strategy Analyzer</title>
+    <link rel="stylesheet" href="../static/css/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <a href="../index.html" class="logo">
+                <span class="logo-icon">S</span>
+                <span>Stock Strategy Analyzer</span>
+            </a>
+            <nav class="nav">
+                <a href="../low-hunter/index.html" class="nav-link">📉 黄金の指値ボード</a>
+                <a href="../high-hunter/index.html" class="nav-link">📈 黄金の空売りボード</a>
+                <a href="../pairs-hunter/index.html" class="nav-link">⚖️ ペアトレード・ボード</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            
+<nav class="breadcrumb">
+    <a href="../index.html">SSA</a>
+    <span class="sep">/</span>
+    <span>サヤ取り</span>
+    <span class="sep">/</span>
+    <span class="current">ペアトレード・ボード</span>
+</nav>
+
+<section class="lh-header" style="display:flex; align-items:flex-start; gap:14px; margin-bottom:18px;">
+    <span style="display:inline-flex; width:40px; height:40px; border-radius:11px; background:#EEF2F6; border:1px solid #D2D6DC; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">⚖️</span>
+    <div>
+        <div style="display:flex; align-items:center; gap:9px;">
+            <h2 style="font-size:21px; font-weight:700;">ペアトレード・ボード</h2>
+            <span style="font-size:11.5px; color:#4F46E5; background:#EEF2F6; border:1px solid #C7D2FE; padding:2px 9px; border-radius:20px; font-weight:700;">マーケット・ニュートラル・サヤ取り</span>
+        </div>
+        <div style="font-size:13px; color:#5A6172; margin-top:3px;">
+            日経225構成銘柄間で統計的連動性（相関 &ge; 0.85, 共和分 p &lt; 0.05）を持つペアの比率（Ratio）が移動平均から &plusmn;3&sigma; 以上乖離した「極上ペア」を自動抽出。許容リスクから推奨ロット数を動的に逆算提示します。
+        </div>
+    </div>
+</section>
+
+<!-- Reactively manipulated UI -->
+<section class="lh-controls" style="margin-bottom: 18px;">
+    <div class="control-card" style="display:flex; align-items:center; gap:18px; background:#fff; border:1px solid #E4E7EC; border-radius:12px; padding:13px 18px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:13px; font-weight:600; color:#3F4654;">許容リスク</span>
+            <span style="display:inline-flex; align-items:center; border:1px solid #D7DCE3; border-radius:9px; overflow:hidden;">
+                <input type="number" id="ph-risk-input" style="font-family:Inter,sans-serif; font-size:15px; font-weight:700; padding:7px 12px; color:#1B1F2A; width: 80px; border: none; outline: none;" value="3" step="1" min="1">
+                <span style="font-size:12px; color:#7A828F; padding:7px 11px; background:#F4F5F7; border-left:1px solid #E4E7EC; user-select: none;">万円</span>
+            </span>
+        </div>
+        <div>
+            <label style="display:flex; align-items:center; gap:7px; font-size:13px; color:#3F4654; cursor:pointer; user-select:none;">
+                <input type="checkbox" id="ph-unit-checkbox" style="width:16px; height:16px;" checked>
+                100株単位（単元株数）で計算する（切り捨て）
+            </label>
+        </div>
+        <span style="font-size:12px; color:#98A0AE; margin-left:auto;">
+            どのペアが &plusmn;4&sigma; にさらに逆行して損切りになっても、合計損失が約<span id="ph-risk-display" style="font-weight:700;">3万円</span>に収まるように株数を動的調整します。
+        </span>
+    </div>
+</section>
+
+<section class="lh-table-section">
+    
+    <div style="text-align: center; padding: 4rem; color: var(--text-secondary); background: var(--bg-card); border-radius: 12px; border: 1px dashed var(--border);">
+        <p>現在、&plusmn;3&sigma; 以上に異常乖離している共和分ペアは見つかりませんでした。</p>
+    </div>
+    
+</section>
+
+<!-- JSON Data Mount for JS -->
+<script>
+    window.PAIRS_HUNTER_DATA = {
+        pairs: {"pairs": []}
+    };
+</script>
+
+<script src="../static/js/pairs_hunter.js"></script>
+
+<style>
+    .sortable { cursor: pointer; user-select: none; }
+    .sortable:hover { background: var(--bg-hover) !important; }
+    .sort-icon::after { content: ' ↕'; opacity: 0.3; font-size: 0.8em; }
+    .sortable.asc .sort-icon::after { content: ' ↑'; opacity: 1; color: var(--accent-primary); }
+    .sortable.desc .sort-icon::after { content: ' ↓'; opacity: 1; color: var(--accent-primary); }
+    
+    .js-qty-a.sub-unit, .js-qty-b.sub-unit {
+        color: #98A0AE !important;
+        font-weight: normal !important;
+    }
+</style>
+
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>最終更新: 2026-07-01</p>
+        </div>
+    </footer>
+</body>
+</html>

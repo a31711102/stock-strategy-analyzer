@@ -1168,8 +1168,8 @@ def generate_all():
     # === 8. Pairs Hunter（ペアトレード・ボード）ページ ===
     logger.info('\n[8/8] Pairs Hunter ページ生成')
     pairs_data = cache.load_pairs_result()
-    if pairs_data and pairs_data.get('pairs'):
-        pairs_list = pairs_data['pairs']
+    if pairs_data:
+        pairs_list = pairs_data.get('pairs', [])
         pairs_json = json.dumps({
             'pairs': pairs_list,
         }, ensure_ascii=False)
@@ -1184,6 +1184,7 @@ def generate_all():
                         **sub_ctx)
     else:
         logger.info('  Pairs Hunterデータなし（スキップ）')
+
 
     # 一時テンプレートを削除
     shutil.rmtree(static_templates_dir)
