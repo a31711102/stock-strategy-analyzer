@@ -272,6 +272,29 @@ def register_routes(app: Flask):
             elapsed=f"{elapsed:.3f}"
         )
 
+    @app.route('/pairs_hunter')
+    def pairs_hunter():
+        """ペアトレード・ボード（Pairs Hunter）"""
+        start = time.time()
+
+        pairs_data = cache.load_pairs_result()
+        pairs = pairs_data.get('pairs', []) if pairs_data else []
+
+        import json
+        pairs_json = json.dumps({
+            'pairs': pairs,
+        }, ensure_ascii=False)
+
+        elapsed = time.time() - start
+
+        return render_template(
+            'pairs_hunter.html',
+            pairs=pairs,
+            pairs_json=pairs_json,
+            elapsed=f"{elapsed:.3f}"
+        )
+
+
     @app.route('/api/search')
     def search_stocks():
         """銘柄検索API"""

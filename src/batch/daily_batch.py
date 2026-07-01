@@ -35,6 +35,7 @@ from src.low_hunter.pipeline import LowHunterPipeline
 from src.low_hunter import config as lh_config
 from src.high_hunter.pipeline import HighHunterPipeline
 from src.high_hunter import config as hh_config
+from src.strategies.pairs_analyzer import PairsAnalyzer
 
 # ログ設定
 def setup_logging(log_dir: str = "./logs"):
@@ -474,6 +475,9 @@ class DailyBatchProcessor:
         # ========== High Hunter（黄金の空売りボード） ==========
         self._run_high_hunter()
         
+        # ========== Pairs Hunter（ペアトレード・ボード） ==========
+        self._run_pairs_hunter()
+        
         # メタデータ更新
         elapsed_time = time.time() - start_time
         stats = {
@@ -818,6 +822,45 @@ class DailyBatchProcessor:
             # 全サブパイプライン完了後にサマリ解放
             self._stock_summaries.clear()
             self._stock_names.clear()
+
+    def _run_pairs_hunter(self):
+        """
+        Pairs Hunter（ペアトレード・ボード）を実行
+
+        日経225構成銘柄からペアを抽出し、相関係数と共和分検定による
+        フィルタリングを行い、アクティブなペアを保存する。
+        """
+        self.logger.info("=== Pairs Hunter 実行 ===")
+
+        try:
+            # 日経225銘柄リストと名前マッピングを取得
+            stock_list = self.low_hunter_pipeline.nikkei_fetcher.fetch()
+            hunter_codes = [code for code, _ in stock_list]
+            stock_names = {code: name for code, name in stock_list}
+
+            # 日経225銘柄のデータをキャッシュから再取得
+            stock_data = self._rebuild_stock_data_from_cache(hunter_codes)
+            self.logger.info(
+                f"Pairs Hunter: DataCacheから{len(stock_data)}/{len(hunter_codes)}銘柄を再取得"
+            )
+
+            # ペアトレード分析実行
+            analyzer = PairsAnalyzer()
+            pairs_results = analyzer.analyze_pairs(stock_data, stock_names)
+
+            # 結果保存
+            result_dict = {
+                "generated_at": datetime.now().isoformat(),
+                "total_results": len(pairs_results),
+                "pairs": pairs_results
+            }
+            self.result_cache.save_pairs_result(result_dict)
+
+            self.logger.info(f"Pairs Hunter 完了: {len(pairs_results)}ペアを出力")
+
+        except Exception as e:
+            self.logger.error(f"Pairs Hunter 実行エラー: {e}", exc_info=True)
+
 
 
 

@@ -20,6 +20,7 @@
             <nav class="nav">
                 <a href="{{ url_for('low_hunter') }}" class="nav-link">📉 黄金の指値ボード</a>
                 <a href="{{ url_for('high_hunter') }}" class="nav-link">📈 黄金の空売りボード</a>
+                <a href="{{ url_for('pairs_hunter') }}" class="nav-link">⚖️ ペアトレード・ボード</a>
                 <form class="search-form" action="{{ url_for('stock_detail', code='') }}" method="GET" id="search-form">
                     <input type="text" class="search-input" placeholder="銘柄コード（例: 7203）" id="stock-search"
                         autocomplete="off">

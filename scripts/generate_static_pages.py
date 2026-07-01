@@ -105,6 +105,7 @@ def generate_base_html():
             <nav class="nav">
                 <a href="{{ site_root }}low-hunter/index.html" class="nav-link">📉 黄金の指値ボード</a>
                 <a href="{{ site_root }}high-hunter/index.html" class="nav-link">📈 黄金の空売りボード</a>
+                <a href="{{ site_root }}pairs-hunter/index.html" class="nav-link">⚖️ ペアトレード・ボード</a>
             </nav>
         </div>
     </header>
@@ -241,11 +242,13 @@ def generate_index_html():
     <!-- secondary nav -->
     <div style="display:flex;align-items:center;gap:10px;margin-top:22px;padding-top:16px;border-top:1px solid #E4E7EC;flex-wrap:wrap">
         <span style="font-size:12px;color:#98A0AE">その他:</span>
+        <a href="{{ site_root }}pairs-hunter/index.html" style="font-size:12.5px;color:#5A6172;background:#fff;border:1px solid #E4E7EC;padding:5px 12px;border-radius:8px;text-decoration:none;">⚖️ ペアトレード・ボード</a>
         {% if strategies %}
             {% set first_strat = strategies[0].name_encoded %}
             <a href="{{ site_root }}strategy/{{ first_strat }}{{ market_suffix }}.html" style="font-size:12.5px;color:#5A6172;background:#fff;border:1px solid #E4E7EC;padding:5px 12px;border-radius:8px;text-decoration:none;">適合度ランキング</a>
         {% endif %}
     </div>
+
 </div>
 
 <style>
@@ -892,6 +895,21 @@ def generate_high_hunter_html():
     html = html.replace("{{ url_for('static', filename='js/high_hunter.js') }}", "{{ static_root }}static/js/high_hunter.js")
     return html
 
+
+def generate_pairs_hunter_html():
+    """Pairs Hunterページのテンプレート"""
+    template_path = PROJECT_ROOT / 'web' / 'templates' / 'pairs_hunter.html'
+    if not template_path.exists():
+        return ''
+
+    html = template_path.read_text(encoding='utf-8')
+    html = html.replace('extends "base.html"', 'extends "static_base.html"')
+    # 適切な置換処理
+    html = html.replace("{{ url_for('index') }}", "{{ site_root }}index.html")
+    html = html.replace("{{ url_for('static', filename='js/pairs_hunter.js') }}", "{{ static_root }}static/js/pairs_hunter.js")
+    return html
+
+
 def generate_all():
     """全ページを生成"""
     logger.info('=== 静的HTML生成開始 ===')
@@ -944,6 +962,10 @@ def generate_all():
     (static_templates_dir / 'static_high_hunter.html').write_text(
         generate_high_hunter_html(), encoding='utf-8'
     )
+    (static_templates_dir / 'static_pairs_hunter.html').write_text(
+        generate_pairs_hunter_html(), encoding='utf-8'
+    )
+
 
     env = Environment(
         loader=FileSystemLoader(str(static_templates_dir)),
@@ -1143,8 +1165,29 @@ def generate_all():
     else:
         logger.info('  High Hunterデータなし（スキップ）')
 
+    # === 8. Pairs Hunter（ペアトレード・ボード）ページ ===
+    logger.info('\n[8/8] Pairs Hunter ページ生成')
+    pairs_data = cache.load_pairs_result()
+    if pairs_data and pairs_data.get('pairs'):
+        pairs_list = pairs_data['pairs']
+        pairs_json = json.dumps({
+            'pairs': pairs_list,
+        }, ensure_ascii=False)
+
+        pairs_dir = DOCS_DIR / 'pairs-hunter'
+        pairs_dir.mkdir(parents=True, exist_ok=True)
+
+        render_template(env, 'static_pairs_hunter.html',
+                        pairs_dir / 'index.html',
+                        pairs=pairs_list,
+                        pairs_json=pairs_json,
+                        **sub_ctx)
+    else:
+        logger.info('  Pairs Hunterデータなし（スキップ）')
+
     # 一時テンプレートを削除
     shutil.rmtree(static_templates_dir)
+
 
     # 生成結果サマリ
     generated = list(DOCS_DIR.rglob('*.html'))

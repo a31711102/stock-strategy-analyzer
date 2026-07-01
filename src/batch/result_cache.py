@@ -637,3 +637,49 @@ class ResultCache:
         except Exception as e:
             logger.error(f"High Hunter結果読み込みエラー: {e}")
             return None
+
+    # ==================== Pairs Trading ====================
+
+    def save_pairs_result(self, result_dict: Dict[str, Any]) -> bool:
+        """
+        ペアトレード分析の結果を保存
+
+        Args:
+            result_dict: ペアトレード結果の辞書
+
+        Returns:
+            成功時True
+        """
+        pairs_dir = self.cache_dir / "pairs"
+        pairs_dir.mkdir(parents=True, exist_ok=True)
+        result_path = pairs_dir / "the_one_pairs.json"
+
+        try:
+            with open(result_path, 'w', encoding='utf-8') as f:
+                json.dump(result_dict, f, ensure_ascii=False, indent=2)
+            pair_count = len(result_dict.get('pairs', []))
+            logger.info(f"ペアトレード結果保存完了: {pair_count}ペア")
+            return True
+        except Exception as e:
+            logger.error(f"ペアトレード結果保存エラー: {e}")
+            return False
+
+    def load_pairs_result(self) -> Optional[Dict[str, Any]]:
+        """
+        ペアトレード分析の結果を読み込み
+
+        Returns:
+            結果の辞書。存在しない場合はNone。
+        """
+        result_path = self.cache_dir / "pairs" / "the_one_pairs.json"
+
+        if not result_path.exists():
+            return None
+
+        try:
+            with open(result_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"ペアトレード結果読み込みエラー: {e}")
+            return None
+
