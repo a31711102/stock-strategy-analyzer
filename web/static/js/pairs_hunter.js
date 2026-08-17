@@ -22,8 +22,9 @@
   /**
    * フィルター適用ロジック
    */
-  function applyFilter() {
-    const filterValue = filterSelect ? filterSelect.value : '2sigma';
+  function applyFilter(overrideValue) {
+    const selectEl = document.getElementById('ph-filter-select');
+    const filterValue = overrideValue || (selectEl ? selectEl.value : '2sigma');
     const rows = document.querySelectorAll('#ph-tbody tr[data-idx]');
     let visibleCount = 0;
 
@@ -40,6 +41,7 @@
       }
 
       if (rawZScore === null || isNaN(rawZScore)) {
+        row.classList.add('ph-hidden');
         row.style.display = 'none';
         return;
       }
@@ -57,7 +59,8 @@
       }
 
       if (isVisible) {
-        row.style.display = '';
+        row.classList.remove('ph-hidden');
+        row.style.display = 'table-row';
         visibleCount++;
         // 表示順位（#）を振り直し
         const rankCell = row.querySelector('.col-rank');
@@ -65,6 +68,7 @@
           rankCell.textContent = visibleCount;
         }
       } else {
+        row.classList.add('ph-hidden');
         row.style.display = 'none';
       }
     });
@@ -73,26 +77,32 @@
     const totalPairsCount = rows.length;
 
     // 表示件数表示の更新
-    if (countDisplay) {
-      countDisplay.textContent = '表示: ' + visibleCount + ' 件 / 全 ' + totalPairsCount + ' ペア';
+    const countEl = document.getElementById('ph-count-display');
+    if (countEl) {
+      countEl.textContent = '表示: ' + visibleCount + ' 件 / 全 ' + totalPairsCount + ' ペア';
     }
 
     // 0件メッセージの表示制御
-    if (noMatchBox) {
+    const noMatchEl = document.getElementById('ph-no-match');
+    if (noMatchEl) {
       if (visibleCount === 0 && totalPairsCount > 0) {
-        noMatchBox.style.display = 'block';
+        noMatchEl.style.display = 'block';
       } else {
-        noMatchBox.style.display = 'none';
+        noMatchEl.style.display = 'none';
       }
     }
   }
+
+  // グローバル関数としてウィンドウにバインド（インラインonchangeからも直接呼び出し可能に設定）
+  window.applyPairsFilter = applyFilter;
 
   /**
    * 初期フィルターの決定ロジック
    */
   function initFilterSelection() {
-    if (!filterSelect) return;
-    filterSelect.value = '2sigma';
+    const selectEl = document.getElementById('ph-filter-select');
+    if (!selectEl) return;
+    selectEl.value = '2sigma';
   }
 
   /**
