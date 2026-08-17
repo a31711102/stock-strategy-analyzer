@@ -79,7 +79,9 @@
                 </thead>
                 <tbody id="ph-tbody">
                     {% for pair in pairs %}
-                    <tr data-idx="{{ loop.index0 }}" data-zscore="{{ pair.z_score }}" data-signal-level="{{ pair.signal_level|default('NEUTRAL') }}" style="background: {{ '#FFFFFF' if loop.index0 % 2 == 0 else '#FBFBFC' }};">
+                    {% set abs_z = pair.z_score|abs %}
+                    {% set is_initial_visible = abs_z >= 2.0 %}
+                    <tr data-idx="{{ loop.index0 }}" data-zscore="{{ pair.z_score }}" data-signal-level="{{ pair.signal_level|default('NEUTRAL') }}" style="display: {{ '' if is_initial_visible else 'none' }}; background: {{ '#FFFFFF' if loop.index0 % 2 == 0 else '#FBFBFC' }};">
                         <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">{{ loop.index }}</td>
                         <td style="padding:11px 12px;" class="col-stock-a">
                             <span style="font-family:Inter,sans-serif; color:#1B1F2A; font-weight:600;">{{ pair.stock_a.code }}</span>
@@ -139,7 +141,7 @@
     };
 </script>
 
-<script src="{{ url_for('static', filename='js/pairs_hunter.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pairs_hunter.js') }}?v=20260817_v3"></script>
 
 <style>
     .sortable { cursor: pointer; user-select: none; }
