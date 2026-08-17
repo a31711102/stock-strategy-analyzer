@@ -9,12 +9,83 @@
   const riskInput = document.getElementById('ph-risk-input');
   const riskDisplay = document.getElementById('ph-risk-display');
   const unitCheckbox = document.getElementById('ph-unit-checkbox');
+  const filterSelect = document.getElementById('ph-filter-select');
+  const countDisplay = document.getElementById('ph-count-display');
+  const noMatchBox = document.getElementById('ph-no-match');
 
   if (!riskInput || !window.PAIRS_HUNTER_DATA) {
     return;
   }
 
   const pairs = window.PAIRS_HUNTER_DATA.pairs || [];
+
+  /**
+   * フィルター適用ロジック
+   */
+  function applyFilter() {
+    const filterValue = filterSelect ? filterSelect.value : 'all';
+    const rows = document.querySelectorAll('#ph-tbody tr[data-idx]');
+    let visibleCount = 0;
+
+    rows.forEach(function (row) {
+      const idx = parseInt(row.getAttribute('data-idx'), 10);
+      const pair = pairs[idx];
+      if (!pair) return;
+
+      const zScore = Math.abs(pair.z_score);
+      let isVisible = false;
+
+      if (filterValue === '3sigma') {
+        isVisible = zScore >= 3.0;
+      } else if (filterValue === '2sigma') {
+        isVisible = zScore >= 2.0;
+      } else {
+        isVisible = true;
+      }
+
+      if (isVisible) {
+        row.style.display = '';
+        visibleCount++;
+        // 表示順位（#）を振り直し
+        const rankCell = row.querySelector('.col-rank');
+        if (rankCell) {
+          rankCell.textContent = visibleCount;
+        }
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    // 表示件数表示の更新
+    if (countDisplay) {
+      countDisplay.textContent = '表示: ' + visibleCount + ' 件 / 全 ' + pairs.length + ' ペア';
+    }
+
+    // 0件メッセージの表示制御
+    if (noMatchBox) {
+      if (visibleCount === 0 && pairs.length > 0) {
+        noMatchBox.style.display = 'block';
+      } else {
+        noMatchBox.style.display = 'none';
+      }
+    }
+  }
+
+  /**
+   * 初期フィルターの決定ロジック
+   * 2シグマ以上のペアが存在する場合は '2sigma'、存在しない場合は 'all'
+   */
+  function initFilterSelection() {
+    if (!filterSelect) return;
+
+    const count2sigma = pairs.filter(p => Math.abs(p.z_score) >= 2.0).length;
+
+    if (count2sigma > 0) {
+      filterSelect.value = '2sigma';
+    } else {
+      filterSelect.value = 'all';
+    }
+  }
 
   /**
    * ポジションサイジング計算（動的金額算出モデル）
@@ -200,7 +271,12 @@
   if (unitCheckbox) {
     unitCheckbox.addEventListener('change', recalculate);
   }
+  if (filterSelect) {
+    filterSelect.addEventListener('change', applyFilter);
+  }
 
-  // 初回計算の実行
+  // 初回フィルターの判定・適用および計算の実行
+  initFilterSelection();
+  applyFilter();
   recalculate();
 })();
