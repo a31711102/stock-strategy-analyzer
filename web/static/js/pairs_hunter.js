@@ -1,300 +1,192 @@
 /**
- * Project-pairs-hunter: ペアトレード・ボード リアクティブロット計算 & テーブルソート
+ * pairs_hunter.js - ペアトレード・ボード
+ * フィルター制御・ロット計算・テーブルソート
  */
-
-(function () {
+document.addEventListener('DOMContentLoaded', function () {
   'use strict';
 
-  // --- DOM要素 ---
-  const riskInput = document.getElementById('ph-risk-input');
-  const riskDisplay = document.getElementById('ph-risk-display');
-  const unitCheckbox = document.getElementById('ph-unit-checkbox');
-  const filterSelect = document.getElementById('ph-filter-select');
-  const countDisplay = document.getElementById('ph-count-display');
-  const noMatchBox = document.getElementById('ph-no-match');
-
-  if (!riskInput || !window.PAIRS_HUNTER_DATA) {
-    return;
+  // --- データ取得 ---
+  // window.PAIRS_DATA はペアオブジェクトの配列（HTMLに埋め込み済み）
+  var pairs = window.PAIRS_DATA;
+  if (!Array.isArray(pairs)) {
+    pairs = [];
   }
 
-  const pairs = window.PAIRS_HUNTER_DATA.pairs || [];
+  // --- DOM要素 ---
+  var filterSelect  = document.getElementById('ph-filter-select');
+  var countDisplay   = document.getElementById('ph-count-display');
+  var noMatchBox     = document.getElementById('ph-no-match');
+  var riskInput      = document.getElementById('ph-risk-input');
+  var unitCheckbox   = document.getElementById('ph-unit-checkbox');
 
-  /**
-   * フィルター適用ロジック
-   */
-  function applyFilter(overrideValue) {
-    const selectEl = document.getElementById('ph-filter-select');
-    const filterValue = overrideValue || (selectEl ? selectEl.value : '2sigma');
-    const rows = document.querySelectorAll('#ph-tbody tr[data-idx]');
-    let visibleCount = 0;
+  // =====================================================
+  //  フィルター機能
+  // =====================================================
+  function applyFilter() {
+    var filterValue = filterSelect ? filterSelect.value : '2sigma';
+    var rows = document.querySelectorAll('#ph-tbody tr.ph-row');
+    var visibleCount = 0;
+    var totalCount = rows.length;
 
-    rows.forEach(function (row) {
-      const idx = parseInt(row.getAttribute('data-idx'), 10);
-      const pair = pairs[idx];
-      
-      // Zスコアの取得（JSオブジェクトまたはHTMLのdata-zscore属性から取得）
-      let rawZScore = null;
-      if (pair && typeof pair.z_score === 'number') {
-        rawZScore = pair.z_score;
-      } else if (row.hasAttribute('data-zscore')) {
-        rawZScore = parseFloat(row.getAttribute('data-zscore'));
-      }
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var zStr = row.getAttribute('data-zscore');
+      var z = parseFloat(zStr);
 
-      if (rawZScore === null || isNaN(rawZScore)) {
+      if (isNaN(z)) {
         row.classList.add('ph-hidden');
-        row.style.display = 'none';
-        return;
+        continue;
       }
 
-      const zScore = Math.abs(rawZScore);
-      let isVisible = false;
+      var absZ = Math.abs(z);
+      var show = false;
 
       if (filterValue === '3sigma') {
-        isVisible = zScore >= 3.0;
+        show = (absZ >= 3.0);
       } else if (filterValue === '2sigma') {
-        isVisible = zScore >= 2.0;
+        show = (absZ >= 2.0);
       } else {
-        // 全件表示時: 乖離度に関わらず全相関ペアを表示
-        isVisible = true;
+        show = true; // 全件表示
       }
 
-      if (isVisible) {
+      if (show) {
         row.classList.remove('ph-hidden');
-        row.style.display = 'table-row';
         visibleCount++;
-        // 表示順位（#）を振り直し
-        const rankCell = row.querySelector('.col-rank');
-        if (rankCell) {
-          rankCell.textContent = visibleCount;
-        }
+        var rankCell = row.querySelector('.col-rank');
+        if (rankCell) rankCell.textContent = visibleCount;
       } else {
         row.classList.add('ph-hidden');
-        row.style.display = 'none';
       }
-    });
-
-    // 総ペア数（全行数）
-    const totalPairsCount = rows.length;
-
-    // 表示件数表示の更新
-    const countEl = document.getElementById('ph-count-display');
-    if (countEl) {
-      countEl.textContent = '表示: ' + visibleCount + ' 件 / 全 ' + totalPairsCount + ' ペア';
     }
 
-    // 0件メッセージの表示制御
-    const noMatchEl = document.getElementById('ph-no-match');
-    if (noMatchEl) {
-      if (visibleCount === 0 && totalPairsCount > 0) {
-        noMatchEl.style.display = 'block';
-      } else {
-        noMatchEl.style.display = 'none';
-      }
+    // 件数表示
+    if (countDisplay) {
+      countDisplay.textContent = '表示: ' + visibleCount + ' 件 / 全 ' + totalCount + ' ペア';
+    }
+
+    // 0件メッセージ
+    if (noMatchBox) {
+      noMatchBox.style.display = (visibleCount === 0 && totalCount > 0) ? 'block' : 'none';
     }
   }
 
-  // グローバル関数としてウィンドウにバインド（インラインonchangeからも直接呼び出し可能に設定）
-  window.applyPairsFilter = applyFilter;
-
-  /**
-   * 初期フィルターの決定ロジック
-   */
-  function initFilterSelection() {
-    const selectEl = document.getElementById('ph-filter-select');
-    if (!selectEl) return;
-    selectEl.value = '2sigma';
+  // フィルターのchangeイベント
+  if (filterSelect) {
+    filterSelect.addEventListener('change', applyFilter);
   }
 
-  /**
-   * ポジションサイジング計算（動的金額算出モデル）
-   * 
-   * A社の株数: Q_A = R / (Price_B * 1sigma_ratio)
-   * B社の株数: Q_B = Q_A * (Price_A / Price_B)
-   * 必要資金: Capital = Q_A * Price_A
-   */
+  // 初回フィルター適用
+  applyFilter();
+
+  // =====================================================
+  //  ポジションサイジング計算
+  // =====================================================
   function calculatePosition(riskJpy, priceA, priceB, ratioSigma) {
-    const isUnit100 = unitCheckbox ? unitCheckbox.checked : false;
-    const unitSize = isUnit100 ? 100 : 1;
+    var isUnit100 = unitCheckbox ? unitCheckbox.checked : false;
+    var unitSize = isUnit100 ? 100 : 1;
 
     if (priceB <= 0 || ratioSigma <= 0) {
       return { qtyA: 0, qtyB: 0, capital: 0 };
     }
 
-    // A社の株数（生値）
-    let qtyA = riskJpy / (priceB * ratioSigma);
-    
-    // 単元で丸め（切り捨て）
+    var qtyA = riskJpy / (priceB * ratioSigma);
     qtyA = Math.floor(qtyA / unitSize) * unitSize;
+    if (qtyA < unitSize) return { qtyA: 0, qtyB: 0, capital: 0 };
 
-    if (qtyA < unitSize) {
-      return { qtyA: 0, qtyB: 0, capital: 0 };
-    }
-
-    // B社の株数（生値）
-    let qtyB = qtyA * (priceA / priceB);
-    
-    // 単元で丸め（切り捨て）
+    var qtyB = qtyA * (priceA / priceB);
     qtyB = Math.floor(qtyB / unitSize) * unitSize;
+    if (qtyB < unitSize) return { qtyA: 0, qtyB: 0, capital: 0 };
 
-    if (qtyB < unitSize) {
-      return { qtyA: 0, qtyB: 0, capital: 0 };
-    }
-
-    // 1レッグあたりの必要資金（A社の投資額で代表）
-    const capital = qtyA * priceA;
-
-    return { qtyA, qtyB, capital };
+    return { qtyA: qtyA, qtyB: qtyB, capital: qtyA * priceA };
   }
 
-  /**
-   * テーブル全行を再計算
-   */
   function recalculate() {
-    const riskMan = parseFloat(riskInput.value);
-    if (isNaN(riskMan) || riskMan <= 0) {
-      return;
-    }
+    if (!riskInput) return;
+    var riskMan = parseFloat(riskInput.value);
+    if (isNaN(riskMan) || riskMan <= 0) return;
 
-    const riskJpy = riskMan * 10000;
+    var riskJpy = riskMan * 10000;
 
-    if (riskDisplay) {
-      riskDisplay.textContent = riskMan.toLocaleString('ja-JP', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2
-      }) + '万円';
-    }
+    var rows = document.querySelectorAll('#ph-tbody tr.ph-row');
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var idx = parseInt(row.getAttribute('data-idx'), 10);
+      var pair = pairs[idx];
+      if (!pair) continue;
 
-    const rows = document.querySelectorAll('#ph-tbody tr[data-idx]');
-    rows.forEach(function (row) {
-      const idx = parseInt(row.getAttribute('data-idx'), 10);
-      const pair = pairs[idx];
-      if (!pair) return;
+      var result = calculatePosition(riskJpy, pair.stock_a.price, pair.stock_b.price, pair.ratio_sigma);
 
-      const result = calculatePosition(
-        riskJpy,
-        pair.stock_a.price,
-        pair.stock_b.price,
-        pair.ratio_sigma
-      );
-
-      const qtyACell = row.querySelector('.js-qty-a');
-      const qtyBCell = row.querySelector('.js-qty-b');
-      const capCell = row.querySelector('.js-capital');
-      const ratioCell = row.querySelector('.js-ratio');
+      var qtyACell  = row.querySelector('.js-qty-a');
+      var qtyBCell  = row.querySelector('.js-qty-b');
+      var capCell   = row.querySelector('.js-capital');
+      var ratioCell = row.querySelector('.js-ratio');
 
       if (qtyACell) {
-        if (result.qtyA === 0) {
-          qtyACell.textContent = '単元未満';
-          qtyACell.classList.add('sub-unit');
-        } else {
-          qtyACell.textContent = result.qtyA.toLocaleString() + '株';
-          qtyACell.classList.remove('sub-unit');
-        }
+        if (result.qtyA === 0) { qtyACell.textContent = '単元未満'; qtyACell.classList.add('sub-unit'); }
+        else { qtyACell.textContent = result.qtyA.toLocaleString() + '株'; qtyACell.classList.remove('sub-unit'); }
       }
-
       if (qtyBCell) {
-        if (result.qtyB === 0) {
-          qtyBCell.textContent = '単元未満';
-          qtyBCell.classList.add('sub-unit');
-        } else {
-          qtyBCell.textContent = result.qtyB.toLocaleString() + '株';
-          qtyBCell.classList.remove('sub-unit');
-        }
+        if (result.qtyB === 0) { qtyBCell.textContent = '単元未満'; qtyBCell.classList.add('sub-unit'); }
+        else { qtyBCell.textContent = result.qtyB.toLocaleString() + '株'; qtyBCell.classList.remove('sub-unit'); }
       }
-
       if (capCell) {
-        if (result.qtyA === 0 || result.qtyB === 0) {
-          capCell.textContent = '—';
-        } else {
-          capCell.textContent = '¥' + Math.round(result.capital).toLocaleString();
-        }
+        capCell.textContent = (result.qtyA === 0 || result.qtyB === 0) ? '—' : '¥' + Math.round(result.capital).toLocaleString();
       }
-
       if (ratioCell) {
-        if (result.qtyA === 0 || result.qtyB === 0) {
-          ratioCell.textContent = '—';
-        } else {
-          // 実質比率 Q_A / Q_B
-          const realRatio = result.qtyA / result.qtyB;
-          ratioCell.textContent = realRatio.toFixed(3);
-        }
+        ratioCell.textContent = (result.qtyA === 0 || result.qtyB === 0) ? '—' : (result.qtyA / result.qtyB).toFixed(3);
       }
-    });
+    }
   }
 
-  // --- ソート機能 ---
+  if (riskInput) riskInput.addEventListener('input', recalculate);
+  if (unitCheckbox) unitCheckbox.addEventListener('change', recalculate);
+  recalculate();
+
+  // =====================================================
+  //  テーブルソート
+  // =====================================================
   function getCellValue(row, key) {
-    const selectorMap = {
-      'rank': '.col-rank',
-      'correlation': '.col-correlation',
-      'pvalue': '.col-pvalue',
-      'zscore': '.col-zscore',
-      'qty_a': '.js-qty-a',
-      'qty_b': '.js-qty-b',
-      'capital': '.js-capital',
-      'ratio': '.js-ratio'
+    var map = {
+      'rank': '.col-rank', 'correlation': '.col-correlation',
+      'pvalue': '.col-pvalue', 'zscore': '.col-zscore',
+      'qty_a': '.js-qty-a', 'qty_b': '.js-qty-b',
+      'capital': '.js-capital', 'ratio': '.js-ratio'
     };
-    const cell = row.querySelector(selectorMap[key]);
+    var cell = row.querySelector(map[key]);
     if (!cell) return 0;
-
-    const text = cell.textContent.trim();
-    if (text === '-' || text === '—' || text === '' || text === '単元未満') {
-      return -9999999;
-    }
-
-    const num = parseFloat(text.replace(/[¥,%/\s株σ+]/g, ''));
+    var text = cell.textContent.trim();
+    if (text === '-' || text === '—' || text === '' || text === '単元未満') return -9999999;
+    var num = parseFloat(text.replace(/[¥,%/\s株σ+]/g, ''));
     return isNaN(num) ? text : num;
   }
 
   function handleSortClick(e) {
-    const th = e.currentTarget;
-    const table = th.closest('table');
-    const tbody = table.querySelector('tbody');
-    const key = th.getAttribute('data-sort-key');
+    var th = e.currentTarget;
+    var table = th.closest('table');
+    var tbody = table.querySelector('tbody');
+    var key = th.getAttribute('data-sort-key');
     if (!key) return;
 
-    const isAsc = th.classList.contains('asc');
-
-    table.querySelectorAll('th.sortable').forEach(el => {
-      el.classList.remove('asc', 'desc');
-    });
-
+    var isAsc = th.classList.contains('asc');
+    table.querySelectorAll('th.sortable').forEach(function (el) { el.classList.remove('asc', 'desc'); });
     th.classList.add(isAsc ? 'desc' : 'asc');
-    const sortDir = isAsc ? -1 : 1;
+    var sortDir = isAsc ? -1 : 1;
 
-    const rows = Array.from(tbody.querySelectorAll('tr[data-idx]'));
-
-    rows.sort((a, b) => {
-      const valA = getCellValue(a, key);
-      const valB = getCellValue(b, key);
-
+    var rows = Array.from(tbody.querySelectorAll('tr.ph-row'));
+    rows.sort(function (a, b) {
+      var valA = getCellValue(a, key);
+      var valB = getCellValue(b, key);
       if (valA === -9999999 && valB !== -9999999) return 1;
       if (valB === -9999999 && valA !== -9999999) return -1;
       if (valA === -9999999 && valB === -9999999) return 0;
-
       if (valA < valB) return -1 * sortDir;
       if (valA > valB) return 1 * sortDir;
       return 0;
     });
-
-    rows.forEach(row => tbody.appendChild(row));
+    rows.forEach(function (row) { tbody.appendChild(row); });
   }
 
-  document.querySelectorAll('#ph-table th.sortable').forEach(th => {
+  document.querySelectorAll('#ph-table th.sortable').forEach(function (th) {
     th.addEventListener('click', handleSortClick);
   });
-
-  // --- イベントリスナー登録 ---
-  riskInput.addEventListener('input', recalculate);
-  if (unitCheckbox) {
-    unitCheckbox.addEventListener('change', recalculate);
-  }
-  if (filterSelect) {
-    filterSelect.addEventListener('change', applyFilter);
-  }
-
-  // 初回フィルターの判定・適用および計算の実行
-  initFilterSelection();
-  applyFilter();
-  recalculate();
-})();
+});

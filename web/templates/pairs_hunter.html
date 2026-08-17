@@ -3,6 +3,19 @@
 {% block title %}ペアトレード・ボード - Stock Strategy Analyzer{% endblock %}
 
 {% block content %}
+<style>
+    .ph-hidden { display: none !important; }
+    .sortable { cursor: pointer; user-select: none; }
+    .sortable:hover { background: var(--bg-hover) !important; }
+    .sort-icon::after { content: ' ↕'; opacity: 0.3; font-size: 0.8em; }
+    .sortable.asc .sort-icon::after { content: ' ↑'; opacity: 1; color: var(--accent-primary); }
+    .sortable.desc .sort-icon::after { content: ' ↓'; opacity: 1; color: var(--accent-primary); }
+    .js-qty-a.sub-unit, .js-qty-b.sub-unit {
+        color: #98A0AE !important;
+        font-weight: normal !important;
+    }
+</style>
+
 <nav class="breadcrumb">
     <a href="{{ url_for('index') }}">SSA</a>
     <span class="sep">/</span>
@@ -20,17 +33,16 @@
         </div>
         <div style="font-size:13px; color:#5A6172; margin-top:3px;">
             日経225構成銘柄間で統計的連動性（相関 &ge; 0.85, 共和分 p &lt; 0.05）を持つペアを全抽出。比率（Ratio）の乖離度（Zスコア）順に提示し、許容リスクから推奨ロット数を動的に逆算します。
-            日経225構成銘柄間で統計的連動性（相関 &ge; 0.85, 共和分 p &lt; 0.05）を持つペアを全抽出。比率（Ratio）的乖離度（Zスコア）順に提示し、許容リスクから推奨ロット数を動的に逆算します。
         </div>
     </div>
 </section>
 
-<!-- Reactively manipulated UI -->
+<!-- コントロールカード -->
 <section class="lh-controls" style="margin-bottom: 18px;">
     <div class="control-card" style="display:flex; align-items:center; gap:18px; background:#fff; border:1px solid #E4E7EC; border-radius:12px; padding:13px 18px; flex-wrap:wrap;">
         <div style="display:flex; align-items:center; gap:10px;">
             <span style="font-size:13px; font-weight:600; color:#3F4654;">乖離度フィルター</span>
-            <select id="ph-filter-select" onchange="if(window.applyPairsFilter) window.applyPairsFilter(this.value);" style="font-family:Inter,sans-serif; font-size:13px; font-weight:600; padding:6px 12px; color:#1B1F2A; border:1px solid #D7DCE3; border-radius:8px; outline:none; background:#FDFDFD; cursor:pointer;">
+            <select id="ph-filter-select" style="font-family:Inter,sans-serif; font-size:13px; font-weight:600; padding:6px 12px; color:#1B1F2A; border:1px solid #D7DCE3; border-radius:8px; outline:none; background:#FDFDFD; cursor:pointer;">
                 <option value="2sigma" selected>2&sigma;以上 (エントリー検討圏内)</option>
                 <option value="3sigma">3&sigma;以上 (極上ペア)</option>
                 <option value="all">全件表示 (全相関ペア)</option>
@@ -54,6 +66,7 @@
     </div>
 </section>
 
+<!-- テーブルセクション -->
 <section class="lh-table-section">
     {% if pairs %}
     <div style="background:#fff; border:1px solid #E4E7EC; border-radius:12px; overflow:hidden;">
@@ -80,9 +93,7 @@
                 </thead>
                 <tbody id="ph-tbody">
                     {% for pair in pairs %}
-                    {% set abs_z = pair.z_score|abs %}
-                    {% set is_initial_visible = abs_z >= 2.0 %}
-                    <tr data-idx="{{ loop.index0 }}" data-zscore="{{ pair.z_score }}" data-signal-level="{{ pair.signal_level|default('NEUTRAL') }}" class="ph-row {{ '' if is_initial_visible else 'ph-hidden' }}" style="background: {{ '#FFFFFF' if loop.index0 % 2 == 0 else '#FBFBFC' }};">
+                    <tr data-idx="{{ loop.index0 }}" data-zscore="{{ pair.z_score }}" class="ph-row {{ '' if (pair.z_score|abs) >= 2.0 else 'ph-hidden' }}" style="background: {{ '#FFFFFF' if loop.index0 % 2 == 0 else '#FBFBFC' }};">
                         <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">{{ loop.index }}</td>
                         <td style="padding:11px 12px;" class="col-stock-a">
                             <span style="font-family:Inter,sans-serif; color:#1B1F2A; font-weight:600;">{{ pair.stock_a.code }}</span>
@@ -135,26 +146,9 @@
     {% endif %}
 </section>
 
-<!-- JSON Data Mount for JS -->
+<!-- ペアデータをJSONとしてページに埋め込み、JSから参照 -->
 <script>
-    window.PAIRS_HUNTER_DATA = {
-        pairs: {{ pairs_json | safe if pairs_json else '[]' }}
-    };
+    window.PAIRS_DATA = {{ pairs_json | safe if pairs_json else '[]' }};
 </script>
-
-<script src="{{ url_for('static', filename='js/pairs_hunter.js') }}?v=20260817_v4"></script>
-
-<style>
-    .ph-hidden { display: none !important; }
-    .sortable { cursor: pointer; user-select: none; }
-    .sortable:hover { background: var(--bg-hover) !important; }
-    .sort-icon::after { content: ' ↕'; opacity: 0.3; font-size: 0.8em; }
-    .sortable.asc .sort-icon::after { content: ' ↑'; opacity: 1; color: var(--accent-primary); }
-    .sortable.desc .sort-icon::after { content: ' ↓'; opacity: 1; color: var(--accent-primary); }
-    
-    .js-qty-a.sub-unit, .js-qty-b.sub-unit {
-        color: #98A0AE !important;
-        font-weight: normal !important;
-    }
-</style>
+<script src="{{ url_for('static', filename='js/pairs_hunter.js') }}?v=20260817_v5"></script>
 {% endblock %}
