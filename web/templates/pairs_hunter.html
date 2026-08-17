@@ -19,7 +19,7 @@
             <span style="font-size:11.5px; color:#4F46E5; background:#EEF2F6; border:1px solid #C7D2FE; padding:2px 9px; border-radius:20px; font-weight:700;">マーケット・ニュートラル・サヤ取り</span>
         </div>
         <div style="font-size:13px; color:#5A6172; margin-top:3px;">
-            日経225構成銘柄間で統計的連動性（相関 &ge; 0.85, 共和分 p &lt; 0.05）を持つペアの比率（Ratio）が移動平均から &plusmn;3&sigma; 以上乖離した「極上ペア」を自動抽出。許容リスクから推奨ロット数を動的に逆算提示します。
+            日経225構成銘柄間で統計的連動性（相関 &ge; 0.85, 共和分 p &lt; 0.05）を持つペアを全抽出。比率（Ratio）の乖離度（Zスコア）順に提示し、許容リスクから推奨ロット数を動的に逆算します。
         </div>
     </div>
 </section>
@@ -28,6 +28,16 @@
 <section class="lh-controls" style="margin-bottom: 18px;">
     <div class="control-card" style="display:flex; align-items:center; gap:18px; background:#fff; border:1px solid #E4E7EC; border-radius:12px; padding:13px 18px; flex-wrap:wrap;">
         <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:13px; font-weight:600; color:#3F4654;">乖離度フィルター</span>
+            <select id="ph-filter-select" style="font-family:Inter,sans-serif; font-size:13px; font-weight:600; padding:6px 12px; color:#1B1F2A; border:1px solid #D7DCE3; border-radius:8px; outline:none; background:#FDFDFD; cursor:pointer;">
+                <option value="2sigma" selected>2&sigma;以上 (エントリー検討圏内)</option>
+                <option value="3sigma">3&sigma;以上 (極上ペア)</option>
+                <option value="all">全件表示 (全相関ペア)</option>
+            </select>
+            <span id="ph-count-display" style="font-size:12px; color:#4F46E5; background:#EEF2F6; border:1px solid #C7D2FE; padding:3px 9px; border-radius:12px; font-weight:700;">表示: - 件</span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px; border-left:1px solid #E4E7EC; padding-left:18px;">
             <span style="font-size:13px; font-weight:600; color:#3F4654;">許容リスク</span>
             <span style="display:inline-flex; align-items:center; border:1px solid #D7DCE3; border-radius:9px; overflow:hidden;">
                 <input type="number" id="ph-risk-input" style="font-family:Inter,sans-serif; font-size:15px; font-weight:700; padding:7px 12px; color:#1B1F2A; width: 80px; border: none; outline: none;" value="3" step="1" min="1">
@@ -37,12 +47,9 @@
         <div>
             <label style="display:flex; align-items:center; gap:7px; font-size:13px; color:#3F4654; cursor:pointer; user-select:none;">
                 <input type="checkbox" id="ph-unit-checkbox" style="width:16px; height:16px;" checked>
-                100株単位（単元株数）で計算する（切り捨て）
+                100株単位で計算
             </label>
         </div>
-        <span style="font-size:12px; color:#98A0AE; margin-left:auto;">
-            どのペアが &plusmn;4&sigma; にさらに逆行して損切りになっても、合計損失が約<span id="ph-risk-display" style="font-weight:700;">3万円</span>に収まるように株数を動的調整します。
-        </span>
     </div>
 </section>
 
@@ -72,7 +79,7 @@
                 </thead>
                 <tbody id="ph-tbody">
                     {% for pair in pairs %}
-                    <tr data-idx="{{ loop.index0 }}" style="background: {{ '#FFFFFF' if loop.index0 % 2 == 0 else '#FBFBFC' }};">
+                    <tr data-idx="{{ loop.index0 }}" data-zscore="{{ pair.z_score }}" data-signal-level="{{ pair.signal_level|default('NEUTRAL') }}" style="background: {{ '#FFFFFF' if loop.index0 % 2 == 0 else '#FBFBFC' }};">
                         <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">{{ loop.index }}</td>
                         <td style="padding:11px 12px;" class="col-stock-a">
                             <span style="font-family:Inter,sans-serif; color:#1B1F2A; font-weight:600;">{{ pair.stock_a.code }}</span>
@@ -91,9 +98,15 @@
                         </td>
                         <td style="padding:11px 12px; text-align:center;" class="col-signal">
                             {% if pair.signal_type == 'SHORT_A_LONG_B' %}
-                            <span style="color:#C03434; background:#FDE8E8; border:1px solid #FBD5D5; padding:2.5px 10px; border-radius:6px; font-weight:700; font-size:12px;">A売 / B買</span>
+                            <span style="color:#C03434; background:#FDE8E8; border:1px solid #FBD5D5; padding:2.5px 10px; border-radius:6px; font-weight:700; font-size:12px;">A売 / B買 (3&sigma;超)</span>
+                            {% elif pair.signal_type == 'LONG_A_SHORT_B' %}
+                            <span style="color:#15803D; background:#EBF7EE; border:1px solid #D1EAD6; padding:2.5px 10px; border-radius:6px; font-weight:700; font-size:12px;">A買 / B売 (3&sigma;超)</span>
+                            {% elif pair.signal_type == 'WATCH_SHORT_A' %}
+                            <span style="color:#C05621; background:#FEEBC8; border:1px solid #FBD38D; padding:2.5px 10px; border-radius:6px; font-weight:700; font-size:12px;">A売検討 (2&sigma;超)</span>
+                            {% elif pair.signal_type == 'WATCH_LONG_A' %}
+                            <span style="color:#2B6CB0; background:#EBF8FF; border:1px solid #BEE3F8; padding:2.5px 10px; border-radius:6px; font-weight:700; font-size:12px;">A買検討 (2&sigma;超)</span>
                             {% else %}
-                            <span style="color:#15803D; background:#EBF7EE; border:1px solid #D1EAD6; padding:2.5px 10px; border-radius:6px; font-weight:700; font-size:12px;">A買 / B売</span>
+                            <span style="color:#718096; background:#EDF2F7; border:1px solid #E2E8F0; padding:2.5px 10px; border-radius:6px; font-weight:600; font-size:12px;">観測中 (中立)</span>
                             {% endif %}
                         </td>
                         <td style="padding:11px 12px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;" class="col-qty-a js-qty-a">-</td>
@@ -106,12 +119,15 @@
             </table>
         </div>
     </div>
+    <div id="ph-no-match" style="display:none; text-align: center; padding: 3rem; color: #7A828F; background: #fff; border-radius: 12px; border: 1px dashed #E4E7EC; margin-top: 10px;">
+        <p>選択されたフィルター条件に合致するペアはありません。</p>
+    </div>
     <div style="font-size:11.5px; color:#98A0AE; margin-top:10px;">
         ※「単元未満」＝株価が高すぎるか、リスク枠 $R$ に対して Ratio の標準偏差 $1\sigma_{ratio}$ が極めて小さいため、切り捨てにより 100株 に満たなかったペアです。
     </div>
     {% else %}
-    <div style="text-align: center; padding: 4rem; color: var(--text-secondary); background: var(--bg-card); border-radius: 12px; border: 1px dashed var(--border);">
-        <p>現在、&plusmn;3&sigma; 以上に異常乖離している共和分ペアは見つかりませんでした。</p>
+    <div style="text-align: center; padding: 4rem; color: #7A828F; background: #fff; border-radius: 12px; border: 1px dashed #E4E7EC;">
+        <p>現在、相関・共和分関係を満たすペアは見つかりませんでした。</p>
     </div>
     {% endif %}
 </section>

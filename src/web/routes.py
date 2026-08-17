@@ -281,9 +281,7 @@ def register_routes(app: Flask):
         pairs = pairs_data.get('pairs', []) if pairs_data else []
 
         import json
-        pairs_json = json.dumps({
-            'pairs': pairs,
-        }, ensure_ascii=False)
+        pairs_json = json.dumps(pairs, ensure_ascii=False)
 
         elapsed = time.time() - start
 

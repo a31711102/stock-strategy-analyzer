@@ -136,34 +136,44 @@ class PairsAnalyzer:
                 price_a_curr = price_a.iloc[-1]
                 price_b_curr = price_b.iloc[-1]
 
-                # シグナル判定
-                signal_type = None
+                # シグナル判定および乖離レベル設定
+                signal_type = "NEUTRAL"
+                signal_level = "NEUTRAL"
+                
                 if z_score >= 3.0:
                     signal_type = "SHORT_A_LONG_B"  # A社高：Aをショート / Bをロング
+                    signal_level = "STRONG_3SIGMA"
                 elif z_score <= -3.0:
                     signal_type = "LONG_A_SHORT_B"  # A社安：Aをロング / Bをショート
+                    signal_level = "STRONG_3SIGMA"
+                elif z_score >= 2.0:
+                    signal_type = "WATCH_SHORT_A"   # A社やや高：観測中
+                    signal_level = "WATCH_2SIGMA"
+                elif z_score <= -2.0:
+                    signal_type = "WATCH_LONG_A"    # A社やや安：観測中
+                    signal_level = "WATCH_2SIGMA"
 
-                # シグナルが点灯している（極上ペア）のみ結果に格納
-                if signal_type:
-                    results.append({
-                        "stock_a": {
-                            "code": code_a,
-                            "name": stock_names.get(code_a, "不明"),
-                            "price": float(price_a_curr),
-                        },
-                        "stock_b": {
-                            "code": code_b,
-                            "name": stock_names.get(code_b, "不明"),
-                            "price": float(price_b_curr),
-                        },
-                        "correlation": float(corr),
-                        "p_value": float(p_value),
-                        "ratio_current": float(current_ratio),
-                        "ratio_mean": float(mean_ratio),
-                        "ratio_sigma": float(std_ratio),
-                        "z_score": float(z_score),
-                        "signal_type": signal_type,
-                    })
+                # 相関・共和分を満たす全ペアを結果に格納
+                results.append({
+                    "stock_a": {
+                        "code": code_a,
+                        "name": stock_names.get(code_a, "不明"),
+                        "price": float(price_a_curr),
+                    },
+                    "stock_b": {
+                        "code": code_b,
+                        "name": stock_names.get(code_b, "不明"),
+                        "price": float(price_b_curr),
+                    },
+                    "correlation": float(corr),
+                    "p_value": float(p_value),
+                    "ratio_current": float(current_ratio),
+                    "ratio_mean": float(mean_ratio),
+                    "ratio_sigma": float(std_ratio),
+                    "z_score": float(z_score),
+                    "signal_type": signal_type,
+                    "signal_level": signal_level,
+                })
 
             except Exception as e:
                 error_count += 1

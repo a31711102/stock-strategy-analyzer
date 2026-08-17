@@ -9,12 +9,91 @@
   const riskInput = document.getElementById('ph-risk-input');
   const riskDisplay = document.getElementById('ph-risk-display');
   const unitCheckbox = document.getElementById('ph-unit-checkbox');
+  const filterSelect = document.getElementById('ph-filter-select');
+  const countDisplay = document.getElementById('ph-count-display');
+  const noMatchBox = document.getElementById('ph-no-match');
 
   if (!riskInput || !window.PAIRS_HUNTER_DATA) {
     return;
   }
 
   const pairs = window.PAIRS_HUNTER_DATA.pairs || [];
+
+  /**
+   * フィルター適用ロジック
+   */
+  function applyFilter() {
+    const filterValue = filterSelect ? filterSelect.value : '2sigma';
+    const rows = document.querySelectorAll('#ph-tbody tr[data-idx]');
+    let visibleCount = 0;
+
+    rows.forEach(function (row) {
+      const idx = parseInt(row.getAttribute('data-idx'), 10);
+      const pair = pairs[idx];
+      
+      // Zスコアの取得（JSオブジェクトまたはHTMLのdata-zscore属性から取得）
+      let rawZScore = null;
+      if (pair && typeof pair.z_score === 'number') {
+        rawZScore = pair.z_score;
+      } else if (row.hasAttribute('data-zscore')) {
+        rawZScore = parseFloat(row.getAttribute('data-zscore'));
+      }
+
+      if (rawZScore === null || isNaN(rawZScore)) {
+        row.style.display = 'none';
+        return;
+      }
+
+      const zScore = Math.abs(rawZScore);
+      let isVisible = false;
+
+      if (filterValue === '3sigma') {
+        isVisible = zScore >= 3.0;
+      } else if (filterValue === '2sigma') {
+        isVisible = zScore >= 2.0;
+      } else {
+        // 全件表示時: 乖離度に関わらず全相関ペアを表示
+        isVisible = true;
+      }
+
+      if (isVisible) {
+        row.style.display = '';
+        visibleCount++;
+        // 表示順位（#）を振り直し
+        const rankCell = row.querySelector('.col-rank');
+        if (rankCell) {
+          rankCell.textContent = visibleCount;
+        }
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    // 総ペア数（全行数）
+    const totalPairsCount = rows.length;
+
+    // 表示件数表示の更新
+    if (countDisplay) {
+      countDisplay.textContent = '表示: ' + visibleCount + ' 件 / 全 ' + totalPairsCount + ' ペア';
+    }
+
+    // 0件メッセージの表示制御
+    if (noMatchBox) {
+      if (visibleCount === 0 && totalPairsCount > 0) {
+        noMatchBox.style.display = 'block';
+      } else {
+        noMatchBox.style.display = 'none';
+      }
+    }
+  }
+
+  /**
+   * 初期フィルターの決定ロジック
+   */
+  function initFilterSelection() {
+    if (!filterSelect) return;
+    filterSelect.value = '2sigma';
+  }
 
   /**
    * ポジションサイジング計算（動的金額算出モデル）
@@ -200,7 +279,12 @@
   if (unitCheckbox) {
     unitCheckbox.addEventListener('change', recalculate);
   }
+  if (filterSelect) {
+    filterSelect.addEventListener('change', applyFilter);
+  }
 
-  // 初回計算の実行
+  // 初回フィルターの判定・適用および計算の実行
+  initFilterSelection();
+  applyFilter();
   recalculate();
 })();

@@ -95,7 +95,7 @@ def test_pairs_analyzer_success_long_signal():
 
 
 def test_pairs_analyzer_no_signal_when_not_deviated():
-    """正常系: 共和分関係はあるが、直近の乖離が小さいためシグナルが出ないこと"""
+    """正常系: 共和分関係はあるが、直近の乖離が小さいためNEUTRALとして抽出されること"""
     df_a, df_b = generate_coint_pair(seed=42, shock_at_end=0.0)  # ショックなし
 
     stock_data = {"9901": df_a, "9902": df_b}
@@ -104,8 +104,29 @@ def test_pairs_analyzer_no_signal_when_not_deviated():
     analyzer = PairsAnalyzer(correlation_threshold=0.80, coint_threshold=0.05, lookback_days=251)
     results = analyzer.analyze_pairs(stock_data, stock_names)
 
-    # シグナルは出ていないはず
-    assert len(results) == 0
+    # 相関・共和分を満たすため1件抽出され、シグナルはNEUTRALであること
+    assert len(results) == 1
+    assert results[0]["signal_type"] == "NEUTRAL"
+    assert results[0]["signal_level"] == "NEUTRAL"
+
+
+def test_pairs_analyzer_sorted_by_abs_zscore():
+    """正常系: 複数ペアがある場合に|Zスコア|の降順でソートされて抽出されること"""
+    df_a1, df_b1 = generate_coint_pair(seed=42, shock_at_end=0.01)  # 乖離小
+    df_a2, df_b2 = generate_coint_pair(seed=43, shock_at_end=0.05)  # 乖離大
+
+    stock_data = {
+        "9901": df_a1, "9902": df_b1,
+        "9903": df_a2, "9904": df_b2
+    }
+    stock_names = {"9901": "A社", "9902": "B社", "9903": "C社", "9904": "D社"}
+
+    analyzer = PairsAnalyzer(correlation_threshold=0.80, coint_threshold=0.05, lookback_days=251)
+    results = analyzer.analyze_pairs(stock_data, stock_names)
+
+    assert len(results) == 2
+    # 1番目の結果の|z_score| >= 2番目の結果の|z_score|
+    assert abs(results[0]["z_score"]) >= abs(results[1]["z_score"])
 
 
 def test_pairs_analyzer_filter_by_correlation():
