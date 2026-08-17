@@ -26,6 +26,19 @@
     <main class="main">
         <div class="container">
             
+<style>
+    .ph-hidden { display: none !important; }
+    .sortable { cursor: pointer; user-select: none; }
+    .sortable:hover { background: var(--bg-hover) !important; }
+    .sort-icon::after { content: ' ↕'; opacity: 0.3; font-size: 0.8em; }
+    .sortable.asc .sort-icon::after { content: ' ↑'; opacity: 1; color: var(--accent-primary); }
+    .sortable.desc .sort-icon::after { content: ' ↓'; opacity: 1; color: var(--accent-primary); }
+    .js-qty-a.sub-unit, .js-qty-b.sub-unit {
+        color: #98A0AE !important;
+        font-weight: normal !important;
+    }
+</style>
+
 <nav class="breadcrumb">
     <a href="../index.html">SSA</a>
     <span class="sep">/</span>
@@ -47,15 +60,15 @@
     </div>
 </section>
 
-<!-- Reactively manipulated UI -->
+<!-- コントロールカード -->
 <section class="lh-controls" style="margin-bottom: 18px;">
     <div class="control-card" style="display:flex; align-items:center; gap:18px; background:#fff; border:1px solid #E4E7EC; border-radius:12px; padding:13px 18px; flex-wrap:wrap;">
         <div style="display:flex; align-items:center; gap:10px;">
             <span style="font-size:13px; font-weight:600; color:#3F4654;">乖離度フィルター</span>
             <select id="ph-filter-select" style="font-family:Inter,sans-serif; font-size:13px; font-weight:600; padding:6px 12px; color:#1B1F2A; border:1px solid #D7DCE3; border-radius:8px; outline:none; background:#FDFDFD; cursor:pointer;">
-                <option value="all" selected>全件表示 (Z&ge;0のみ)</option>
-                <option value="2sigma">2&sigma;以上 (エントリー検討圏内)</option>
+                <option value="2sigma" selected>2&sigma;以上 (エントリー検討圏内)</option>
                 <option value="3sigma">3&sigma;以上 (極上ペア)</option>
+                <option value="all">全件表示 (全相関ペア)</option>
             </select>
             <span id="ph-count-display" style="font-size:12px; color:#4F46E5; background:#EEF2F6; border:1px solid #C7D2FE; padding:3px 9px; border-radius:12px; font-weight:700;">表示: - 件</span>
         </div>
@@ -76,6 +89,7 @@
     </div>
 </section>
 
+<!-- テーブルセクション -->
 <section class="lh-table-section">
     
     <div style="background:#fff; border:1px solid #E4E7EC; border-radius:12px; overflow:hidden;">
@@ -102,7 +116,7 @@
                 </thead>
                 <tbody id="ph-tbody">
                     
-                    <tr data-idx="0" data-zscore="-1.1215516077540693" data-signal-level="NEUTRAL" style="background: #FFFFFF;">
+                    <tr data-idx="0" data-zscore="-1.1215516077540693" class="ph-row ph-hidden" style="background: #FFFFFF;">
                         <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">1</td>
                         <td style="padding:11px 12px;" class="col-stock-a">
                             <span style="font-family:Inter,sans-serif; color:#1B1F2A; font-weight:600;">8316</span>
@@ -130,7 +144,7 @@
                         <td style="padding:11px 12px; text-align:right; background:#F7F8FB; color:#7A828F; font-size:12.5px; font-variant-numeric:tabular-nums;" class="col-ratio js-ratio">-</td>
                     </tr>
                     
-                    <tr data-idx="1" data-zscore="0.23421753714049076" data-signal-level="NEUTRAL" style="background: #FBFBFC;">
+                    <tr data-idx="1" data-zscore="0.23421753714049076" class="ph-row ph-hidden" style="background: #FBFBFC;">
                         <td style="padding:11px 12px; text-align:center; color:#B58A1B; font-weight:700; font-variant-numeric:tabular-nums;" class="col-rank">2</td>
                         <td style="padding:11px 12px;" class="col-stock-a">
                             <span style="font-family:Inter,sans-serif; color:#1B1F2A; font-weight:600;">5831</span>
@@ -171,27 +185,11 @@
     
 </section>
 
-<!-- JSON Data Mount for JS -->
+<!-- ペアデータをJSONとしてページに埋め込み、JSから参照 -->
 <script>
-    window.PAIRS_HUNTER_DATA = {
-        pairs: {"pairs": [{"stock_a": {"code": "8316", "name": "三井住友フィナンシャルグループ", "price": 6969.0}, "stock_b": {"code": "8411", "name": "みずほフィナンシャルグループ", "price": 8620.0}, "correlation": 0.8819796890134699, "p_value": 0.012527417929414246, "ratio_current": 0.8084686774941995, "ratio_mean": 0.8320717697110656, "ratio_sigma": 0.02104503444485427, "z_score": -1.1215516077540693, "signal_type": "NEUTRAL", "signal_level": "NEUTRAL"}, {"stock_a": {"code": "5831", "name": "しずおかフィナンシャルグループ", "price": 3513.0}, "stock_b": {"code": "7186", "name": "横浜フィナンシャルグループ", "price": 1934.5}, "correlation": 0.8536298122753622, "p_value": 0.04533062165883835, "ratio_current": 1.815973119669165, "ratio_mean": 1.8024966709111452, "ratio_sigma": 0.05753817123410497, "z_score": 0.23421753714049076, "signal_type": "NEUTRAL", "signal_level": "NEUTRAL"}]}
-    };
+    window.PAIRS_DATA = {"pairs": [{"stock_a": {"code": "8316", "name": "三井住友フィナンシャルグループ", "price": 6969.0}, "stock_b": {"code": "8411", "name": "みずほフィナンシャルグループ", "price": 8620.0}, "correlation": 0.8819796890134699, "p_value": 0.012527417929414246, "ratio_current": 0.8084686774941995, "ratio_mean": 0.8320717697110656, "ratio_sigma": 0.02104503444485427, "z_score": -1.1215516077540693, "signal_type": "NEUTRAL", "signal_level": "NEUTRAL"}, {"stock_a": {"code": "5831", "name": "しずおかフィナンシャルグループ", "price": 3513.0}, "stock_b": {"code": "7186", "name": "横浜フィナンシャルグループ", "price": 1934.5}, "correlation": 0.8536298122753622, "p_value": 0.04533062165883835, "ratio_current": 1.815973119669165, "ratio_mean": 1.8024966709111452, "ratio_sigma": 0.05753817123410497, "z_score": 0.23421753714049076, "signal_type": "NEUTRAL", "signal_level": "NEUTRAL"}]};
 </script>
-
-<script src="../static/js/pairs_hunter.js"></script>
-
-<style>
-    .sortable { cursor: pointer; user-select: none; }
-    .sortable:hover { background: var(--bg-hover) !important; }
-    .sort-icon::after { content: ' ↕'; opacity: 0.3; font-size: 0.8em; }
-    .sortable.asc .sort-icon::after { content: ' ↑'; opacity: 1; color: var(--accent-primary); }
-    .sortable.desc .sort-icon::after { content: ' ↓'; opacity: 1; color: var(--accent-primary); }
-    
-    .js-qty-a.sub-unit, .js-qty-b.sub-unit {
-        color: #98A0AE !important;
-        font-weight: normal !important;
-    }
-</style>
+<script src="../static/js/pairs_hunter.js?v=20260817_v5"></script>
 
         </div>
     </main>
