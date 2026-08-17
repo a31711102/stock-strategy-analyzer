@@ -40,7 +40,8 @@
       } else if (filterValue === '2sigma') {
         isVisible = zScore >= 2.0;
       } else {
-        isVisible = true;
+        // 全件表示時: Zスコアがプラス（Z >= 0）のペアのみを表示（マイナスは除外）
+        isVisible = pair.z_score >= 0;
       }
 
       if (isVisible) {
@@ -73,18 +74,11 @@
 
   /**
    * 初期フィルターの決定ロジック
-   * 2シグマ以上のペアが存在する場合は '2sigma'、存在しない場合は 'all'
+   * 初期表示は 'all'（全件表示、Zスコア正のみ）
    */
   function initFilterSelection() {
     if (!filterSelect) return;
-
-    const count2sigma = pairs.filter(p => Math.abs(p.z_score) >= 2.0).length;
-
-    if (count2sigma > 0) {
-      filterSelect.value = '2sigma';
-    } else {
-      filterSelect.value = 'all';
-    }
+    filterSelect.value = 'all';
   }
 
   /**
