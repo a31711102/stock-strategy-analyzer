@@ -73,12 +73,26 @@ class UneriPipeline:
         self.exclusion_reasons = {
             "non_prime": 0,
             "insufficient_data": 0,
+            "stale_or_delisted": 0,
             "low_liquidity_or_no_wave": 0,
             "error": 0,
         }
 
         total_input = len(stock_data)
         prime_count = 0
+
+        # 市場全体の最新営業日を特定（上場廃止や長期売買停止による古いキャッシュデータを除外するため）
+        market_latest_dt: Optional[datetime] = None
+        for df in stock_data.values():
+            if df is not None and not df.empty:
+                last_idx = df.index[-1]
+                dt_str = last_idx.strftime("%Y-%m-%d") if hasattr(last_idx, "strftime") else str(last_idx)[:10]
+                try:
+                    dt_val = datetime.strptime(dt_str, "%Y-%m-%d")
+                    if market_latest_dt is None or dt_val > market_latest_dt:
+                        market_latest_dt = dt_val
+                except ValueError:
+                    continue
 
         for code, df in stock_data.items():
             code_str = str(code).replace(".JP", "").strip()
@@ -113,6 +127,13 @@ class UneriPipeline:
                     for d in clean_df.index
                 ]
                 as_of_date = dates[-1]
+
+                # 2.5 データ鮮度チェック（上場廃止・長期売買停止銘柄の除外）
+                if market_latest_dt is not None:
+                    stock_last_dt = datetime.strptime(as_of_date, "%Y-%m-%d")
+                    if (market_latest_dt - stock_last_dt).days > self.config.max_stale_calendar_days:
+                        self.exclusion_reasons["stale_or_delisted"] += 1
+                        continue
 
                 # 冪等性対応: 同一営業日（as_of_date）に複数回バッチを回した場合でも、
                 # 「前営業日時点の状態（prev_day_state）」と比較して新規通知フラグが消えないようにする
@@ -183,6 +204,7 @@ class UneriPipeline:
             f"→ 抽出:{len(candidates)}銘柄 (うち新規買い接近通知:{new_alert_count}銘柄) | "
             f"除外内訳: 非プライム={self.exclusion_reasons['non_prime']}, "
             f"データ不足={self.exclusion_reasons['insufficient_data']}, "
+            f"鮮度切れ/上場廃止={self.exclusion_reasons['stale_or_delisted']}, "
             f"うねり/接近条件外={self.exclusion_reasons['low_liquidity_or_no_wave']}, "
             f"エラー={self.exclusion_reasons['error']} ==="
         )

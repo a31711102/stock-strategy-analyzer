@@ -15,6 +15,7 @@ class UneriConfig:
     # 流動性フィルター（3.1章・12章）
     average_volume_days: int = 20
     minimum_average_volume: int = 1_000_000
+    max_stale_calendar_days: int = 7  # 市場最新営業日から7暦日以上古いデータは上場廃止・長期停止として除外
 
     # 山と谷の抽出（5.1章・12章）
     pivot_window_days: int = 5
@@ -62,6 +63,7 @@ class UneriConfig:
         int_fields = (
             "average_volume_days",
             "minimum_average_volume",
+            "max_stale_calendar_days",
             "pivot_window_days",
             "minimum_touch_count_s",
             "minimum_touch_count_r",
@@ -121,6 +123,7 @@ class UneriConfig:
         return {
             "average_volume_days": self.average_volume_days,
             "minimum_average_volume": self.minimum_average_volume,
+            "max_stale_calendar_days": self.max_stale_calendar_days,
             "pivot_window_days": self.pivot_window_days,
             "minimum_swing_percent": self.minimum_swing_percent,
             "price_zone_percent": self.price_zone_percent,

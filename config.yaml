@@ -96,6 +96,7 @@ pattern_detection:
 uneri:
   average_volume_days: 20
   minimum_average_volume: 1000000
+  max_stale_calendar_days: 7
   pivot_window_days: 5
   minimum_swing_percent: 8.0
   price_zone_percent: 3.0

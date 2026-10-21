@@ -448,3 +448,33 @@ class TestUneriRedTeamEdgeCases:
         assert pipeline.exclusion_reasons["non_prime"] == 1
         assert pipeline.exclusion_reasons["insufficient_data"] == 1
         assert candidates[0].weekly_context.range_position_3y is not None
+
+    def test_stale_or_delisted_stock_is_excluded(self):
+        """
+        【上場廃止・古いキャッシュ除外】
+        市場全体の最新営業日に対して最終取引日が max_stale_calendar_days (7日) より古い銘柄は、
+        上場廃止または長期停止銘柄として除外され、exclusion_reasons['stale_or_delisted'] に記録されること。
+        """
+        dates_active, highs, lows, closes, volumes = generate_box_wave_series(
+            total_days=220, final_close=1008.0
+        )
+        df_active = build_df_from_series(dates_active, highs, lows, closes, volumes)
+
+        # 最終取引日が半年以上古いデータ（上場廃止銘柄を模擬）
+        dates_delisted = [
+            (pd.Timestamp("2025-01-06") + pd.Timedelta(days=i)).strftime("%Y-%m-%d")
+            for i in range(len(dates_active))
+        ]
+        df_delisted = build_df_from_series(dates_delisted, highs, lows, closes, volumes)
+
+        pipeline = UneriPipeline()
+        candidates, _ = pipeline.run(
+            stock_data={"7203": df_active, "7205": df_delisted},
+            stock_names={"7203": "トヨタ自動車", "7205": "日野自動車"},
+            market_map={"7203": "プライム（内国株式）", "7205": "プライム（内国株式）"},
+        )
+
+        assert len(candidates) == 1
+        assert candidates[0].code == "7203"
+        assert pipeline.exclusion_reasons["stale_or_delisted"] == 1
+
