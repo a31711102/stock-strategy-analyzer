@@ -105,6 +105,7 @@ def generate_base_html():
             <nav class="nav">
                 <a href="{{ site_root }}low-hunter/index.html" class="nav-link">📉 黄金の指値ボード</a>
                 <a href="{{ site_root }}high-hunter/index.html" class="nav-link">📈 黄金の空売りボード</a>
+                <a href="{{ site_root }}uneri/index.html" class="nav-link">うねり底値買い</a>
                 <a href="{{ site_root }}pairs-hunter/index.html" class="nav-link">⚖️ ペアトレード・ボード</a>
             </nav>
         </div>
@@ -214,6 +215,30 @@ def generate_index_html():
                 <span style="font-size:11.5px;color:#4338CA;background:#EEF0FB;border:1px solid #D9DCF6;padding:1.5px 8px;border-radius:20px;font-weight:600">数日〜数週で狙う</span>
             </div>
 
+            <!-- うねり底値買い（サポート接近） -->
+            <div style="background:#fff;border:1px solid #E4E7EC;border-radius:12px;padding:14px 16px;margin-bottom:14px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                    <span style="font-weight:700;font-size:13.5px">うねりチャート底値買い <span style="color:#15803D">S接近</span></span>
+                    <a href="{{ site_root }}uneri/index.html" style="font-size:12px;color:#5A6172;text-decoration:none">全件を見る →</a>
+                </div>
+                <div style="display:grid;grid-template-columns:82px 44px minmax(0,1fr) 68px 66px;gap:8px;font-size:10.5px;color:#98A0AE;font-weight:600;padding:0 2px 5px;border-bottom:1px solid #E4E7EC">
+                    <span>状態</span><span>コード</span><span>銘柄名</span><span style="text-align:right">S代表価格</span><span style="text-align:right">S乖離率</span>
+                </div>
+                {% if uneri_top %}
+                    {% for u in uneri_top %}
+                    <div style="display:grid;grid-template-columns:82px 44px minmax(0,1fr) 68px 66px;gap:8px;align-items:center;font-size:13px;padding:8px 2px;border-bottom:1px solid #F1F3F5">
+                        <span style="font-size:11px;font-weight:700;color:#15803D;">{{ u.state_label }}{% if u.is_new_buy_alert %} (新){% endif %}</span>
+                        <a href="https://finance.yahoo.co.jp/quote/{{ u.code }}.T" target="_blank" style="font-family:Inter,sans-serif;color:#C2740A;font-weight:600;font-variant-numeric:tabular-nums;text-decoration:none;">{{ u.code }}</a>
+                        <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.name }}</span>
+                        <span style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">¥{{ "{:,.0f}".format(u.support.price) }}</span>
+                        <span style="text-align:right;color:#15803D;font-weight:700;font-variant-numeric:tabular-nums">{{ "%+.1f"|format(u.support.distance_pct) }}%</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="font-size:12px;color:#98A0AE;text-align:center;padding:10px 0;">現在サポート接近中の候補はありません</div>
+                {% endif %}
+            </div>
+
             <!-- シグナル接近中 -->
             <div style="background:#fff;border:1px solid #E4E7EC;border-radius:12px;padding:14px 16px">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -242,6 +267,7 @@ def generate_index_html():
     <!-- secondary nav -->
     <div style="display:flex;align-items:center;gap:10px;margin-top:22px;padding-top:16px;border-top:1px solid #E4E7EC;flex-wrap:wrap">
         <span style="font-size:12px;color:#98A0AE">その他:</span>
+        <a href="{{ site_root }}uneri/index.html" style="font-size:12.5px;color:#5A6172;background:#fff;border:1px solid #E4E7EC;padding:5px 12px;border-radius:8px;text-decoration:none;">うねりチャート底値買い</a>
         <a href="{{ site_root }}pairs-hunter/index.html" style="font-size:12.5px;color:#5A6172;background:#fff;border:1px solid #E4E7EC;padding:5px 12px;border-radius:8px;text-decoration:none;">⚖️ ペアトレード・ボード</a>
         {% if strategies %}
             {% set first_strat = strategies[0].name_encoded %}
@@ -896,6 +922,21 @@ def generate_high_hunter_html():
     return html
 
 
+def generate_uneri_html():
+    """うねりチャート底値買いページのテンプレート"""
+    template_path = PROJECT_ROOT / 'web' / 'templates' / 'uneri.html'
+    if not template_path.exists():
+        return ''
+
+    html = template_path.read_text(encoding='utf-8')
+    html = html.replace('extends "base.html"', 'extends "static_base.html"')
+    html = html.replace("{{ url_for('index') }}", "{{ site_root }}index.html")
+    html = html.replace("{{ url_for('stock_detail', code=item.code) }}", "https://finance.yahoo.co.jp/quote/{{ item.code }}.T")
+    html = html.replace("{{ url_for('stock_detail', code=s.code) }}", "https://finance.yahoo.co.jp/quote/{{ s.code }}.T")
+    html = html.replace("{{ url_for('static', filename='js/uneri.js') }}", "{{ static_root }}static/js/uneri.js")
+    return html
+
+
 def generate_pairs_hunter_html():
     """Pairs Hunterページのテンプレート"""
     template_path = PROJECT_ROOT / 'web' / 'templates' / 'pairs_hunter.html'
@@ -962,6 +1003,9 @@ def generate_all():
     (static_templates_dir / 'static_high_hunter.html').write_text(
         generate_high_hunter_html(), encoding='utf-8'
     )
+    (static_templates_dir / 'static_uneri.html').write_text(
+        generate_uneri_html(), encoding='utf-8'
+    )
     (static_templates_dir / 'static_pairs_hunter.html').write_text(
         generate_pairs_hunter_html(), encoding='utf-8'
     )
@@ -985,7 +1029,7 @@ def generate_all():
     market_map = load_market_map(str(STOCK_LIST_PATH))
 
     # === 1. トップページ ===
-    logger.info('\n[1/5] トップページ生成')
+    logger.info('\n[1/9] トップページ生成')
     ranking_strategies = cache.get_available_strategies()
     
     # 黄金の指値ボード（Low Hunter）のロード
@@ -995,6 +1039,14 @@ def generate_all():
     # 黄金の空売りボード（High Hunter）のロード
     hh_data = cache.load_high_hunter_result()
     hh_stocks_all = hh_data.get('stocks', []) if hh_data else []
+
+    # うねりチャート底値買いのロード
+    uneri_data = cache.load_uneri_result()
+    uneri_tabs = uneri_data.get('tabs', {}) if uneri_data else {}
+    uneri_buy_candidates = (
+        uneri_tabs.get('buy_active', []) + uneri_tabs.get('buy_watch', [])
+    )
+    uneri_top = uneri_buy_candidates[:5]
 
     # 接近シグナルのロード（全戦略からマージ用）
     approaching_strategies = cache.get_available_approaching_strategies()
@@ -1033,7 +1085,7 @@ def generate_all():
             try:
                 val = x.get('estimated_days')
                 return int(val) if val is not None else 999
-            except:
+            except Exception:
                 return 999
         
         approaching_signals.sort(key=get_days)
@@ -1044,11 +1096,12 @@ def generate_all():
                         market_suffix=suffix,
                         low_hunter_top3=low_hunter_top3,
                         high_hunter_top3=high_hunter_top3,
+                        uneri_top=uneri_top,
                         approaching_top=approaching_top6,
                         **base_ctx)
 
     # === 2. 戦略別ランキングページ ===
-    logger.info('\n[2/5] 戦略別ランキングページ生成')
+    logger.info('\n[2/9] 戦略別ランキングページ生成')
     strategy_nav = [{'name': n, 'encoded': safe_filename(n)} for n in ranking_strategies]
     sub_ctx = {**base_ctx, 'site_root': '../', 'static_root': '../'}
 
@@ -1068,7 +1121,7 @@ def generate_all():
                             market_suffix=suffix, **sub_ctx)
 
     # === 3. 接近シグナル トップページ ===
-    logger.info('\n[3/5] 接近シグナル一覧ページ生成')
+    logger.info('\n[3/9] 接近シグナル一覧ページ生成')
     approaching_strategies = cache.get_available_approaching_strategies()
     for suffix, label in MARKET_VARIANTS:
         approaching_info = []
@@ -1088,7 +1141,7 @@ def generate_all():
                         market_suffix=suffix, **sub_ctx)
 
     # === 4. 戦略別接近シグナルページ ===
-    logger.info('\n[4/5] 戦略別接近シグナルページ生成')
+    logger.info('\n[4/9] 戦略別接近シグナルページ生成')
     for suffix, label in MARKET_VARIANTS:
         for name in approaching_strategies:
             signals = cache.load_approaching_signals(name, limit=None if suffix else 50)
@@ -1104,7 +1157,7 @@ def generate_all():
                             market_suffix=suffix, **sub_ctx)
 
     # === 5. ボラティリティスクリーナーページ ===
-    logger.info('\n[5/5] ボラティリティスクリーナーページ生成')
+    logger.info('\n[5/9] ボラティリティスクリーナーページ生成')
     screener_data = cache.load_screener_result()
     if screener_data and (screener_data.get('stocks') or screener_data.get('stocks_large_cap')):
         stocks_dynamic = screener_data.get('stocks', [])
@@ -1128,7 +1181,7 @@ def generate_all():
         logger.info('  スクリーナーデータなし（スキップ）')
 
     # === 6. Low Hunter（黄金の指値ボード）ページ ===
-    logger.info('\n[6/7] Low Hunter ページ生成')
+    logger.info('\n[6/9] Low Hunter ページ生成')
     lh_data = cache.load_low_hunter_result()
     if lh_data and lh_data.get('stocks'):
         lh_stocks = lh_data['stocks']
@@ -1147,7 +1200,7 @@ def generate_all():
         logger.info('  Low Hunterデータなし（スキップ）')
 
     # === 7. High Hunter（黄金の空売りボード）ページ ===
-    logger.info('\n[7/7] High Hunter ページ生成')
+    logger.info('\n[7/9] High Hunter ページ生成')
     hh_data = cache.load_high_hunter_result()
     if hh_data and hh_data.get('stocks'):
         hh_stocks = hh_data['stocks']
@@ -1165,8 +1218,34 @@ def generate_all():
     else:
         logger.info('  High Hunterデータなし（スキップ）')
 
-    # === 8. Pairs Hunter（ペアトレード・ボード）ページ ===
-    logger.info('\n[8/8] Pairs Hunter ページ生成')
+    # === 8. うねりチャート底値買い（Uneri）ページ（0件でも常時生成） ===
+    logger.info('\n[8/9] Uneri（うねりチャート底値買い）ページ生成')
+    uneri_data = cache.load_uneri_result() or {}
+    uneri_tabs_data = uneri_data.get('tabs', {
+        'buy_active': [],
+        'buy_watch': [],
+        'profit_take': [],
+        'breakdown': [],
+    })
+    uneri_counts = uneri_data.get('counts_by_tab', {
+        'buy_active': 0,
+        'buy_watch': 0,
+        'profit_take': 0,
+        'breakdown': 0,
+    })
+    uneri_new_alerts = uneri_data.get('new_buy_alerts', [])
+    uneri_params = uneri_data.get('parameters', {})
+
+    render_template(env, 'static_uneri.html',
+                    DOCS_DIR / 'uneri' / 'index.html',
+                    tabs=uneri_tabs_data,
+                    counts_by_tab=uneri_counts,
+                    new_buy_alerts=uneri_new_alerts,
+                    parameters=uneri_params,
+                    **sub_ctx)
+
+    # === 9. Pairs Hunter（ペアトレード・ボード）ページ ===
+    logger.info('\n[9/9] Pairs Hunter ページ生成')
     pairs_data = cache.load_pairs_result()
     if pairs_data:
         pairs_list = pairs_data.get('pairs', [])

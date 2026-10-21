@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}うねりチャート底値買い - Stock Strategy Analyzer{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb">
+    <a href="{{ url_for('index') }}">SSA</a>
+    <span class="sep">/</span>
+    <span>スイング</span>
+    <span class="sep">/</span>
+    <span class="current">うねりチャート底値買い</span>
+</nav>
+
+<section class="uneri-header" style="margin-bottom:18px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px;">
+        <div>
+            <div style="display:flex; align-items:center; gap:9px;">
+                <h2 style="font-size:21px; font-weight:700;">うねりチャート S/R接近監視リスト</h2>
+                <span style="font-size:11.5px; color:#15803D; background:#E7F4EC; border:1px solid #C6E6D2; padding:2px 9px; border-radius:20px; font-weight:700;">東証プライム・高流動性</span>
+            </div>
+            <div style="font-size:13px; color:#5A6172; margin-top:4px;">
+                約3か月周期（40〜90営業日）でサポート（S）とレジスタンス（R）を1.5往復以上うねる銘柄を抽出し、サポート引き付けの分割買い候補を表示します。
+            </div>
+        </div>
+        <div style="font-size:12px; color:#7A828F;">
+            対象条件: 東証プライム / 20日平均出来高 {{ "{:,.0f}".format((parameters.minimum_average_volume or 1000000) / 10000) }}万株以上 / S-R値幅 {{ parameters.min_sr_range_percent or 8 }}%以上
+        </div>
+    </div>
+</section>
+
+{% if new_buy_alerts %}
+<section class="uneri-alert-banner" style="background:#F0FDF4; border:1px solid #86EFAC; border-radius:12px; padding:14px 18px; margin-bottom:18px;">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span style="font-size:11px; font-weight:700; color:#fff; background:#15803D; padding:2px 8px; border-radius:6px; letter-spacing:.04em;">新規買い接近通知</span>
+        <span style="font-size:13.5px; font-weight:700; color:#14532D;">本日のバッチで新たにサポート接近圏（S到達・買い検討・監視開始）へ状態遷移した銘柄が {{ new_buy_alerts|length }} 件あります</span>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:10px;">
+        {% for item in new_buy_alerts %}
+        <div style="background:#fff; border:1px solid #BBF7D0; border-radius:8px; padding:6px 12px; font-size:12.5px; display:flex; align-items:center; gap:8px;">
+            <span style="font-size:11px; font-weight:700; color:#15803D; background:#DCFCE7; padding:1px 6px; border-radius:4px;">{{ item.state_label }}</span>
+            <a href="{{ url_for('stock_detail', code=item.code) }}" style="font-family:Inter,sans-serif; font-weight:700; color:#15803D; text-decoration:none;">{{ item.code }}</a>
+            <span style="font-weight:600; color:#1B1F2A;">{{ item.name }}</span>
+            <span style="color:#5A6172; font-variant-numeric:tabular-nums;">終値 ¥{{ "{:,.0f}".format(item.close) }} / S ¥{{ "{:,.0f}".format(item.support.price) }} (乖離 {{ "%+.1f"|format(item.support.distance_pct) }}%)</span>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<section class="uneri-controls" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+    <!-- 4つの状態別タブ切り替え（絵文字なし） -->
+    <div class="uneri-tabs" style="display:flex; gap:6px; flex-wrap:wrap;" role="tablist">
+        <button type="button" class="uneri-tab active" data-tab="buy_active" role="tab" aria-selected="true">
+            買い検討・S到達 <span class="tab-count">{{ counts_by_tab.buy_active if counts_by_tab else 0 }}</span>
+        </button>
+        <button type="button" class="uneri-tab" data-tab="buy_watch" role="tab" aria-selected="false">
+            監視開始 <span class="tab-count">{{ counts_by_tab.buy_watch if counts_by_tab else 0 }}</span>
+        </button>
+        <button type="button" class="uneri-tab" data-tab="profit_take" role="tab" aria-selected="false">
+            利確目安 <span class="tab-count">{{ counts_by_tab.profit_take if counts_by_tab else 0 }}</span>
+        </button>
+        <button type="button" class="uneri-tab" data-tab="breakdown" role="tab" aria-selected="false">
+            下抜け警戒 <span class="tab-count">{{ counts_by_tab.breakdown if counts_by_tab else 0 }}</span>
+        </button>
+    </div>
+
+    <!-- 10.2章 並び順の切り替え -->
+    <div style="display:flex; align-items:center; gap:8px;">
+        <label for="uneri-sort-select" style="font-size:12.5px; font-weight:600; color:#5A6172;">並び順:</label>
+        <select id="uneri-sort-select" style="font-size:12.5px; padding:6px 10px; border:1px solid #D7DCE3; border-radius:8px; background:#fff; color:#1B1F2A; font-weight:500;">
+            <option value="s_dist_asc">S乖離率の小さい順（初期表示）</option>
+            <option value="cycles_desc">往復数の多い順</option>
+            <option value="r_upside_desc">Rまでの上昇余地が大きい順</option>
+            <option value="volume_desc">20日平均出来高の多い順</option>
+        </select>
+    </div>
+</section>
+
+{% macro render_uneri_panel(panel_id, items, empty_msg) %}
+<div class="uneri-tab-panel {{ 'active' if panel_id == 'buy_active' else '' }}" id="panel-{{ panel_id }}" data-panel="{{ panel_id }}" style="{{ '' if panel_id == 'buy_active' else 'display:none;' }}">
+    {% if items %}
+    <div style="background:#fff; border:1px solid #E4E7EC; border-radius:12px; overflow:hidden;">
+        <div style="overflow-x:auto;">
+            <table class="uneri-table" style="font-size:12.5px; min-width:1100px; width:100%; border-collapse:collapse;">
+                <thead>
+                    <tr>
+                        <th colspan="4" style="text-align:left; padding:8px 10px; background:#F2F3F6; color:#7A828F; font-size:11px; font-weight:700; border-bottom:1px solid #E4E7EC;">銘柄・状態</th>
+                        <th colspan="3" style="text-align:left; padding:8px 10px; background:#EEF6F0; color:#15803D; font-size:11px; font-weight:700; border-bottom:1px solid #E4E7EC; border-left:2px solid #fff;">サポート（S：買い目安）</th>
+                        <th colspan="3" style="text-align:left; padding:8px 10px; background:#FEF2F2; color:#B91C1C; font-size:11px; font-weight:700; border-bottom:1px solid #E4E7EC; border-left:2px solid #fff;">レジスタンス（R：利確目安）</th>
+                        <th colspan="3" style="text-align:left; padding:8px 10px; background:#F1F2F7; color:#4338CA; font-size:11px; font-weight:700; border-bottom:1px solid #E4E7EC; border-left:2px solid #fff;">うねり周期（40〜90日）</th>
+                        <th colspan="2" style="text-align:left; padding:8px 10px; background:#F2F3F6; color:#7A828F; font-size:11px; font-weight:700; border-bottom:1px solid #E4E7EC; border-left:2px solid #fff;">流動性・週足参考・根拠</th>
+                    </tr>
+                    <tr style="color:#5A6172; font-size:11.5px; background:#FAFBFC; border-bottom:1px solid #E4E7EC;">
+                        <th style="padding:9px 10px; text-align:left; font-weight:600;">状態</th>
+                        <th style="padding:9px 10px; text-align:left; font-weight:600;">コード</th>
+                        <th style="padding:9px 10px; text-align:left; font-weight:600;">銘柄名</th>
+                        <th style="padding:9px 10px; text-align:right; font-weight:600;">終値</th>
+                        <th style="padding:9px 10px; text-align:right; background:#F6FAF7; font-weight:600;">S代表価格 (帯域)</th>
+                        <th style="padding:9px 10px; text-align:center; background:#F6FAF7; font-weight:600;">S接触</th>
+                        <th style="padding:9px 10px; text-align:right; background:#F6FAF7; font-weight:600;">S乖離率</th>
+                        <th style="padding:9px 10px; text-align:right; background:#FFF8F8; font-weight:600;">R代表価格 (帯域)</th>
+                        <th style="padding:9px 10px; text-align:center; background:#FFF8F8; font-weight:600;">R接触</th>
+                        <th style="padding:9px 10px; text-align:right; background:#FFF8F8; font-weight:600;">上昇余地</th>
+                        <th style="padding:9px 10px; text-align:center; background:#F7F8FB; font-weight:600;">往復数</th>
+                        <th style="padding:9px 10px; text-align:right; background:#F7F8FB; font-weight:600;">直近/平均往復</th>
+                        <th style="padding:9px 10px; text-align:right; background:#F7F8FB; font-weight:600;">S-R値幅</th>
+                        <th style="padding:9px 10px; text-align:right; font-weight:600;">20日出来高 (売買代金)</th>
+                        <th style="padding:9px 10px; text-align:left; font-weight:600;">週足位置 / 判定根拠</th>
+                    </tr>
+                </thead>
+                <tbody class="uneri-tbody">
+                    {% for s in items %}
+                    <tr class="uneri-row {{ 'row-new-alert' if s.is_new_buy_alert else '' }}"
+                        data-s-dist="{{ s.support.distance_pct }}"
+                        data-cycles="{{ s.wave.cycles }}"
+                        data-r-upside="{{ s.resistance.upside_pct }}"
+                        data-volume="{{ s.avg_volume_20d }}"
+                        style="border-bottom:1px solid #F1F3F5; background: {{ '#F0FDF4' if s.is_new_buy_alert else ('#FFFFFF' if loop.index0 % 2 == 0 else '#FBFBFC') }};">
+                        <td style="padding:10px; white-space:nowrap;">
+                            <span class="state-pill state-{{ s.state }}">{{ s.state_label }}</span>
+                            {% if s.is_new_buy_alert %}
+                            <span style="display:inline-block; font-size:10px; font-weight:700; color:#fff; background:#15803D; padding:1px 5px; border-radius:4px; margin-left:4px;">新規接近</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding:10px; white-space:nowrap;">
+                            <a href="{{ url_for('stock_detail', code=s.code) }}" style="font-family:Inter,sans-serif; color:#C2740A; font-weight:700; text-decoration:none;">{{ s.code }}</a>
+                        </td>
+                        <td style="padding:10px; font-weight:600; max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ s.name }} ({{ s.market }})">{{ s.name }}</td>
+                        <td style="padding:10px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums;">¥{{ "{:,.0f}".format(s.close) }}</td>
+
+                        <!-- サポート -->
+                        <td style="padding:10px; text-align:right; background:#F6FAF7; font-variant-numeric:tabular-nums;">
+                            <div style="font-weight:700; color:#15803D;">¥{{ "{:,.0f}".format(s.support.price) }}</div>
+                            <div style="font-size:10.5px; color:#7A828F;">{{ "{:,.0f}".format(s.support.lower) }}〜{{ "{:,.0f}".format(s.support.upper) }}</div>
+                        </td>
+                        <td style="padding:10px; text-align:center; background:#F6FAF7; font-weight:600; font-variant-numeric:tabular-nums;">{{ s.support.touch_count }}回</td>
+                        <td style="padding:10px; text-align:right; background:#F6FAF7; font-weight:700; font-variant-numeric:tabular-nums; color:{{ '#15803D' if s.support.distance_pct <= 3.0 else ('#C03434' if s.support.distance_pct < 0 else '#3F4654') }};">
+                            {{ "%+.2f"|format(s.support.distance_pct) }}%
+                        </td>
+
+                        <!-- レジスタンス -->
+                        <td style="padding:10px; text-align:right; background:#FFF8F8; font-variant-numeric:tabular-nums;">
+                            <div style="font-weight:700; color:#B91C1C;">¥{{ "{:,.0f}".format(s.resistance.price) }}</div>
+                            <div style="font-size:10.5px; color:#7A828F;">{{ "{:,.0f}".format(s.resistance.lower) }}〜{{ "{:,.0f}".format(s.resistance.upper) }}</div>
+                        </td>
+                        <td style="padding:10px; text-align:center; background:#FFF8F8; font-weight:600; font-variant-numeric:tabular-nums;">{{ s.resistance.touch_count }}回</td>
+                        <td style="padding:10px; text-align:right; background:#FFF8F8; font-weight:700; color:#15803D; font-variant-numeric:tabular-nums;">
+                            +{{ "%.2f"|format(s.resistance.upside_pct) }}%
+                        </td>
+
+                        <!-- うねり -->
+                        <td style="padding:10px; text-align:center; background:#F7F8FB; font-weight:700; color:#4338CA; font-variant-numeric:tabular-nums;">
+                            {{ "%.1f"|format(s.wave.cycles) }}往復
+                            {% if s.wave.is_priority %}
+                            <div style="font-size:10px; color:#4338CA; font-weight:600;">優先(2+)</div>
+                            {% endif %}
+                        </td>
+                        <td style="padding:10px; text-align:right; background:#F7F8FB; font-variant-numeric:tabular-nums;">
+                            <div style="font-weight:600;">{{ s.wave.latest_round_trip_days }}営業日</div>
+                            <div style="font-size:10.5px; color:#7A828F;">平均 {{ "%.1f"|format(s.wave.average_round_trip_days) }}日</div>
+                        </td>
+                        <td style="padding:10px; text-align:right; background:#F7F8FB; font-weight:600; font-variant-numeric:tabular-nums;">
+                            +{{ "%.1f"|format(s.wave.sr_range_percent) }}%
+                        </td>
+
+                        <!-- 流動性 -->
+                        <td style="padding:10px; text-align:right; font-variant-numeric:tabular-nums;">
+                            <div style="font-weight:600;">{{ "{:,.0f}".format(s.avg_volume_20d / 10000) }}万株</div>
+                            <div style="font-size:10.5px; color:#7A828F;">約{{ "{:,.1f}".format(s.avg_trading_value_20d / 100000000) }}億円/日</div>
+                        </td>
+
+                        <!-- 週足参考・判定根拠 -->
+                        <td style="padding:10px; min-width:230px;">
+                            <div style="font-size:11.5px; color:#3F4654; margin-bottom:4px;">
+                                週足位置:
+                                3年 <strong>{{ "%.0f%%"|format(s.weekly.range_position_3y) if s.weekly.range_position_3y is not none else '-' }}</strong> /
+                                5年 <strong>{{ "%.0f%%"|format(s.weekly.range_position_5y) if s.weekly.range_position_5y is not none else '-' }}</strong>
+                                {% if s.weekly.long_term_support or s.weekly.long_term_resistance %}
+                                <span style="color:#7A828F; font-size:10.5px;">
+                                    (週足S:{{ "¥{:,.0f}".format(s.weekly.long_term_support) if s.weekly.long_term_support else '-' }} / R:{{ "¥{:,.0f}".format(s.weekly.long_term_resistance) if s.weekly.long_term_resistance else '-' }})
+                                </span>
+                                {% endif %}
+                            </div>
+                            <details style="font-size:11px; color:#5A6172; cursor:pointer;">
+                                <summary style="font-weight:600; color:#4338CA;">主要転換点の根拠 ({{ s.wave.wave_pivots|length }}点)</summary>
+                                <div style="margin-top:4px; padding:6px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; line-height:1.5;">
+                                    {% for p in s.wave.wave_pivots %}
+                                    <div>
+                                        <span style="font-weight:700; color:{{ '#15803D' if p.kind == 'low' else '#B91C1C' }};">{{ '谷(S)' if p.kind == 'low' else '山(R)' }}</span>:
+                                        {{ p.date }} / ¥{{ "{:,.0f}".format(p.price) }}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </details>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:3.5rem 1rem; color:#7A828F; background:#fff; border-radius:12px; border:1px dashed #D7DCE3;">
+        <p style="font-size:14px; font-weight:600; margin-bottom:4px;">{{ empty_msg }}</p>
+        <p style="font-size:12px;">条件に該当する銘柄がない日は無理に候補を出さず、サポートまで引き付けられるのを待ちます。</p>
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{{ render_uneri_panel('buy_active', tabs.buy_active if tabs else [], '現在「買い検討圏（S乖離3%以下）」または「サポート到達（1%以下）」に該当する銘柄はありません。') }}
+{{ render_uneri_panel('buy_watch', tabs.buy_watch if tabs else [], '現在「監視開始（S乖離5%以下）」に該当する銘柄はありません。') }}
+{{ render_uneri_panel('profit_take', tabs.profit_take if tabs else [], '現在「利確目安（R接近5%・3%以下）」に該当する銘柄はありません。') }}
+{{ render_uneri_panel('breakdown', tabs.breakdown if tabs else [], '現在「下抜け警戒」に該当する銘柄はありません。') }}
+
+<script src="{{ url_for('static', filename='js/uneri.js') }}"></script>
+
+<style>
+    .uneri-tab {
+        padding: 8px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #5A6172;
+        background: #fff;
+        border: 1px solid #D7DCE3;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+    }
+    .uneri-tab:hover {
+        background: #F4F5F7;
+        color: #1B1F2A;
+    }
+    .uneri-tab.active {
+        background: #1B1F2A;
+        color: #fff;
+        border-color: #1B1F2A;
+    }
+    .uneri-tab .tab-count {
+        font-size: 11px;
+        padding: 1px 6px;
+        border-radius: 10px;
+        background: #EEF0F4;
+        color: #3F4654;
+        font-variant-numeric: tabular-nums;
+    }
+    .uneri-tab.active .tab-count {
+        background: rgba(255,255,255,0.2);
+        color: #fff;
+    }
+    .state-pill {
+        display: inline-block;
+        padding: 2.5px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+    .state-support_reached { background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; }
+    .state-buy_consider { background: #E7F4EC; color: #15803D; border: 1px solid #C6E6D2; }
+    .state-watch_start { background: #EEF0FB; color: #4338CA; border: 1px solid #D9DCF6; }
+    .state-profit_consider { background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; }
+    .state-profit_watch { background: #FBF0DF; color: #C2740A; border: 1px solid #F0DCBE; }
+    .state-breakdown_warning { background: #FEE2E2; color: #B91C1C; border: 1px solid #FECACA; }
+</style>
+{% endblock %}

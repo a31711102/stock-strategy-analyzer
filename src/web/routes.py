@@ -4,6 +4,7 @@ Web UIルート定義
 - / : トップページ（戦略一覧）
 - /strategy/<name> : 戦略別ランキング
 - /stock/<code> : 銘柄詳細
+- /uneri : うねりチャート底値買い（S/R接近監視リスト）
 - /api/search : 銘柄検索API
 - /robots.txt : クローラー禁止ファイル
 """
@@ -78,6 +79,14 @@ def register_routes(app: Flask):
         hh_stocks = hh_data.get('stocks', []) if hh_data else []
         high_hunter_top3 = hh_stocks[:3]
 
+        # うねりチャート底値買い（サポート接近：買い検討・S到達＋監視開始の上位5件）
+        uneri_data = cache.load_uneri_result()
+        uneri_tabs = uneri_data.get('tabs', {}) if uneri_data else {}
+        uneri_buy_candidates = (
+            uneri_tabs.get('buy_active', []) + uneri_tabs.get('buy_watch', [])
+        )
+        uneri_top = uneri_buy_candidates[:5]
+
         # 接近シグナル上位6件
         approaching_signals = []
         app_strategies = cache.get_available_approaching_strategies()
@@ -94,7 +103,7 @@ def register_routes(app: Flask):
             try:
                 val = x.get('estimated_days')
                 return int(val) if val is not None else 999
-            except:
+            except Exception:
                 return 999
 
         approaching_signals.sort(key=get_days)
@@ -109,6 +118,7 @@ def register_routes(app: Flask):
             market=market,
             low_hunter_top3=low_hunter_top3,
             high_hunter_top3=high_hunter_top3,
+            uneri_top=uneri_top,
             approaching_top=approaching_top6,
             elapsed=f"{elapsed:.3f}"
         )
@@ -268,6 +278,38 @@ def register_routes(app: Flask):
         return render_template(
             'high_hunter.html',
             stocks=stocks,
+            parameters=parameters,
+            elapsed=f"{elapsed:.3f}"
+        )
+
+    @app.route('/uneri')
+    def uneri():
+        """うねりチャート底値買い（S/R接近監視リスト）"""
+        start = time.time()
+
+        uneri_data = cache.load_uneri_result() or {}
+        tabs = uneri_data.get('tabs', {
+            'buy_active': [],
+            'buy_watch': [],
+            'profit_take': [],
+            'breakdown': [],
+        })
+        counts_by_tab = uneri_data.get('counts_by_tab', {
+            'buy_active': 0,
+            'buy_watch': 0,
+            'profit_take': 0,
+            'breakdown': 0,
+        })
+        new_buy_alerts = uneri_data.get('new_buy_alerts', [])
+        parameters = uneri_data.get('parameters', {})
+
+        elapsed = time.time() - start
+
+        return render_template(
+            'uneri.html',
+            tabs=tabs,
+            counts_by_tab=counts_by_tab,
+            new_buy_alerts=new_buy_alerts,
             parameters=parameters,
             elapsed=f"{elapsed:.3f}"
         )

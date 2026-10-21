@@ -92,3 +92,16 @@ pattern_detection:
 
   max_pattern_bonus: 100 # CWH 50 + VCP 50
 
+
+uneri:
+  average_volume_days: 20
+  minimum_average_volume: 1000000
+  pivot_window_days: 5
+  minimum_swing_percent: 8.0
+  price_zone_percent: 3.0
+  minimum_touch_gap_days: 10
+  round_trip_min_days: 40
+  round_trip_max_days: 90
+  minimum_cycles: 1.5
+  support_alert_levels: [5.0, 3.0, 1.0]
+  resistance_alert_levels: [5.0, 3.0]

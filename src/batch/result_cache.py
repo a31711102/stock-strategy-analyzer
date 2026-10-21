@@ -683,3 +683,85 @@ class ResultCache:
             logger.error(f"ペアトレード結果読み込みエラー: {e}")
             return None
 
+
+    # ==================== Uneri（うねりチャート S/R接近） ====================
+
+    def save_uneri_result(self, result_dict: Dict[str, Any]) -> bool:
+        """
+        うねりチャートS/R接近分析の結果を保存
+
+        Args:
+            result_dict: UneriPipeline.to_json_dict() の出力
+
+        Returns:
+            成功時True
+        """
+        uneri_dir = self.cache_dir / "uneri"
+        uneri_dir.mkdir(parents=True, exist_ok=True)
+        result_path = uneri_dir / "uneri_candidates.json"
+
+        try:
+            with open(result_path, 'w', encoding='utf-8') as f:
+                json.dump(result_dict, f, ensure_ascii=False, indent=2)
+            stock_count = len(result_dict.get('stocks', []))
+            logger.info(f"うねりチャート結果保存完了: {stock_count}銘柄")
+            return True
+        except Exception as e:
+            logger.error(f"うねりチャート結果保存エラー: {e}")
+            return False
+
+    def load_uneri_result(self) -> Optional[Dict[str, Any]]:
+        """
+        うねりチャートS/R接近分析の結果を読み込み
+
+        Returns:
+            結果の辞書。存在しない場合はNone。
+        """
+        result_path = self.cache_dir / "uneri" / "uneri_candidates.json"
+
+        if not result_path.exists():
+            return None
+
+        try:
+            with open(result_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"うねりチャート結果読み込みエラー: {e}")
+            return None
+
+    def save_uneri_state_history(self, history: Dict[str, Dict[str, Any]]) -> bool:
+        """
+        うねりチャートの営業日ごとの状態履歴を保存（重複通知防止・状態遷移判定用）
+        """
+        uneri_dir = self.cache_dir / "uneri"
+        uneri_dir.mkdir(parents=True, exist_ok=True)
+        history_path = uneri_dir / "state_history.json"
+
+        data = {
+            "updated_at": datetime.now().isoformat(),
+            "states": history,
+        }
+        try:
+            with open(history_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            logger.info(f"うねり状態履歴保存完了: {len(history)}銘柄")
+            return True
+        except Exception as e:
+            logger.error(f"うねり状態履歴保存エラー: {e}")
+            return False
+
+    def load_uneri_state_history(self) -> Dict[str, Dict[str, Any]]:
+        """
+        うねりチャートの前回の状態履歴を読み込み
+        """
+        history_path = self.cache_dir / "uneri" / "state_history.json"
+        if not history_path.exists():
+            return {}
+
+        try:
+            with open(history_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            return data.get("states", {})
+        except Exception as e:
+            logger.error(f"うねり状態履歴読み込みエラー: {e}")
+            return {}

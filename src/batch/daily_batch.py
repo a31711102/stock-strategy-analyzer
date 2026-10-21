@@ -24,6 +24,7 @@ sys.path.insert(0, str(project_root))
 
 from src.data.fetcher import StockDataFetcher
 from src.data.cache import DataCache
+from src.data.market_segments import is_prime
 from src.indicators.technical import TechnicalIndicators
 from src.strategies import get_all_strategies
 from src.analysis.compatibility import CompatibilityAnalyzer
@@ -36,6 +37,8 @@ from src.low_hunter import config as lh_config
 from src.high_hunter.pipeline import HighHunterPipeline
 from src.high_hunter import config as hh_config
 from src.strategies.pairs_analyzer import PairsAnalyzer
+from src.uneri.config import UneriConfig
+from src.uneri.pipeline import UneriPipeline
 
 # ログ設定
 def setup_logging(log_dir: str = "./logs"):
@@ -150,12 +153,14 @@ class DailyBatchProcessor:
         # High Hunter（黄金の空売りボード）
         self.high_hunter_pipeline = HighHunterPipeline()
         
-        # スクリーナー/Hunter用: 最終行サマリの一時保持
+        # スクリーナー/Hunter/Uneri用: 最終行サマリ・市場区分の一時保持
         # Note: DataFrame全体を保持すると ~4.2GB のメモリを消費し
         #       throttle_if_needed のメモリ制限でデッドロックを引き起こすため、
         #       最終行のスカラー値のみ保持する（~1.5MB）
         self._stock_summaries: dict[str, dict] = {}
         self._stock_names: dict[str, str] = {}
+        self._stock_markets: dict[str, str] = {}
+        self._uneri_candidate_codes: list[str] = []
         
         # ATR閾値（バッチ開始時に前回値を読み込み、なければ初回2パス処理）
         self.atr_thresholds = None
@@ -175,6 +180,8 @@ class DailyBatchProcessor:
             
             self.stock_list_path = config.get('data', {}).get('stock_list_path', '')
             self.strategies = get_all_strategies()
+            self.uneri_config = UneriConfig.from_dict(config.get('uneri', {}))
+            self.uneri_pipeline = UneriPipeline(self.uneri_config)
             self.logger.info(f"設定読み込み完了: {len(self.strategies)}戦略")
         except Exception as e:
             self.logger.error(f"設定読み込みエラー: {e}")
@@ -243,9 +250,16 @@ class DailyBatchProcessor:
             # テクニカル指標計算
             df = self.indicator_calc.calculate_all_indicators(df)
             
-            # スクリーナー/Hunter用にサマリを保持（バッチ完了後に一括処理）
+            # スクリーナー/Hunter/Uneri用にサマリを保持（バッチ完了後に一括処理）
             self._stock_summaries[str(code)] = self._extract_summary(df)
             self._stock_names[str(code)] = name
+            self._stock_markets[str(code)] = market
+
+            # うねりチャート対象ユニバース事前絞込（東証プライム かつ 直近20日平均出来高 >= 100万株）
+            if is_prime(market) and len(df) >= self.uneri_config.average_volume_days:
+                avg_vol_20 = df['Volume'].tail(self.uneri_config.average_volume_days).mean()
+                if pd.notna(avg_vol_20) and avg_vol_20 >= self.uneri_config.minimum_average_volume:
+                    self._uneri_candidate_codes.append(str(code))
             
             # 全戦略で適合度計算
             compatibility = self.analyzer.calculate_compatibility(
@@ -474,6 +488,9 @@ class DailyBatchProcessor:
 
         # ========== High Hunter（黄金の空売りボード） ==========
         self._run_high_hunter()
+
+        # ========== Uneri（うねりチャート S/R接近） ==========
+        self._run_uneri(stock_df)
         
         # ========== Pairs Hunter（ペアトレード・ボード） ==========
         self._run_pairs_hunter()
@@ -818,10 +835,71 @@ class DailyBatchProcessor:
         except Exception as e:
             self.logger.error(f"High Hunter 実行エラー: {e}", exc_info=True)
 
+    def _run_uneri(self, stock_df: pd.DataFrame):
+        """
+        うねりチャート S/R接近通知システムを実行
+
+        流動性フィルター（東証プライム かつ 20日平均出来高100万株以上）を通過した銘柄について
+        DataCacheからOHLCVデータを再取得し、S/R算出・うねり判定・接近通知判定を行う。
+        """
+        self.logger.info("=== うねりチャート S/R接近判定 実行 ===")
+        try:
+            # resumeモード等で _uneri_candidate_codes が空の場合でも、stock_df から東証プライム銘柄を走査可能にする
+            target_codes = list(dict.fromkeys(self._uneri_candidate_codes))
+            stock_names = dict(self._stock_names)
+            market_map = dict(self._stock_markets)
+
+            if not target_codes and stock_df is not None and not stock_df.empty:
+                for _, row in stock_df.iterrows():
+                    c = str(row['コード'])
+                    m = str(row['市場区分'])
+                    n = str(row['銘柄名'])
+                    stock_names[c] = n
+                    market_map[c] = m
+                    if is_prime(m):
+                        target_codes.append(c)
+
+            stock_data: dict[str, pd.DataFrame] = {}
+            for code in target_codes:
+                df = self.data_cache.get(str(code), ignore_ttl=True)
+                if df is not None and len(df) >= 120:
+                    avg_vol = df['Volume'].tail(self.uneri_config.average_volume_days).mean()
+                    if pd.notna(avg_vol) and avg_vol >= self.uneri_config.minimum_average_volume:
+                        stock_data[str(code)] = df
+
+            self.logger.info(f"うねりチャート: 高流動性プライム対象 {len(stock_data)}銘柄を分析中")
+
+            prev_history = self.result_cache.load_uneri_state_history()
+            candidates, new_history = self.uneri_pipeline.run(
+                stock_data=stock_data,
+                stock_names=stock_names,
+                market_map=market_map,
+                previous_state_history=prev_history,
+            )
+
+            result_dict = self.uneri_pipeline.to_json_dict(candidates)
+            self.result_cache.save_uneri_result(result_dict)
+            self.result_cache.save_uneri_state_history(new_history)
+
+            new_alerts = [c for c in candidates if c.is_new_buy_alert]
+            if new_alerts:
+                self.logger.info(f"【うねり新規買い接近通知】{len(new_alerts)}銘柄が新たにサポート接近圏へ遷移しました:")
+                for c in new_alerts:
+                    self.logger.info(
+                        f"  [新規買い接近] {c.code} {c.name} | 状態:{c.state_label} "
+                        f"| 終値:¥{c.close:,.1f} | S:¥{c.support_zone.representative_price:,.1f} "
+                        f"(乖離:{c.support_distance_pct:+.2f}%) | 往復:{c.wave_metrics.cycles}回"
+                    )
+            else:
+                self.logger.info("うねり新規買い接近通知: 本日の新規状態遷移銘柄はありません")
+
+        except Exception as e:
+            self.logger.error(f"うねりチャート実行エラー: {e}", exc_info=True)
         finally:
-            # 全サブパイプライン完了後にサマリ解放
             self._stock_summaries.clear()
             self._stock_names.clear()
+            self._stock_markets.clear()
+            self._uneri_candidate_codes.clear()
 
     def _run_pairs_hunter(self):
         """
